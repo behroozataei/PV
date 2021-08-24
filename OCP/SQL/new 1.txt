@@ -1,0 +1,520 @@
+--select * from nodes where guid in (select ParentGUID from dbo.nodes where name like 'IT')
+
+select a.name, b.name, b.guid 
+from nodes a join nodes b 
+on a.guid = b.ParentGUID
+where b.name like 'IT'
+order by a.name
+
+
+update app.OCP_CheckPoints set IT_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP01%') where 
+ app.OCP_CheckPoints.NAME like 'CP01%';
+update app.OCP_CheckPoints set IT_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP02%') where 
+ app.OCP_CheckPoints.NAME like 'CP02%';
+update app.OCP_CheckPoints set IT_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP03%') where 
+ app.OCP_CheckPoints.NAME like 'CP03%';
+update app.OCP_CheckPoints set IT_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP04%') where 
+ app.OCP_CheckPoints.NAME like 'CP04%';
+update app.OCP_CheckPoints set IT_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP05%') where 
+ app.OCP_CheckPoints.NAME like 'CP05%';
+update app.OCP_CheckPoints set IT_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP06%') where 
+ app.OCP_CheckPoints.NAME like 'CP06%';
+update app.OCP_CheckPoints set IT_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP07%') where 
+ app.OCP_CheckPoints.NAME like 'CP07%';
+update app.OCP_CheckPoints set IT_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP08%') where 
+ app.OCP_CheckPoints.NAME like 'CP08%';
+update app.OCP_CheckPoints set IT_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP09%') where 
+ app.OCP_CheckPoints.NAME like 'CP09%';
+
+update app.OCP_CheckPoints set IT_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP10%') where 
+ app.OCP_CheckPoints.NAME like 'CP10%';
+update app.OCP_CheckPoints set IT_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP11%') where 
+ app.OCP_CheckPoints.NAME like 'CP11%';
+update app.OCP_CheckPoints set IT_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP12%') where 
+ app.OCP_CheckPoints.NAME like 'CP12%';
+update app.OCP_CheckPoints set IT_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP13%') where 
+ app.OCP_CheckPoints.NAME like 'CP13%';
+update app.OCP_CheckPoints set IT_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP14%') where 
+ app.OCP_CheckPoints.NAME like 'CP14%';
+update app.OCP_CheckPoints set IT_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP15%') where 
+ app.OCP_CheckPoints.NAME like 'CP15%';
+update app.OCP_CheckPoints set IT_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP16%') where 
+ app.OCP_CheckPoints.NAME like 'CP16%';
+update app.OCP_CheckPoints set IT_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP17%') where 
+ app.OCP_CheckPoints.NAME like 'CP17%';
+update app.OCP_CheckPoints set IT_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP18%') where 
+ app.OCP_CheckPoints.NAME like 'CP18%';
+update app.OCP_CheckPoints set IT_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP19%') where 
+ app.OCP_CheckPoints.NAME like 'CP19%';
+ 
+update app.OCP_CheckPoints set IT_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP20%') where 
+ app.OCP_CheckPoints.NAME like 'CP20%';
+update app.OCP_CheckPoints set IT_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP21%') where 
+ app.OCP_CheckPoints.NAME like 'CP21%';
+update app.OCP_CheckPoints set IT_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP22%') where 
+ app.OCP_CheckPoints.NAME like 'CP22%';
+update app.OCP_CheckPoints set IT_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP23%') where 
+ app.OCP_CheckPoints.NAME like 'CP23%';
+update app.OCP_CheckPoints set IT_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP24%') where 
+ app.OCP_CheckPoints.NAME like 'CP24%';
+update app.OCP_CheckPoints set IT_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP25%') where 
+ app.OCP_CheckPoints.NAME like 'CP25%';
+update app.OCP_CheckPoints set IT_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP26%') where 
+ app.OCP_CheckPoints.NAME like 'CP26%';
+update app.OCP_CheckPoints set IT_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP27%') where 
+ app.OCP_CheckPoints.NAME like 'CP27%';
+update app.OCP_CheckPoints set IT_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP28%') where 
+ app.OCP_CheckPoints.NAME like 'CP28%';
+update app.OCP_CheckPoints set IT_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP29%') where 
+ app.OCP_CheckPoints.NAME like 'CP29%';
+
+update app.OCP_CheckPoints set IT_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP30%') where 
+ app.OCP_CheckPoints.NAME like 'CP30%';
+update app.OCP_CheckPoints set IT_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP31%') where 
+ app.OCP_CheckPoints.NAME like 'CP31%';
+update app.OCP_CheckPoints set IT_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP32%') where 
+ app.OCP_CheckPoints.NAME like 'CP32%';
+update app.OCP_CheckPoints set IT_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP33%') where 
+ app.OCP_CheckPoints.NAME like 'CP33%';
+update app.OCP_CheckPoints set IT_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP34%') where 
+ app.OCP_CheckPoints.NAME like 'CP34%';
+update app.OCP_CheckPoints set IT_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP35%') where 
+ app.OCP_CheckPoints.NAME like 'CP35%';
+update app.OCP_CheckPoints set IT_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP36%') where 
+ app.OCP_CheckPoints.NAME like 'CP36%';
+update app.OCP_CheckPoints set IT_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP37%') where 
+ app.OCP_CheckPoints.NAME like 'CP37%';
+update app.OCP_CheckPoints set IT_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP38%') where 
+ app.OCP_CheckPoints.NAME like 'CP38%';
+update app.OCP_CheckPoints set IT_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP39%') where 
+ app.OCP_CheckPoints.NAME like 'CP39%';
+
+update app.OCP_CheckPoints set IT_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP40%') where 
+ app.OCP_CheckPoints.NAME like 'CP40%';
+update app.OCP_CheckPoints set IT_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP41%') where 
+ app.OCP_CheckPoints.NAME like 'CP41%';
+update app.OCP_CheckPoints set IT_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP42%') where 
+ app.OCP_CheckPoints.NAME like 'CP42%';
+update app.OCP_CheckPoints set IT_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP43%') where 
+ app.OCP_CheckPoints.NAME like 'CP43%';
+update app.OCP_CheckPoints set IT_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP44%') where 
+ app.OCP_CheckPoints.NAME like 'CP44%';
+update app.OCP_CheckPoints set IT_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP45%') where 
+ app.OCP_CheckPoints.NAME like 'CP45%';
+update app.OCP_CheckPoints set IT_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP46%') where 
+ app.OCP_CheckPoints.NAME like 'CP46%';
+update app.OCP_CheckPoints set IT_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP47%') where 
+ app.OCP_CheckPoints.NAME like 'CP47%';
+update app.OCP_CheckPoints set IT_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP48%') where 
+ app.OCP_CheckPoints.NAME like 'CP48%';
+update app.OCP_CheckPoints set IT_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP49%') where 
+ app.OCP_CheckPoints.NAME like 'CP49%';
+
+update app.OCP_CheckPoints set IT_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP50%') where 
+ app.OCP_CheckPoints.NAME like 'CP50%';
+update app.OCP_CheckPoints set IT_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP51%') where 
+ app.OCP_CheckPoints.NAME like 'CP51%';
+update app.OCP_CheckPoints set IT_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP52%') where 
+ app.OCP_CheckPoints.NAME like 'CP52%';
+update app.OCP_CheckPoints set IT_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP53%') where 
+ app.OCP_CheckPoints.NAME like 'CP53%';
+update app.OCP_CheckPoints set IT_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP54%') where 
+ app.OCP_CheckPoints.NAME like 'CP54%';
+update app.OCP_CheckPoints set IT_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP55%') where 
+ app.OCP_CheckPoints.NAME like 'CP55%';
+update app.OCP_CheckPoints set IT_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP56%') where 
+ app.OCP_CheckPoints.NAME like 'CP56%';
+update app.OCP_CheckPoints set IT_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP57%') where 
+ app.OCP_CheckPoints.NAME like 'CP57%';
+update app.OCP_CheckPoints set IT_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP58%') where 
+ app.OCP_CheckPoints.NAME like 'CP58%';
+update app.OCP_CheckPoints set IT_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP59%') where 
+ app.OCP_CheckPoints.NAME like 'CP59%';
+
+update app.OCP_CheckPoints set IT_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP60%') where 
+ app.OCP_CheckPoints.NAME like 'CP60%';
+
+--------------------------------------------------------------
+
+update app.OCP_CheckPoints set ALLOWEDACTIVEPOWER_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'ALLOWEDACTIVEPOWER' and a.name like 'CP01%') where 
+ app.OCP_CheckPoints.NAME like 'CP01%';
+update app.OCP_CheckPoints set ALLOWEDACTIVEPOWER_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP02%') where 
+ app.OCP_CheckPoints.NAME like 'CP02%';
+update app.OCP_CheckPoints set ALLOWEDACTIVEPOWER_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP03%') where 
+ app.OCP_CheckPoints.NAME like 'CP03%';
+update app.OCP_CheckPoints set ALLOWEDACTIVEPOWER_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP04%') where 
+ app.OCP_CheckPoints.NAME like 'CP04%';
+update app.OCP_CheckPoints set ALLOWEDACTIVEPOWER_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP05%') where 
+ app.OCP_CheckPoints.NAME like 'CP05%';
+update app.OCP_CheckPoints set ALLOWEDACTIVEPOWER_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP06%') where 
+ app.OCP_CheckPoints.NAME like 'CP06%';
+update app.OCP_CheckPoints set ALLOWEDACTIVEPOWER_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP07%') where 
+ app.OCP_CheckPoints.NAME like 'CP07%';
+update app.OCP_CheckPoints set ALLOWEDACTIVEPOWER_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP08%') where 
+ app.OCP_CheckPoints.NAME like 'CP08%';
+update app.OCP_CheckPoints set ALLOWEDACTIVEPOWER_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP09%') where 
+ app.OCP_CheckPoints.NAME like 'CP09%';
+
+update app.OCP_CheckPoints set ALLOWEDACTIVEPOWER_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP10%') where 
+ app.OCP_CheckPoints.NAME like 'CP10%';
+update app.OCP_CheckPoints set ALLOWEDACTIVEPOWER_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP11%') where 
+ app.OCP_CheckPoints.NAME like 'CP11%';
+update app.OCP_CheckPoints set ALLOWEDACTIVEPOWER_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP12%') where 
+ app.OCP_CheckPoints.NAME like 'CP12%';
+update app.OCP_CheckPoints set ALLOWEDACTIVEPOWER_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP13%') where 
+ app.OCP_CheckPoints.NAME like 'CP13%';
+update app.OCP_CheckPoints set ALLOWEDACTIVEPOWER_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP14%') where 
+ app.OCP_CheckPoints.NAME like 'CP14%';
+update app.OCP_CheckPoints set ALLOWEDACTIVEPOWER_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP15%') where 
+ app.OCP_CheckPoints.NAME like 'CP15%';
+update app.OCP_CheckPoints set ALLOWEDACTIVEPOWER_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP16%') where 
+ app.OCP_CheckPoints.NAME like 'CP16%';
+update app.OCP_CheckPoints set ALLOWEDACTIVEPOWER_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP17%') where 
+ app.OCP_CheckPoints.NAME like 'CP17%';
+update app.OCP_CheckPoints set ALLOWEDACTIVEPOWER_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP18%') where 
+ app.OCP_CheckPoints.NAME like 'CP18%';
+update app.OCP_CheckPoints set ALLOWEDACTIVEPOWER_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP19%') where 
+ app.OCP_CheckPoints.NAME like 'CP19%';
+ 
+update app.OCP_CheckPoints set ALLOWEDACTIVEPOWER_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP20%') where 
+ app.OCP_CheckPoints.NAME like 'CP20%';
+update app.OCP_CheckPoints set ALLOWEDACTIVEPOWER_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP21%') where 
+ app.OCP_CheckPoints.NAME like 'CP21%';
+update app.OCP_CheckPoints set ALLOWEDACTIVEPOWER_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP22%') where 
+ app.OCP_CheckPoints.NAME like 'CP22%';
+update app.OCP_CheckPoints set ALLOWEDACTIVEPOWER_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP23%') where 
+ app.OCP_CheckPoints.NAME like 'CP23%';
+update app.OCP_CheckPoints set ALLOWEDACTIVEPOWER_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP24%') where 
+ app.OCP_CheckPoints.NAME like 'CP24%';
+update app.OCP_CheckPoints set ALLOWEDACTIVEPOWER_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP25%') where 
+ app.OCP_CheckPoints.NAME like 'CP25%';
+update app.OCP_CheckPoints set ALLOWEDACTIVEPOWER_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP26%') where 
+ app.OCP_CheckPoints.NAME like 'CP26%';
+update app.OCP_CheckPoints set ALLOWEDACTIVEPOWER_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP27%') where 
+ app.OCP_CheckPoints.NAME like 'CP27%';
+update app.OCP_CheckPoints set ALLOWEDACTIVEPOWER_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP28%') where 
+ app.OCP_CheckPoints.NAME like 'CP28%';
+update app.OCP_CheckPoints set ALLOWEDACTIVEPOWER_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP29%') where 
+ app.OCP_CheckPoints.NAME like 'CP29%';
+
+update app.OCP_CheckPoints set ALLOWEDACTIVEPOWER_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP30%') where 
+ app.OCP_CheckPoints.NAME like 'CP30%';
+update app.OCP_CheckPoints set ALLOWEDACTIVEPOWER_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP31%') where 
+ app.OCP_CheckPoints.NAME like 'CP31%';
+update app.OCP_CheckPoints set ALLOWEDACTIVEPOWER_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP32%') where 
+ app.OCP_CheckPoints.NAME like 'CP32%';
+update app.OCP_CheckPoints set ALLOWEDACTIVEPOWER_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP33%') where 
+ app.OCP_CheckPoints.NAME like 'CP33%';
+update app.OCP_CheckPoints set ALLOWEDACTIVEPOWER_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP34%') where 
+ app.OCP_CheckPoints.NAME like 'CP34%';
+update app.OCP_CheckPoints set ALLOWEDACTIVEPOWER_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP35%') where 
+ app.OCP_CheckPoints.NAME like 'CP35%';
+update app.OCP_CheckPoints set ALLOWEDACTIVEPOWER_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP36%') where 
+ app.OCP_CheckPoints.NAME like 'CP36%';
+update app.OCP_CheckPoints set ALLOWEDACTIVEPOWER_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP37%') where 
+ app.OCP_CheckPoints.NAME like 'CP37%';
+update app.OCP_CheckPoints set ALLOWEDACTIVEPOWER_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP38%') where 
+ app.OCP_CheckPoints.NAME like 'CP38%';
+update app.OCP_CheckPoints set ALLOWEDACTIVEPOWER_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP39%') where 
+ app.OCP_CheckPoints.NAME like 'CP39%';
+
+update app.OCP_CheckPoints set ALLOWEDACTIVEPOWER_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP40%') where 
+ app.OCP_CheckPoints.NAME like 'CP40%';
+update app.OCP_CheckPoints set ALLOWEDACTIVEPOWER_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP41%') where 
+ app.OCP_CheckPoints.NAME like 'CP41%';
+update app.OCP_CheckPoints set ALLOWEDACTIVEPOWER_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP42%') where 
+ app.OCP_CheckPoints.NAME like 'CP42%';
+update app.OCP_CheckPoints set ALLOWEDACTIVEPOWER_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP43%') where 
+ app.OCP_CheckPoints.NAME like 'CP43%';
+update app.OCP_CheckPoints set ALLOWEDACTIVEPOWER_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP44%') where 
+ app.OCP_CheckPoints.NAME like 'CP44%';
+update app.OCP_CheckPoints set ALLOWEDACTIVEPOWER_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP45%') where 
+ app.OCP_CheckPoints.NAME like 'CP45%';
+update app.OCP_CheckPoints set ALLOWEDACTIVEPOWER_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP46%') where 
+ app.OCP_CheckPoints.NAME like 'CP46%';
+update app.OCP_CheckPoints set ALLOWEDACTIVEPOWER_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP47%') where 
+ app.OCP_CheckPoints.NAME like 'CP47%';
+update app.OCP_CheckPoints set ALLOWEDACTIVEPOWER_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP48%') where 
+ app.OCP_CheckPoints.NAME like 'CP48%';
+update app.OCP_CheckPoints set ALLOWEDACTIVEPOWER_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP49%') where 
+ app.OCP_CheckPoints.NAME like 'CP49%';
+
+update app.OCP_CheckPoints set ALLOWEDACTIVEPOWER_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP50%') where 
+ app.OCP_CheckPoints.NAME like 'CP50%';
+update app.OCP_CheckPoints set ALLOWEDACTIVEPOWER_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP51%') where 
+ app.OCP_CheckPoints.NAME like 'CP51%';
+update app.OCP_CheckPoints set ALLOWEDACTIVEPOWER_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP52%') where 
+ app.OCP_CheckPoints.NAME like 'CP52%';
+update app.OCP_CheckPoints set ALLOWEDACTIVEPOWER_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP53%') where 
+ app.OCP_CheckPoints.NAME like 'CP53%';
+update app.OCP_CheckPoints set ALLOWEDACTIVEPOWER_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP54%') where 
+ app.OCP_CheckPoints.NAME like 'CP54%';
+update app.OCP_CheckPoints set ALLOWEDACTIVEPOWER_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP55%') where 
+ app.OCP_CheckPoints.NAME like 'CP55%';
+update app.OCP_CheckPoints set ALLOWEDACTIVEPOWER_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP56%') where 
+ app.OCP_CheckPoints.NAME like 'CP56%';
+update app.OCP_CheckPoints set ALLOWEDACTIVEPOWER_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP57%') where 
+ app.OCP_CheckPoints.NAME like 'CP57%';
+update app.OCP_CheckPoints set ALLOWEDACTIVEPOWER_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP58%') where 
+ app.OCP_CheckPoints.NAME like 'CP58%';
+update app.OCP_CheckPoints set ALLOWEDACTIVEPOWER_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP59%') where 
+ app.OCP_CheckPoints.NAME like 'CP59%';
+
+update app.OCP_CheckPoints set ALLOWEDACTIVEPOWER_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP60%') where 
+ app.OCP_CheckPoints.NAME like 'CP60%';
+ ---------------------------------------------------
+ 
+update app.OCP_CheckPoints set SAMPLE_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'SAMPLE' and a.name like 'CP01%') where 
+ app.OCP_CheckPoints.NAME like 'CP01%';
+update app.OCP_CheckPoints set SAMPLE_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP02%') where 
+ app.OCP_CheckPoints.NAME like 'CP02%';
+update app.OCP_CheckPoints set SAMPLE_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP03%') where 
+ app.OCP_CheckPoints.NAME like 'CP03%';
+update app.OCP_CheckPoints set SAMPLE_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP04%') where 
+ app.OCP_CheckPoints.NAME like 'CP04%';
+update app.OCP_CheckPoints set SAMPLE_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP05%') where 
+ app.OCP_CheckPoints.NAME like 'CP05%';
+update app.OCP_CheckPoints set SAMPLE_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP06%') where 
+ app.OCP_CheckPoints.NAME like 'CP06%';
+update app.OCP_CheckPoints set SAMPLE_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP07%') where 
+ app.OCP_CheckPoints.NAME like 'CP07%';
+update app.OCP_CheckPoints set SAMPLE_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP08%') where 
+ app.OCP_CheckPoints.NAME like 'CP08%';
+update app.OCP_CheckPoints set SAMPLE_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP09%') where 
+ app.OCP_CheckPoints.NAME like 'CP09%';
+
+update app.OCP_CheckPoints set SAMPLE_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP10%') where 
+ app.OCP_CheckPoints.NAME like 'CP10%';
+update app.OCP_CheckPoints set SAMPLE_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP11%') where 
+ app.OCP_CheckPoints.NAME like 'CP11%';
+update app.OCP_CheckPoints set SAMPLE_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP12%') where 
+ app.OCP_CheckPoints.NAME like 'CP12%';
+update app.OCP_CheckPoints set SAMPLE_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP13%') where 
+ app.OCP_CheckPoints.NAME like 'CP13%';
+update app.OCP_CheckPoints set SAMPLE_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP14%') where 
+ app.OCP_CheckPoints.NAME like 'CP14%';
+update app.OCP_CheckPoints set SAMPLE_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP15%') where 
+ app.OCP_CheckPoints.NAME like 'CP15%';
+update app.OCP_CheckPoints set SAMPLE_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP16%') where 
+ app.OCP_CheckPoints.NAME like 'CP16%';
+update app.OCP_CheckPoints set SAMPLE_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP17%') where 
+ app.OCP_CheckPoints.NAME like 'CP17%';
+update app.OCP_CheckPoints set SAMPLE_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP18%') where 
+ app.OCP_CheckPoints.NAME like 'CP18%';
+update app.OCP_CheckPoints set SAMPLE_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP19%') where 
+ app.OCP_CheckPoints.NAME like 'CP19%';
+ 
+update app.OCP_CheckPoints set SAMPLE_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP20%') where 
+ app.OCP_CheckPoints.NAME like 'CP20%';
+update app.OCP_CheckPoints set SAMPLE_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP21%') where 
+ app.OCP_CheckPoints.NAME like 'CP21%';
+update app.OCP_CheckPoints set SAMPLE_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP22%') where 
+ app.OCP_CheckPoints.NAME like 'CP22%';
+update app.OCP_CheckPoints set SAMPLE_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP23%') where 
+ app.OCP_CheckPoints.NAME like 'CP23%';
+update app.OCP_CheckPoints set SAMPLE_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP24%') where 
+ app.OCP_CheckPoints.NAME like 'CP24%';
+update app.OCP_CheckPoints set SAMPLE_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP25%') where 
+ app.OCP_CheckPoints.NAME like 'CP25%';
+update app.OCP_CheckPoints set SAMPLE_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP26%') where 
+ app.OCP_CheckPoints.NAME like 'CP26%';
+update app.OCP_CheckPoints set SAMPLE_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP27%') where 
+ app.OCP_CheckPoints.NAME like 'CP27%';
+update app.OCP_CheckPoints set SAMPLE_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP28%') where 
+ app.OCP_CheckPoints.NAME like 'CP28%';
+update app.OCP_CheckPoints set SAMPLE_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP29%') where 
+ app.OCP_CheckPoints.NAME like 'CP29%';
+
+update app.OCP_CheckPoints set SAMPLE_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP30%') where 
+ app.OCP_CheckPoints.NAME like 'CP30%';
+update app.OCP_CheckPoints set SAMPLE_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP31%') where 
+ app.OCP_CheckPoints.NAME like 'CP31%';
+update app.OCP_CheckPoints set SAMPLE_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP32%') where 
+ app.OCP_CheckPoints.NAME like 'CP32%';
+update app.OCP_CheckPoints set SAMPLE_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP33%') where 
+ app.OCP_CheckPoints.NAME like 'CP33%';
+update app.OCP_CheckPoints set SAMPLE_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP34%') where 
+ app.OCP_CheckPoints.NAME like 'CP34%';
+update app.OCP_CheckPoints set SAMPLE_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP35%') where 
+ app.OCP_CheckPoints.NAME like 'CP35%';
+update app.OCP_CheckPoints set SAMPLE_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP36%') where 
+ app.OCP_CheckPoints.NAME like 'CP36%';
+update app.OCP_CheckPoints set SAMPLE_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP37%') where 
+ app.OCP_CheckPoints.NAME like 'CP37%';
+update app.OCP_CheckPoints set SAMPLE_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP38%') where 
+ app.OCP_CheckPoints.NAME like 'CP38%';
+update app.OCP_CheckPoints set SAMPLE_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP39%') where 
+ app.OCP_CheckPoints.NAME like 'CP39%';
+
+update app.OCP_CheckPoints set SAMPLE_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP40%') where 
+ app.OCP_CheckPoints.NAME like 'CP40%';
+update app.OCP_CheckPoints set SAMPLE_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP41%') where 
+ app.OCP_CheckPoints.NAME like 'CP41%';
+update app.OCP_CheckPoints set SAMPLE_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP42%') where 
+ app.OCP_CheckPoints.NAME like 'CP42%';
+update app.OCP_CheckPoints set SAMPLE_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP43%') where 
+ app.OCP_CheckPoints.NAME like 'CP43%';
+update app.OCP_CheckPoints set SAMPLE_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP44%') where 
+ app.OCP_CheckPoints.NAME like 'CP44%';
+update app.OCP_CheckPoints set SAMPLE_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP45%') where 
+ app.OCP_CheckPoints.NAME like 'CP45%';
+update app.OCP_CheckPoints set SAMPLE_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP46%') where 
+ app.OCP_CheckPoints.NAME like 'CP46%';
+update app.OCP_CheckPoints set SAMPLE_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP47%') where 
+ app.OCP_CheckPoints.NAME like 'CP47%';
+update app.OCP_CheckPoints set SAMPLE_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP48%') where 
+ app.OCP_CheckPoints.NAME like 'CP48%';
+update app.OCP_CheckPoints set SAMPLE_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP49%') where 
+ app.OCP_CheckPoints.NAME like 'CP49%';
+
+update app.OCP_CheckPoints set SAMPLE_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP50%') where 
+ app.OCP_CheckPoints.NAME like 'CP50%';
+update app.OCP_CheckPoints set SAMPLE_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP51%') where 
+ app.OCP_CheckPoints.NAME like 'CP51%';
+update app.OCP_CheckPoints set SAMPLE_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP52%') where 
+ app.OCP_CheckPoints.NAME like 'CP52%';
+update app.OCP_CheckPoints set SAMPLE_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP53%') where 
+ app.OCP_CheckPoints.NAME like 'CP53%';
+update app.OCP_CheckPoints set SAMPLE_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP54%') where 
+ app.OCP_CheckPoints.NAME like 'CP54%';
+update app.OCP_CheckPoints set SAMPLE_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP55%') where 
+ app.OCP_CheckPoints.NAME like 'CP55%';
+update app.OCP_CheckPoints set SAMPLE_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP56%') where 
+ app.OCP_CheckPoints.NAME like 'CP56%';
+update app.OCP_CheckPoints set SAMPLE_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP57%') where 
+ app.OCP_CheckPoints.NAME like 'CP57%';
+update app.OCP_CheckPoints set SAMPLE_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP58%') where 
+ app.OCP_CheckPoints.NAME like 'CP58%';
+update app.OCP_CheckPoints set SAMPLE_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP59%') where 
+ app.OCP_CheckPoints.NAME like 'CP59%';
+
+update app.OCP_CheckPoints set SAMPLE_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP60%') where 
+ app.OCP_CheckPoints.NAME like 'CP60%';
+ ----------------------------------------------------------
+ 
+update app.OCP_CheckPoints set AVERAGE_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'AVERAGE' and a.name like 'CP01%') where 
+ app.OCP_CheckPoints.NAME like 'CP01%';
+update app.OCP_CheckPoints set AVERAGE_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP02%') where 
+ app.OCP_CheckPoints.NAME like 'CP02%';
+update app.OCP_CheckPoints set AVERAGE_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP03%') where 
+ app.OCP_CheckPoints.NAME like 'CP03%';
+update app.OCP_CheckPoints set AVERAGE_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP04%') where 
+ app.OCP_CheckPoints.NAME like 'CP04%';
+update app.OCP_CheckPoints set AVERAGE_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP05%') where 
+ app.OCP_CheckPoints.NAME like 'CP05%';
+update app.OCP_CheckPoints set AVERAGE_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP06%') where 
+ app.OCP_CheckPoints.NAME like 'CP06%';
+update app.OCP_CheckPoints set AVERAGE_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP07%') where 
+ app.OCP_CheckPoints.NAME like 'CP07%';
+update app.OCP_CheckPoints set AVERAGE_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP08%') where 
+ app.OCP_CheckPoints.NAME like 'CP08%';
+update app.OCP_CheckPoints set AVERAGE_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP09%') where 
+ app.OCP_CheckPoints.NAME like 'CP09%';
+
+update app.OCP_CheckPoints set AVERAGE_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP10%') where 
+ app.OCP_CheckPoints.NAME like 'CP10%';
+update app.OCP_CheckPoints set AVERAGE_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP11%') where 
+ app.OCP_CheckPoints.NAME like 'CP11%';
+update app.OCP_CheckPoints set AVERAGE_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP12%') where 
+ app.OCP_CheckPoints.NAME like 'CP12%';
+update app.OCP_CheckPoints set AVERAGE_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP13%') where 
+ app.OCP_CheckPoints.NAME like 'CP13%';
+update app.OCP_CheckPoints set AVERAGE_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP14%') where 
+ app.OCP_CheckPoints.NAME like 'CP14%';
+update app.OCP_CheckPoints set AVERAGE_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP15%') where 
+ app.OCP_CheckPoints.NAME like 'CP15%';
+update app.OCP_CheckPoints set AVERAGE_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP16%') where 
+ app.OCP_CheckPoints.NAME like 'CP16%';
+update app.OCP_CheckPoints set AVERAGE_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP17%') where 
+ app.OCP_CheckPoints.NAME like 'CP17%';
+update app.OCP_CheckPoints set AVERAGE_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP18%') where 
+ app.OCP_CheckPoints.NAME like 'CP18%';
+update app.OCP_CheckPoints set AVERAGE_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP19%') where 
+ app.OCP_CheckPoints.NAME like 'CP19%';
+ 
+update app.OCP_CheckPoints set AVERAGE_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP20%') where 
+ app.OCP_CheckPoints.NAME like 'CP20%';
+update app.OCP_CheckPoints set AVERAGE_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP21%') where 
+ app.OCP_CheckPoints.NAME like 'CP21%';
+update app.OCP_CheckPoints set AVERAGE_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP22%') where 
+ app.OCP_CheckPoints.NAME like 'CP22%';
+update app.OCP_CheckPoints set AVERAGE_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP23%') where 
+ app.OCP_CheckPoints.NAME like 'CP23%';
+update app.OCP_CheckPoints set AVERAGE_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP24%') where 
+ app.OCP_CheckPoints.NAME like 'CP24%';
+update app.OCP_CheckPoints set AVERAGE_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP25%') where 
+ app.OCP_CheckPoints.NAME like 'CP25%';
+update app.OCP_CheckPoints set AVERAGE_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP26%') where 
+ app.OCP_CheckPoints.NAME like 'CP26%';
+update app.OCP_CheckPoints set AVERAGE_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP27%') where 
+ app.OCP_CheckPoints.NAME like 'CP27%';
+update app.OCP_CheckPoints set AVERAGE_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP28%') where 
+ app.OCP_CheckPoints.NAME like 'CP28%';
+update app.OCP_CheckPoints set AVERAGE_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP29%') where 
+ app.OCP_CheckPoints.NAME like 'CP29%';
+
+update app.OCP_CheckPoints set AVERAGE_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP30%') where 
+ app.OCP_CheckPoints.NAME like 'CP30%';
+update app.OCP_CheckPoints set AVERAGE_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP31%') where 
+ app.OCP_CheckPoints.NAME like 'CP31%';
+update app.OCP_CheckPoints set AVERAGE_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP32%') where 
+ app.OCP_CheckPoints.NAME like 'CP32%';
+update app.OCP_CheckPoints set AVERAGE_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP33%') where 
+ app.OCP_CheckPoints.NAME like 'CP33%';
+update app.OCP_CheckPoints set AVERAGE_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP34%') where 
+ app.OCP_CheckPoints.NAME like 'CP34%';
+update app.OCP_CheckPoints set AVERAGE_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP35%') where 
+ app.OCP_CheckPoints.NAME like 'CP35%';
+update app.OCP_CheckPoints set AVERAGE_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP36%') where 
+ app.OCP_CheckPoints.NAME like 'CP36%';
+update app.OCP_CheckPoints set AVERAGE_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP37%') where 
+ app.OCP_CheckPoints.NAME like 'CP37%';
+update app.OCP_CheckPoints set AVERAGE_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP38%') where 
+ app.OCP_CheckPoints.NAME like 'CP38%';
+update app.OCP_CheckPoints set AVERAGE_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP39%') where 
+ app.OCP_CheckPoints.NAME like 'CP39%';
+
+update app.OCP_CheckPoints set AVERAGE_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP40%') where 
+ app.OCP_CheckPoints.NAME like 'CP40%';
+update app.OCP_CheckPoints set AVERAGE_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP41%') where 
+ app.OCP_CheckPoints.NAME like 'CP41%';
+update app.OCP_CheckPoints set AVERAGE_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP42%') where 
+ app.OCP_CheckPoints.NAME like 'CP42%';
+update app.OCP_CheckPoints set AVERAGE_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP43%') where 
+ app.OCP_CheckPoints.NAME like 'CP43%';
+update app.OCP_CheckPoints set AVERAGE_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP44%') where 
+ app.OCP_CheckPoints.NAME like 'CP44%';
+update app.OCP_CheckPoints set AVERAGE_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP45%') where 
+ app.OCP_CheckPoints.NAME like 'CP45%';
+update app.OCP_CheckPoints set AVERAGE_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP46%') where 
+ app.OCP_CheckPoints.NAME like 'CP46%';
+update app.OCP_CheckPoints set AVERAGE_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP47%') where 
+ app.OCP_CheckPoints.NAME like 'CP47%';
+update app.OCP_CheckPoints set AVERAGE_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP48%') where 
+ app.OCP_CheckPoints.NAME like 'CP48%';
+update app.OCP_CheckPoints set AVERAGE_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP49%') where 
+ app.OCP_CheckPoints.NAME like 'CP49%';
+
+update app.OCP_CheckPoints set AVERAGE_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP50%') where 
+ app.OCP_CheckPoints.NAME like 'CP50%';
+update app.OCP_CheckPoints set AVERAGE_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP51%') where 
+ app.OCP_CheckPoints.NAME like 'CP51%';
+update app.OCP_CheckPoints set AVERAGE_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP52%') where 
+ app.OCP_CheckPoints.NAME like 'CP52%';
+update app.OCP_CheckPoints set AVERAGE_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP53%') where 
+ app.OCP_CheckPoints.NAME like 'CP53%';
+update app.OCP_CheckPoints set AVERAGE_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP54%') where 
+ app.OCP_CheckPoints.NAME like 'CP54%';
+update app.OCP_CheckPoints set AVERAGE_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP55%') where 
+ app.OCP_CheckPoints.NAME like 'CP55%';
+update app.OCP_CheckPoints set AVERAGE_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP56%') where 
+ app.OCP_CheckPoints.NAME like 'CP56%';
+update app.OCP_CheckPoints set AVERAGE_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP57%') where 
+ app.OCP_CheckPoints.NAME like 'CP57%';
+update app.OCP_CheckPoints set AVERAGE_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP58%') where 
+ app.OCP_CheckPoints.NAME like 'CP58%';
+update app.OCP_CheckPoints set AVERAGE_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP59%') where 
+ app.OCP_CheckPoints.NAME like 'CP59%';
+
+update app.OCP_CheckPoints set AVERAGE_GUID = (select b.guid from nodes a join nodes b on a.guid = b.ParentGUID where b.name like 'IT' and a.name like 'CP60%') where 
+ app.OCP_CheckPoints.NAME like 'CP60%';

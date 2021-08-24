@@ -1,0 +1,14 @@
+﻿{
+	"DatabaseCredential":
+	{
+		"Server":"172.25.16.126",
+		"Database":"Irisa_Scada_Power",
+		"UID":"sa",
+		"Password":"123"
+	}
+	,		
+	"EquipmentID":"C25C9D96-5B4F-4D13-BD63-00DE7C482FA2",
+	"EquipmentType" : 0,
+	"IsEquipmentOpened": true ,
+	"DigitalMeasurementQuality": false 
+}
