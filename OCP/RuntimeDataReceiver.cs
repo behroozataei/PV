@@ -79,7 +79,7 @@ namespace OCP
             {
                 string strguid = "059d74d9-9d2a-4059-b3ab-a559992b9e03"; //MIS2-63-FCB-TRIP
                 
-                 if (eventItem.ElementId == strguid || eventItem.ElementId == strguid.ToUpper())
+                if (eventItem.ElementId == strguid || eventItem.ElementId == strguid.ToUpper())
 
                 if (eventItem.EventStatus ==  3) //3 = Acknowledge Event
                 {
