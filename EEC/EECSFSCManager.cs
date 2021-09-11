@@ -279,7 +279,7 @@ namespace EEC
                     _MaxBusbarPowers[1] = Convert.ToSingle(dr["MAXOVERLOAD2"].ToString());
                     dTime = DateTime.Parse(dr["TELDATETIME"].ToString());
                     var deltatime = DateTime.Now.Subtract(dTime).TotalSeconds;
-                    if (deltatime > 61)
+                    if (deltatime > 65)
                     {
                         _logger.WriteEntry("Error: Date and Time  of MAXOVERLOAD1, MAXOVERLOAD2 is not correct! "+ "EEC TELDATEtime = "+ dTime +"  Delta Second = "+ deltatime, LogLevels.Error);
                         return false;
@@ -482,8 +482,8 @@ namespace EEC
                     }
 
                     // Check and clearance of irrelated overload flags
-                    var timeDiff = (DateTime.Now - _cycles[busbar, cycle]).TotalSeconds;
-                    if ((timeDiff >= NUMBER_OF_CYCLES_OVERLAD_CHECK * TIMER_TICKS_SFSC) && _IsOverloadAppear[busbar, cycle])
+                    var timeDiff = (DateTime.Now - _cycles[busbar, cycle]).TotalMilliseconds;
+                    if ((timeDiff >= (NUMBER_OF_CYCLES_OVERLAD_CHECK -1 ) * TIMER_TICKS_SFSC) && _IsOverloadAppear[busbar, cycle])
                         _IsOverloadAppear[busbar, cycle] = false;
                 }
 
@@ -518,7 +518,7 @@ namespace EEC
                     if (_IsOverloadAppear[busbar, previousCycle] && _IsOverloadAppear[busbar, cycle])
                     {
                         {
-                            _logger.WriteEntry("Start of reporting Overload on busbar " + (busbar + 1), LogLevels.Warn);
+                            _logger.WriteEntry("Start of reporting Overload on busbar " + (busbar + 1) + "; previousCycle = " + previousCycle + "; previousCycleTime =" + _cycles[busbar, previousCycle] + "; Cycle = " + cycle + "; CycleTime =" + _cycles[busbar, cycle], LogLevels.Warn);
 
                             var sql = $"SELECT FURNACE, CONSUMED_ENERGY_PER_HEAT FROM {GetEndStringCommand()}EEC_SFSCEAFSPRIORITY WHERE GROUPNUM = " +
                                 (busbar + 1).ToString() +
