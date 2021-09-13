@@ -10,7 +10,7 @@ namespace EEC
 {
     class EECSFSCManager
     {
-        private const int NUMBER_OF_CYCLES_OVERLAD_CHECK = 6;
+        private const int NUMBER_OF_CYCLES_OVERLAD_CHECK = 8;
         private const int NUMBER_OF_BUSBARS = 2;
         private const int NUMBER_OF_FURNACES = 8;
         private const int TIMER_TICKS_SFSC = 4000;
@@ -460,7 +460,7 @@ namespace EEC
                     {
 
                         //_logger.WriteEntry("Power overload is detected for Busbar = " + (busbar+1) , LogLevels.Info);
-                        _logger.WriteEntry($"Warning: BusbarPowers[{(busbar + 1)}] = {_BusbarPowers[busbar]} ; MaxBusbarPowers[{(busbar + 1)}] = {_MaxBusbarPowers[busbar]}"
+                        _logger.WriteEntry($"Warning: BusbarPowers[{(busbar + 1)}] = {_BusbarPowers[busbar]} ; MaxBusbarPowers[{(busbar + 1)}] = {_MaxBusbarPowers[busbar]} ; CycleNumber = {cycle} ;  CycleTime = {_cycles[busbar, cycle]} "
                                                , LogLevels.Warn);
 
                         _IsOverloadAppear[busbar, cycle] = true;
