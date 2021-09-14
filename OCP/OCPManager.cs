@@ -65,12 +65,12 @@ namespace OCP
                 //Call theCTraceLogger.WriteLog(TraceInfo1, "COCPManager.RunCyclicOperation", "Start: " & Time)
                 //' 1394.05.05 End
 
-                if (!_overloadCheck.OCP_Function_Status())
-                {
-                    isCompleted = true;
-                    _logger.WriteEntry("OCP Funtion is OFF!", LogLevels.Info);
-                    return;
-                }
+                //if (!_overloadCheck.OCP_Function_Status())
+                //{
+                //    isCompleted = true;
+                //    _logger.WriteEntry("OCP Funtion is OFF!", LogLevels.Error);
+                //    return;
+                //}
                     
 
                 if (!_cycleValidator.GetOCPCycleNo(_firstRun))
