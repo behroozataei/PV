@@ -501,7 +501,7 @@ namespace DCP
 					_EECTelegram.m_OverLoad2 = dr["MAXOVERLOAD2"].ToString();
 					_EECTelegram.m_ResidualEnergyEnd = dr["ResidualEnergyEnd"].ToString();
 
-					strTelDate = dr["TELDATETIME"].ToString();
+					strTelDate = Convert.ToDateTime(dr["TELDATETIME"]).ToString("yyyy-MM-dd HH:mm:ss");
 					
 				}
 
@@ -557,7 +557,7 @@ namespace DCP
 
 				//--------------------------------------------------------------------------
 				// 8. Updating sent record in the Table
-				strTime = DateTime.Now.ToString(); 
+				strTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"); 
 				if (!_repository.UpdateEECTELEGRAM(strTime, strTelDate))
 				{
 					_logger.WriteEntry("Could not update T_EECTelegram Table", LogLevels.Error);

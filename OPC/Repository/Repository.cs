@@ -68,7 +68,7 @@ namespace OPC
         private void PopulateOPCTags(DataManager dbQuery)
         {
             string sql = $"SELECT ScadaTagName, KeepServerTagName, Description, MessageConfiguration, TagType, NetworkPath  FROM {GetEndStringCommand()}OPCMEASUREMENT";
-            var dataTable = dbQuery.GetRecord(sql);
+            var dataTable = dbQuery.GetRecord(sql);                
 
             foreach (DataRow row in dataTable.Rows)
             {

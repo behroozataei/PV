@@ -370,7 +370,7 @@ namespace DCP
             }
             else if(RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
             {                
-                sql = $"Update APP_EEC_TELEGRAMS Set SentTime=" + $"TO_DATE('{atime}', 'mm/dd/yyyy HH:MI:SS AM')" + $" Where TELDATETIME = TO_DATE('{telDate}','mm/dd/yyyy HH:MI:SS AM')";
+                sql = $"Update APP_EEC_TELEGRAMS Set SentTime=" + $"TO_DATE('{atime}', 'yyyy-mm-dd HH24:mi:ss')" + $" Where TELDATETIME = TO_DATE('{telDate}','yyyy-mm-dd HH24:mi:ss')";
             }
 
             try
