@@ -155,7 +155,7 @@ namespace EEC
             int counter = 0;
             while (!_globalData.CPSStatus)
             {
-                System.Threading.Thread.Sleep(1000);
+                System.Threading.Thread.Sleep(5000);
                 _logger.WriteEntry("Waiting for Connecting to CPS", LogLevels.Info);
                 //if (counter++ > 30)
                 //{
