@@ -252,21 +252,21 @@ namespace LSP
 					return;
 				}
 
-				var SFSC_STATUS = _repository.GetLSPScadaPoint("SFSC_STATUS");
-				if (SFSC_STATUS is null)
-				{
-					_logger.WriteEntry("Error in finding SFSC_STATUS", LogLevels.Error);
-					isWorking_CheckLSPActivationFromSFSC = false;
-					return;
-				}
+				//var SFSC_STATUS = _repository.GetLSPScadaPoint("SFSC_STATUS");
+				//if (SFSC_STATUS is null)
+				//{
+				//	_logger.WriteEntry("Error in finding SFSC_STATUS", LogLevels.Error);
+				//	isWorking_CheckLSPActivationFromSFSC = false;
+				//	return;
+				//}
 
-				if (SFSC_STATUS.Value == 0.0)
-                {
-					_logger.WriteEntry("LSP_SFSC Triggered, LSP_SFSC Function is OFF!", LogLevels.Error);
-					ClearSFSCTrigger();
-					isWorking_CheckLSPActivationFromSFSC = false;
-					return;
-				}
+				//if (SFSC_STATUS.Value == 0.0)
+    //            {
+				//	_logger.WriteEntry("LSP_SFSC Triggered, LSP_SFSC Function is OFF!", LogLevels.Error);
+				//	ClearSFSCTrigger();
+				//	isWorking_CheckLSPActivationFromSFSC = false;
+				//	return;
+				//}
 
 
 
@@ -312,21 +312,27 @@ namespace LSP
 				var guid = _repository.GetGuid(dr_EEC_EAFSPriority["CB_NETWORKPATH"].ToString());
 
 				var cbToShed = _repository.GetLSPScadaPoint(guid);
-				if((DigitalDoubleStatus)cbToShed.Value == DigitalDoubleStatus.Close)
+				if (cbToShed != null)
 				{
-					if (!SendCommandToSCADA(guid, dr_EEC_EAFSPriority["CB_NETWORKPATH"].ToString()))
+					if ((DigitalDoubleStatus)cbToShed.Value == DigitalDoubleStatus.Close)
 					{
-						_logger.WriteEntry("Error in SendCommandToSCADA for " + dr_EEC_EAFSPriority["CB_NETWORKPATH"].ToString(), LogLevels.Error);
+						if (!SendCommandToSCADA(guid, dr_EEC_EAFSPriority["CB_NETWORKPATH"].ToString()))
+						{
+							_logger.WriteEntry("Error in SendCommandToSCADA for " + dr_EEC_EAFSPriority["CB_NETWORKPATH"].ToString(), LogLevels.Error);
 
-						//return;
+							//return;
+						}
+
 					}
-
+					else
+					{
+						_logger.WriteEntry("CB Status is OPEN: " + dr_EEC_EAFSPriority["CB_NETWORKPATH"].ToString(), LogLevels.Info);
+					}
 				}
-                else
+				else
                 {
-					_logger.WriteEntry("CB Status is OPEN: " + dr_EEC_EAFSPriority["CB_NETWORKPATH"].ToString(), LogLevels.Info);
+					_logger.WriteEntry("Error to find CB ADDRESS in Repository: " + dr_EEC_EAFSPriority["CB_NETWORKPATH"].ToString(), LogLevels.Error);
 				}
-
 				
 
 				if (dr_EEC_EAFSPriority["HASPARTNER"].ToString() == "YES")
@@ -336,17 +342,24 @@ namespace LSP
 					var guidPartner = _repository.GetGuid(dr_EEC_EAFSPriority["PARTNERADDRESS"].ToString());
 
 					var cbPartnerToShed = _repository.GetLSPScadaPoint(guidPartner);
-					if ((DigitalDoubleStatus)cbPartnerToShed.Value == DigitalDoubleStatus.Close)
+					if (cbPartnerToShed != null)
 					{
-						if (!SendCommandToSCADA(guidPartner, dr_EEC_EAFSPriority["PARTNERADDRESS"].ToString()))
+						if ((DigitalDoubleStatus)cbPartnerToShed.Value == DigitalDoubleStatus.Close)
 						{
-							_logger.WriteEntry("Error in SendCommandToSCADA for Partner " + dr_EEC_EAFSPriority["PARTNERADDRESS"].ToString(), LogLevels.Error);
+							if (!SendCommandToSCADA(guidPartner, dr_EEC_EAFSPriority["PARTNERADDRESS"].ToString()))
+							{
+								_logger.WriteEntry("Error in SendCommandToSCADA for Partner " + dr_EEC_EAFSPriority["PARTNERADDRESS"].ToString(), LogLevels.Error);
 
+							}
+						}
+						else
+						{
+							_logger.WriteEntry("CB Status is OPEN: " + dr_EEC_EAFSPriority["PARTNERADDRESS"].ToString(), LogLevels.Info);
 						}
 					}
-					else
-					{
-						_logger.WriteEntry("CB Status is OPEN: " + dr_EEC_EAFSPriority["PARTNERADDRESS"].ToString(), LogLevels.Info);
+                    else
+                    {
+						_logger.WriteEntry("Error to find CB ADDRESS in Repository: " + dr_EEC_EAFSPriority["PARTNERADDRESS"].ToString(), LogLevels.Error);
 					}
 				}
 
@@ -367,6 +380,7 @@ namespace LSP
 
 		private void ClearSFSCTrigger()
         {
+			_logger.WriteEntry("Clear SFSC Trigger", LogLevels.Info);
 			var scadapointLSPACTIVATED = _repository.GetLSPScadaPoint("LSPACTIVATED");
 			if (scadapointLSPACTIVATED is null)
 			{
