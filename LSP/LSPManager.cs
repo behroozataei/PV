@@ -1008,8 +1008,9 @@ namespace LSP
 							priorityNISLines._breakersToShed[I].FurnaceIndex = dr["Furnace"].ToString();
 							_logger.WriteEntry("m_arrPriols(IdxPriolsLINES).arrBreakers('" + I.ToString() + "').FurnaceIndex  = " + priorityNISLines._breakersToShed[I].FurnaceIndex, LogLevels.Info);
 
-                            //priorityNISLines._breakersToShed[I].addressPartner_guid = Guid.Parse(dr["PARTNER_GUID"].ToString());
-							priorityNISLines._breakersToShed[I].addressPartner_guid = _repository.GetGuid(priorityNISLines._breakersToShed[I].AddressPartner);
+							if(priorityNISLines._breakersToShed[I].HasPartner == "YES")
+								//priorityNISLines._breakersToShed[I].addressPartner_guid = Guid.Parse(dr["PARTNER_GUID"].ToString());
+								priorityNISLines._breakersToShed[I].addressPartner_guid = _repository.GetGuid(priorityNISLines._breakersToShed[I].AddressPartner);
 							//priorityNISLines._breakersToShed[I].guid_item = Guid.Parse(dr["CB_GUID"].ToString());
 							priorityNISLines._breakersToShed[I].guid_item = _repository.GetGuid(priorityNISLines._breakersToShed[I].NetworkPath_Cur);
 							//priorityNISLines._breakersToShed[I].guid_curr = Guid.Parse(dr["CT_GUID"].ToString());
@@ -1567,8 +1568,9 @@ namespace LSP
 						priol.GetArrBreakers(I).FurnaceIndex = dr["FURNACE"].ToString();
 						_logger.WriteEntry("Breakers(" + I.ToString() + ").FurnaceIndex = " + priol.GetArrBreakers(I).FurnaceIndex.ToString(), LogLevels.Info);
 
-						//priol.GetArrBreakers(I).addressPartner_guid = Guid.Parse(dr["PARTNER_GUID"].ToString());
-						priol.GetArrBreakers(I).addressPartner_guid = _repository.GetGuid(priol.GetArrBreakers(I).AddressPartner);
+						if(priol.GetArrBreakers(I).HasPartner == "YES")
+							//priol.GetArrBreakers(I).addressPartner_guid = Guid.Parse(dr["PARTNER_GUID"].ToString());
+							priol.GetArrBreakers(I).addressPartner_guid = _repository.GetGuid(priol.GetArrBreakers(I).AddressPartner);
 
 						if (I < 3)
 							I = (byte)(I + 1);
@@ -1579,7 +1581,13 @@ namespace LSP
 					//****************
 					aaa:
 					aP1 = _repository.GetLSPScadaPoint(strP1);
+					if (aP1==null)
+						_logger.WriteEntry("Error to read "+strP1 + " from Repository", LogLevels.Error);
+
 					aQ2 = _repository.GetLSPScadaPoint(strQ2);
+					if (aQ2 == null)
+						_logger.WriteEntry("Error to read " + strQ2 + " from Repository", LogLevels.Error);
+
 					aQ3 = _repository.GetLSPScadaPoint(strQ3);
 
 					// TODO: check, because aQ3 is always null, I use (aQ3_Value = 0) instead of aQ3.Value

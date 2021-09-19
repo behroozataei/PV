@@ -298,6 +298,10 @@ namespace LSP
                             _scadaPoints.Add(id, scadaPoint);
                             _scadaPointsHelper.Add(name, scadaPoint);
                         }
+                        else
+                        {
+                            _logger.WriteEntry(networkPath + " already exist in repository", LogLevels.Error);
+                        }
                        
                     }
                     
@@ -340,6 +344,11 @@ namespace LSP
                         {
                             _scadaPoints.Add(id, scadaPoint);
                             _scadaPointsHelper.Add(name, scadaPoint);
+                        }
+                        else
+                        {
+                            ;
+                           // _logger.WriteEntry(networkPath + " already exist in repository", LogLevels.Error);
                         }
                     }
                 }
@@ -400,6 +409,11 @@ namespace LSP
                             _scadaPoints.Add(id_cb, scadaPoint);
                             _scadaPointsHelper.Add(name, scadaPoint);
                         }
+                        else
+                        {
+                            ;
+                            //_logger.WriteEntry(networkPath + " already exist in repository", LogLevels.Error);
+                        }
                     }
                 }
 
@@ -459,6 +473,11 @@ namespace LSP
                             _scadaPoints.Add(id_CT, scadaPoint);
                             _scadaPointsHelper.Add(name, scadaPoint);
                         }
+                        else
+                        {
+                            ;
+                            //_logger.WriteEntry(networkPath + " already exist in repository", LogLevels.Error);
+                        }
                     }
 
                     var id_CB_Partner = GetGuid(row["PARTNERADDRESS"].ToString());
@@ -476,6 +495,11 @@ namespace LSP
                         {
                             _scadaPoints.Add(id_CB_Partner, scadaPoint);
                             _scadaPointsHelper.Add(name, scadaPoint);
+                        }
+                        else
+                        {
+                            ;
+                            //_logger.WriteEntry(networkPath + " already exist in repository", LogLevels.Error);
                         }
                     }
                    
