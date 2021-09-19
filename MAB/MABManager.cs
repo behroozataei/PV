@@ -1579,6 +1579,40 @@ namespace MAB
                         _logger.WriteEntry($"It is not possible to Open, {CB_GEN4.NetworkPath}", LogLevels.Error);
                 }
 
+                ////For CB_M2_L601
+                //var CB_M2_601 = _repository.GetScadaPoint("CB_M2_601");
+                //var CB_M2_601_Status = _repository.GetDigitalStatusByScadaName("CB_M2_601");
+                //var L601VT = _repository.GetScadaPoint("L601VT").Value;
+                //if ((L601VT > VOLTAGLE_LIMIT_FOR_GEN_SOURCE_CHECK) && ((CB_M2_601.Value == (float)DigitalStatus.Open) || CB_M2_601.Qulity == (int)QualityCodes.LocalNotRenewed))
+                //{
+                //    _logger.WriteEntry($"L601 is connected, {CB_M2_601.NetworkPath}", LogLevels.Info);
+                //    if (!_updateScadaPointOnServer.WriteDigital(CB_M2_601, (int)DigitalStatus.Close, "L601 is connected"))
+                //        _logger.WriteEntry($"It is not possible to Close, {CB_M2_601.NetworkPath}", LogLevels.Error);
+                //}
+                //else if ((L601VT <= VOLTAGLE_LIMIT_FOR_GEN_SOURCE_CHECK) && ((CB_M2_601.Value == (float)DigitalStatus.Close) || CB_M2_601.Qulity == (int)QualityCodes.LocalNotRenewed))
+                //{
+                //    _logger.WriteEntry($"L601 is disconnected, {CB_M2_601.NetworkPath}", LogLevels.Info);
+                //    if (!_updateScadaPointOnServer.WriteDigital(CB_M2_601, (int)DigitalStatus.Open, "L601 is disconnected"))
+                //        _logger.WriteEntry($"It is not possible to Open, {CB_M2_601.NetworkPath}", LogLevels.Error);
+                //}
+
+                ////For CB_M2_L614
+                //var CB_M2_614 = _repository.GetScadaPoint("CB_M2_614");
+                //var CB_M2_614_Status = _repository.GetDigitalStatusByScadaName("CB_M2_614");
+                //var L614VT = _repository.GetScadaPoint("L614VT").Value;
+                //if ((L614VT > VOLTAGLE_LIMIT_FOR_GEN_SOURCE_CHECK) && ((CB_M2_614.Value == (float)DigitalStatus.Open) || CB_M2_614.Qulity == (int)QualityCodes.LocalNotRenewed))
+                //{
+                //    _logger.WriteEntry($"L614 is connected, {CB_M2_614.NetworkPath}", LogLevels.Info);
+                //    if (!_updateScadaPointOnServer.WriteDigital(CB_M2_614, (int)DigitalStatus.Close, "L614 is connected"))
+                //        _logger.WriteEntry($"It is not possible to Close, {CB_M2_614.NetworkPath}", LogLevels.Error);
+                //}
+                //else if ((L614VT <= VOLTAGLE_LIMIT_FOR_GEN_SOURCE_CHECK) && ((CB_M2_614.Value == (float)DigitalStatus.Close) || CB_M2_614.Qulity == (int)QualityCodes.LocalNotRenewed))
+                //{
+                //    _logger.WriteEntry($"L614 is disconnected, {CB_M2_614.NetworkPath}", LogLevels.Info);
+                //    if (!_updateScadaPointOnServer.WriteDigital(CB_M2_614, (int)DigitalStatus.Open, "L614 is disconnected"))
+                //        _logger.WriteEntry($"It is not possible to Open, {CB_M2_614.NetworkPath}", LogLevels.Error);
+                //}
+
                 if (_initialize_Voltage_Source == false)
                     _logger.WriteEntry(" ----- Initialize_VoltageSources -> Process VoltageSources is finished ---- ", LogLevels.Info);
                 _initialize_Voltage_Source = true;

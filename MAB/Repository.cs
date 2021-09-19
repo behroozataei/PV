@@ -81,10 +81,11 @@ namespace MAB
                 var pointDirectionType = row["DirectionType"].ToString();
                 var scadaType = Convert.ToString(row["SCADAType"]);
                 var id = GetGuid(networkPath);
-                var scadaPoint = new MABScadaPoint(id, name, networkPath, (PointDirectionType)Enum.Parse(typeof(PointDirectionType), pointDirectionType), scadaType);
+               
 
                 try
                 {
+                    var scadaPoint = new MABScadaPoint(id, name, networkPath, (PointDirectionType)Enum.Parse(typeof(PointDirectionType), pointDirectionType), scadaType);
                     if (!_scadaPoints.ContainsKey(id))
                     {
                         _scadaPoints.Add(id, scadaPoint);
