@@ -25,8 +25,8 @@ namespace LSP
 		private byte m_nCheckPoints = 0;
 
 		// Array for storing a list Analog Object should be added to receiving their value changes
-		// List of digital points subscribed for receivung any change on their values
-		// A list of all points should be monitored if hey changed, do some actions ...
+		// List of digital points subscribed for receiving any change on their values
+		// A list of all points should be monitored if any changed, do some actions ...
 		private string[] m_arrChangeableDPoints = null;
 
 		// List of all decision tables
@@ -837,7 +837,7 @@ namespace LSP
 					aPriolFound._shedType = aJob.ShedType;
 					//End If
 
-					// Check big trans( except T4 ) on PP Busbar
+					// Check big trans( except T4 and T6) on PP Busbar
 					bBigTrans = false;
 					if (aJob.DectNo == Constants.T1AN_DectNo)
 					{
@@ -1678,7 +1678,7 @@ namespace LSP
 				result = false;
 
 				//--------------------------------------------------------------
-				// Only for transformers 1, 2, 3, 5 ,7; except overloaded transformer
+				// Only for transformers 1, 2, 3, 5 ,7, 8; except overloaded transformer
 				for (byte idxTransformer = 1; idxTransformer <= Constants.MaxNoOfTransformers; idxTransformer = (byte)(idxTransformer + 1))
 				{
 

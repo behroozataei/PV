@@ -94,13 +94,15 @@ namespace LSP
         {
             if (e.Level == LogLevels.Info)
                 Console.ForegroundColor = ConsoleColor.Green;
-            else if (e.Level == LogLevels.Error || e.Level == LogLevels.Critical || e.Level == LogLevels.Warn)
+            else if (e.Level == LogLevels.Warn)
+                Console.ForegroundColor = ConsoleColor.Yellow;
+            else if (e.Level == LogLevels.Error || e.Level == LogLevels.Critical)
                 Console.ForegroundColor = ConsoleColor.Red;
 
             if (string.IsNullOrEmpty(e.Exception))
-                Console.WriteLine($"{e.TimeStamp.ToLocalFullDateAndTimeString()} ==>   {e.Message}");
+                Console.WriteLine($"{e.TimeStamp.ToIranStandardTime()} ==>   {e.Message}");
             else
-                Console.WriteLine($"{e.TimeStamp.ToLocalFullDateAndTimeString()} ==>   \n\tCall site: {e.CallSite} \n\t{e.Message}");
+                Console.WriteLine($"{e.TimeStamp.ToIranStandardTime()} ==>   \n\tCall site: {e.CallSite} \n\t{e.Message}");
 
             Console.ResetColor();
         }

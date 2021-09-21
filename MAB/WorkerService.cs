@@ -102,7 +102,9 @@ namespace MAB
         {
             if (e.Level == LogLevels.Info)
                 Console.ForegroundColor = ConsoleColor.Green;
-            else if (e.Level == LogLevels.Error || e.Level == LogLevels.Critical || e.Level == LogLevels.Warn)
+            else if (e.Level == LogLevels.Warn)
+                Console.ForegroundColor = ConsoleColor.Yellow;
+            else if (e.Level == LogLevels.Error || e.Level == LogLevels.Critical)
                 Console.ForegroundColor = ConsoleColor.Red;
 
             if (string.IsNullOrEmpty(e.Exception))
