@@ -277,14 +277,22 @@ namespace LSP
 						_logger.WriteEntry("... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ...", LogLevels.Info);
 						_logger.WriteEntry("Processing OVERLOAD is started . . . ", LogLevels.Info);
 
-						if (!ProcessOverload(strValue))
+						if (_repository.GetLSPScadaPoint("FunctionSatus").Value == 1.0)
 						{
-							_logger.WriteEntry("Process OVERLOAD was failed", LogLevels.Error);
+							if (!ProcessOverload(strValue))
+							{
+								_logger.WriteEntry("Process OVERLOAD was failed", LogLevels.Error);
+							}
+							else
+							{
+								_logger.WriteEntry("Processing OVERLOAD was accomplished succesfully", LogLevels.Info);
+							}
 						}
 						else
 						{
-							_logger.WriteEntry("Processing OVERLOAD was accomplished succesfully", LogLevels.Info);
+							_logger.WriteEntry("Processing OVERLOAD not accomplished because 'LSP Function for OCP' was disabled ", LogLevels.Warn);
 						}
+
 
 						// 1399.09.25 KAJI    001_Added
 						var overLCond = _repository.GetLSPScadaPoint("OVERLCOND");
