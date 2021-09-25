@@ -73,8 +73,8 @@ namespace DCP
                     var name = row["Name"].ToString();
                     var networkPath = row["NetworkPath"].ToString();
                     var pointDirectionType = row["DirectionType"].ToString();
-                    if (name == "MAC_DS")
-                        System.Diagnostics.Debugger.Break();
+                    //if (name == "MAC_DS")
+                    //    System.Diagnostics.Debugger.Break();
                     var id = GetGuid(networkPath);
                     var scadaPoint = new DCPScadaPoint(id, name, networkPath, (PointDirectionType)Enum.Parse(typeof(PointDirectionType), pointDirectionType));
 
