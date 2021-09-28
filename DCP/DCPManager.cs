@@ -119,7 +119,7 @@ namespace DCP
 			{
 				var sql = "SELECT TelDateTime, Sumation, PowerGrp1, PowerGrp2, Furnace1, Furnace2, " +
 					"Furnace3, Furnace4, Furnace5, Furnace6, Furnace7, Furnace8 " +
-					$"from {GetEndStringCommand()}SFSC_EAFsPower Where TELDATETIME = (Select Max(TELDATETIME) From {GetEndStringCommand()}SFSC_EAFsPower)";
+					$"from {GetEndStringCommand()}SFSC_EAFsPower Where ID = (Select Max(ID) From {GetEndStringCommand()}SFSC_EAFsPower)";
 				DataTable dataTable = _repository.GetFromHistoricalDB(sql);
 				if ((dataTable is null) || (dataTable.Rows.Count == 0))
 				{

@@ -1,0 +1,8 @@
+version: '3.4'
+
+services:
+  dcp:
+    image: ${DOCKER_REGISTRY-}dcp
+    build:
+      context: .
+      dockerfile: DCP/Dockerfile

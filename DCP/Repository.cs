@@ -346,7 +346,7 @@ namespace DCP
 
             try
             {
-                string sql = $"Select * FROM {GetEndStringCommand()}EEC_TELEGRAMS WHERE TELDATETIME = (SELECT MAX(TELDATETIME) FROM {GetEndStringCommand()}EEC_TELEGRAMS)";
+                string sql = $"Select * FROM {GetEndStringCommand()}EEC_TELEGRAMS WHERE ID = (SELECT MAX(ID) FROM {GetEndStringCommand()}EEC_TELEGRAMS)";
                 dataTable = _historicalDataManager.GetRecord(sql);
             }
             catch (Irisa.DataLayer.DataException ex)
