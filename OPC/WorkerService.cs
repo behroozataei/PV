@@ -104,9 +104,9 @@ namespace OPC
                 Console.ForegroundColor = ConsoleColor.Red;
 
             if (string.IsNullOrEmpty(e.Exception))
-                Console.WriteLine($"{e.TimeStamp.ToLocalFullDateAndTimeString()} ==>   {e.Message}");
+                Console.WriteLine($"{e.TimeStamp.ToIranStandardTime()} ==>   {e.Message}");
             else
-                Console.WriteLine($"{e.TimeStamp.ToLocalFullDateAndTimeString()} ==>   \n\tCall site: {e.CallSite} \n\t{e.Message}");
+                Console.WriteLine($"{e.TimeStamp.ToIranStandardTime()} ==>   \n\tCall site: {e.CallSite} \n\t{e.Message}");
 
             Console.ResetColor();
         }
