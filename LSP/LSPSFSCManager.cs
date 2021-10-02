@@ -252,25 +252,25 @@ namespace LSP
 					return;
 				}
 
-				//var SFSC_STATUS = _repository.GetLSPScadaPoint("SFSC_STATUS");
-				//if (SFSC_STATUS is null)
-				//{
-				//	_logger.WriteEntry("Error in finding SFSC_STATUS", LogLevels.Error);
-				//	isWorking_CheckLSPActivationFromSFSC = false;
-				//	return;
-				//}
+                var SFSC_STATUS = _repository.GetLSPScadaPoint("SFSC_STATUS");
+                if (SFSC_STATUS is null)
+                {
+                    _logger.WriteEntry("Error in finding SFSC_STATUS", LogLevels.Error);
+                    isWorking_CheckLSPActivationFromSFSC = false;
+                    return;
+                }
 
-				//if (SFSC_STATUS.Value == 0.0)
-    //            {
-				//	_logger.WriteEntry("LSP_SFSC Triggered, LSP_SFSC Function is OFF!", LogLevels.Error);
-				//	ClearSFSCTrigger();
-				//	isWorking_CheckLSPActivationFromSFSC = false;
-				//	return;
-				//}
+                if (SFSC_STATUS.Value == 0.0)
+                {
+                    _logger.WriteEntry("LSP_SFSC Triggered, LSP_SFSC Function is OFF!", LogLevels.Error);
+                    ClearSFSCTrigger();
+                    isWorking_CheckLSPActivationFromSFSC = false;
+                    return;
+                }
 
 
 
-				_logger.WriteEntry(". .. ... .... ..... ...... SFSC is ACTIVATED ...... ..... .... ... .. . . .. ... .... ..... ...... " , LogLevels.Info);
+                _logger.WriteEntry(". .. ... .... ..... ...... SFSC is ACTIVATED ...... ..... .... ... .. . . .. ... .... ..... ...... " , LogLevels.Info);
 
 				DataRow dr_SFSC_FURNACE_TO_SHED = datatable.Rows[0];
 

@@ -128,7 +128,7 @@ namespace OCP
                 checkPoint.Quality3 = OCPCheckPointQuality.Invalid;
                 checkPoint.Quality4 = OCPCheckPointQuality.Invalid;
                 checkPoint.Quality5 = OCPCheckPointQuality.Invalid;
-                checkPoint.QualityErrorId = GetGuid("Network/Model Functions/OCP/Shedpoint/" + checkPoint.Name + "/QualityError");
+                checkPoint.QualityErrorId = GetGuid(Convert.ToString(row["CHECKPOINT_NETWORKPATH"]) + "/QualityError");
                 try
                 {
                     if (!_checkPoints.ContainsKey(checkPoint.MeasurementId))
