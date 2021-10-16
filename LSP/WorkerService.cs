@@ -42,7 +42,7 @@ namespace LSP
             else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
             {
                 _staticDataManager = new Irisa.DataLayer.Oracle.OracleDataManager(config["OracleServicename"], config["OracleDatabaseAddress"], config["OracleStaticUser"], config["OracleStaticPassword"]);
-                _storeLogs = new StoreLogs(_staticDataManager, _logger, "HIS_HisLogs_INSERT");
+                _storeLogs = new StoreLogs(_staticDataManager, _logger, "SCADA.\"HIS_HisLogs_Insert\"");
             }
 
 

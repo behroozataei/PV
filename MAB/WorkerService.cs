@@ -44,7 +44,7 @@ namespace MAB
             else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
             {
                 _dataManager = new Irisa.DataLayer.Oracle.OracleDataManager(config["OracleServicename"], config["OracleDatabaseAddress"], config["OracleStaticUser"], config["OracleStaticPassword"]);
-                _storeLogs = new StoreLogs(_dataManager, _logger, "HIS_HisLogs_INSERT");
+                _storeLogs = new StoreLogs(_dataManager, _logger, "SCADA.\"HIS_HisLogs_Insert\"");
             }
 
             _cpsRuntimeDataBuffer = new BlockingCollection<CpsRuntimeData>();

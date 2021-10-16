@@ -90,17 +90,12 @@ namespace EEC
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
                 return "app.";
-                //return string.Empty;
-
             }
 
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
             {
-
                 return "APP_";
-
             }
-
             return string.Empty;
         }
 

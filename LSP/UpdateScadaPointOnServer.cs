@@ -85,6 +85,7 @@ namespace LSP
 
         public bool SendCommandTestRetry()
         {
+            _logger.WriteEntry("SendCommandTestRetry 22222222222222222 ", LogLevels.Warn);
             try
             {
                 var controls = new System.Collections.ObjectModel.Collection<Tuple<string, string>>
@@ -93,10 +94,10 @@ namespace LSP
                     //new Tuple<string, string>("7e4974bb-bd45-4142-96eb-73f4170e6664", "Network/Substations/EFS/6.6kV/C.55/CB/STATE"),
                     //new Tuple<string, string>("c09ace81-fc50-4420-8182-98ff8cd22f66", "Network/Substations/EFS/6.6kV/C.52/CB/STATE"),
                     //new Tuple<string, string>("b94f5db0-59aa-4cdf-b91f-2b65d0a797b0", "Network/Substations/EFS/6.6kV/C.53/CB/STATE")
-                    new Tuple<string, string>("699002d5-575a-4ba2-bd7b-efc3cbd54cab", "Network/Substations/MIS1/6.6kV/C.07/CB/STATE"),
-                    new Tuple<string, string>("989bf3d8-2d76-47ba-9b0a-0dd944b90d5c", "Network/Substations/MIS1/6.6kV/C.08/CB/STATE"),
-                    new Tuple<string, string>("dd1bc017-4b2b-47da-ba39-f810b9001737", "Network/Substations/MIS1/6.6kV/C.11/CB/STATE"),
-                    new Tuple<string, string>("8655cc5b-9ac1-4cff-a9b5-5bfe96bb69fa", "Network/Substations/MIS1/6.6kV/C.16/CB/STATE")
+                    //new Tuple<string, string>("699002d5-575a-4ba2-bd7b-efc3cbd54cab", "Network/Substations/MIS1/6.6kV/C.07/CB/STATE"),
+                    //new Tuple<string, string>("989bf3d8-2d76-47ba-9b0a-0dd944b90d5c", "Network/Substations/MIS1/6.6kV/C.08/CB/STATE"),
+                    //new Tuple<string, string>("dd1bc017-4b2b-47da-ba39-f810b9001737", "Network/Substations/MIS1/6.6kV/C.11/CB/STATE"),
+                    new Tuple<string, string>("8655CC5B-9AC1-4CFF-A9B5-5BFE96BB69FA", "Network/Substations/MIS1/6.6kV/C.16/CB/STATE")
                     //new Tuple<string, string>("dbe1303f-410d-4a52-836a-2dd81e868f55", "Network/Substations/MIS2/63KV/MO1/DS2/STATE")
 
                 };
@@ -109,7 +110,7 @@ namespace LSP
                         Console = "LSPTEST",
                         Force = true,
                         User = "mscfunction",    // It is a constant value with "mscfunction"
-                        Value = (int)Breaker_Status.BOpen
+                        Value = (int)Breaker_Status.bClose
                     };
 
                     for( int cntr = 0 ; cntr < 3 ; cntr++)

@@ -66,7 +66,7 @@ namespace LSP
 
 
 			
-			//SendCommandTestRetry();
+			SendCommandTestRetry();
 			//SendCommandTest2();
 			//SendCommandTest();
 
@@ -83,6 +83,7 @@ namespace LSP
 
 		public void Initialize()
         {
+			
 			try
 			{
 				_logger.WriteEntry("----------------------  FetchDecisionTables  ----------------------", LogLevels.Info);
@@ -190,11 +191,13 @@ namespace LSP
 				_sfscManager = new LSPSFSCManager(_logger, _repository, _scadaCommand, _PriorityList);
 
 
-				//_logger.WriteEntry(" INITILIZE: Before SendCommandTestRetry ", LogLevels.Info);
-				//SendCommandTestRetry();
-				//_logger.WriteEntry(" INITILIZE: After SendCommandTestRetry", LogLevels.Info);
+                //_logger.WriteEntry(" INITILIZE: Before SendCommandTestRetry ", LogLevels.Info);
+                //SendCommandTestRetry();
+                //_logger.WriteEntry(" INITILIZE: After SendCommandTestRetry", LogLevels.Info);
 
-			}
+            }
+
+
 			catch (System.Exception excep)
 			{
 				_logger.WriteEntry(excep.Message, LogLevels.Error, excep);
@@ -1941,6 +1944,7 @@ namespace LSP
 		private bool SendCommandTestRetry()
 		{
 			bool result = false;
+			_logger.WriteEntry("SendCommandTestRetry 11111111111111111 ", LogLevels.Warn);
 			try
 			{
 				result = false;
