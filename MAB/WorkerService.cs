@@ -5,6 +5,7 @@ using System.Threading;
 using System.Collections.Concurrent;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Configuration;
+using ServiceStack.Redis;
 
 using Irisa.Logger;
 using Irisa.Message;
@@ -26,13 +27,14 @@ namespace MAB
         private readonly Repository _repository;
         private readonly RuntimeDataReceiver _runtimeDataReceiver;
         private readonly MABManager _mabManager;
-
+        private readonly RedisUtils _RedisConnectorHelper;
         public WorkerService(IServiceProvider serviceProvider)
         {
             var config = serviceProvider.GetService<IConfiguration>();
 
             _logger = serviceProvider.GetService<ILogger>();
-         
+            _RedisConnectorHelper = new RedisUtils(0);
+
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
                  _dataManager = new SqlServerDataManager(config["SQLServerNameOfStaticDataDatabase"], config["SQLServerDatabaseAddress"], config["SQLServerUser"], config["SQLServerPassword"]);
@@ -49,7 +51,7 @@ namespace MAB
 
             _cpsRuntimeDataBuffer = new BlockingCollection<CpsRuntimeData>();
             _rpcService = new RpcService(config["CpsIpAddress"], 10000, _cpsRuntimeDataBuffer);
-            _repository = new Repository(_logger, _dataManager);
+            _repository = new Repository(_logger, _dataManager, _RedisConnectorHelper);
             _mabManager = new MABManager(_logger, _repository, _rpcService.CommandService);
             _runtimeDataReceiver = new RuntimeDataReceiver(_logger, _repository, (IProcessing)_mabManager, _rpcService, _cpsRuntimeDataBuffer);
         }

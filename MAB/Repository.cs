@@ -2,6 +2,8 @@
 using System.Data;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
+using StackExchange.Redis;
+using Newtonsoft.Json;
 
 using Irisa.Logger;
 using Irisa.DataLayer;
@@ -14,18 +16,40 @@ namespace MAB
         private readonly DataManager _dataManager;
         private readonly Dictionary<Guid, MABScadaPoint> _scadaPoints;
         private readonly Dictionary<string, MABScadaPoint> _scadaPointsHelper;
+        private readonly RedisUtils _RedisConnectorHelper;
 
-        public Repository(ILogger logger, DataManager staticDataManager)
+        private bool LoadfromRedis = false;
+        IDatabase _cache;
+
+        public Repository(ILogger logger, DataManager staticDataManager, RedisUtils RedisConnectorHelper)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _dataManager = staticDataManager ?? throw new ArgumentNullException(nameof(staticDataManager));
             _scadaPoints = new Dictionary<Guid, MABScadaPoint>();
             _scadaPointsHelper = new Dictionary<string, MABScadaPoint>();
+            _RedisConnectorHelper = RedisConnectorHelper ?? throw new ArgumentNullException(nameof(RedisConnectorHelper));
         }
 
         public bool Build()
         {
             var isBuild = false;
+            if (RedisUtils.IsConnected)
+            {
+                _logger.WriteEntry("Redis Connacted ", LogLevels.Info);
+                _cache = _RedisConnectorHelper.DataBase;
+                if (_RedisConnectorHelper.GetKeys(pattern: RedisKeyPattern.MAB_Measurements).Length != 0)
+                {
+                    LoadfromRedis = true;
+                }
+                else
+                {
+                    LoadfromRedis = false;
+                }
+            }
+            else
+            {
+                _logger.WriteEntry("Redis Connaction Fauiled.", LogLevels.Error);
+            }
 
             try
             {
@@ -65,40 +89,67 @@ namespace MAB
 
         private void GetInputScadaPoints(DataManager dataManager)
         {
-            string command = "";
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-                command = $"SELECT  Name, NetworkPath, DirectionType, SCADAType from app.MAB_Measurements";
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-                command = $"SELECT  Name, NetworkPath, DirectionType, SCADAType from APP_MAB_PARAMS";
-
-            var dataTable = dataManager.GetRecord(command);
-
-            foreach (DataRow row in dataTable.Rows)
+            if (LoadfromRedis)
             {
-                //var id = Guid.Parse(row["MeasurementId"].ToString());
-                var name = row["Name"].ToString();
-                var networkPath = row["NetworkPath"].ToString();
-                var pointDirectionType = row["DirectionType"].ToString();
-                var scadaType = Convert.ToString(row["SCADAType"]);
-                var id = GetGuid(networkPath);
-               
+                _logger.WriteEntry("Loading Data from Cash", LogLevels.Info);
+
+                var keys = _RedisConnectorHelper.GetKeys(pattern: RedisKeyPattern.MAB_Measurements);
+                var rows = _RedisConnectorHelper.StringGet<MABScadaPoint>(keys);
 
                 try
                 {
-                    var scadaPoint = new MABScadaPoint(id, name, networkPath, (PointDirectionType)Enum.Parse(typeof(PointDirectionType), pointDirectionType), scadaType);
-                    if (!_scadaPoints.ContainsKey(id))
+                    foreach (var _mabscadapoint in rows)
                     {
-                        _scadaPoints.Add(id, scadaPoint);
-                        _scadaPointsHelper.Add(name, scadaPoint);
+
+                        _scadaPoints.Add(_mabscadapoint.Id, _mabscadapoint);
+                        _scadaPointsHelper.Add(_mabscadapoint.Name, _mabscadapoint);
                     }
-                }
-                catch (Irisa.DataLayer.DataException ex)
-                {
-                    _logger.WriteEntry(ex.ToString(), LogLevels.Error, ex);
                 }
                 catch (Exception ex)
                 {
-                    _logger.WriteEntry("Error in loading " + networkPath.ToString(), LogLevels.Error, ex);
+                    _logger.WriteEntry("Error load data from cash database", LogLevels.Error, ex);
+                }
+            }
+            else
+            {
+                _logger.WriteEntry("Loading Data from Database", LogLevels.Info);
+                string command = "";
+                if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                    command = $"SELECT  Name, NetworkPath, DirectionType, SCADAType from app.MAB_Measurements";
+                if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+                    command = $"SELECT  Name, NetworkPath, DirectionType, SCADAType from APP_MAB_PARAMS";
+
+                var dataTable = dataManager.GetRecord(command);
+
+                foreach (DataRow row in dataTable.Rows)
+                {
+                    //var id = Guid.Parse(row["MeasurementId"].ToString());
+                    var name = row["Name"].ToString();
+                    var networkPath = row["NetworkPath"].ToString();
+                    var pointDirectionType = row["DirectionType"].ToString();
+                    var scadaType = Convert.ToString(row["SCADAType"]);
+                    var id = GetGuid(networkPath);
+
+
+                    try
+                    {
+                        var scadaPoint = new MABScadaPoint(id, name, networkPath, (PointDirectionType)Enum.Parse(typeof(PointDirectionType), pointDirectionType), scadaType);
+                        if (!_scadaPoints.ContainsKey(id))
+                        {
+                            _scadaPoints.Add(id, scadaPoint);
+                            _scadaPointsHelper.Add(name, scadaPoint);
+                            if (RedisUtils.IsConnected)
+                                _cache.StringSet(RedisKeyPattern.MAB_Measurements + networkPath, JsonConvert.SerializeObject(scadaPoint));
+                        }
+                    }
+                    catch (Irisa.DataLayer.DataException ex)
+                    {
+                        _logger.WriteEntry(ex.ToString(), LogLevels.Error, ex);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.WriteEntry("Error in loading " + networkPath.ToString(), LogLevels.Error, ex);
+                    }
                 }
             }
         }
@@ -166,5 +217,25 @@ namespace MAB
             }
         }
     }
-    
+
+    static class RedisKeyPattern
+    {
+        public const string MAB_Measurements = "APP:MAB_Measurements:";
+        public const string DCIS_PARAMS = "DCIS_PARAMS:";
+        public const string DCP_PARAMS = "DCP_PARAMS:";
+        public const string EEC_EAFSPriority = "EEC_EAFSPriority:";
+        public const string EEC_PARAMS = "EEC_PARAMS:";
+        public const string LSP_DECTCOMB = "LSP_DECTCOMB:";
+        public const string LSP_DECTITEMS = "LSP_DECTITEMS:";
+        public const string LSP_DECTLIST = "LSP_DECTLIST:";
+        public const string LSP_DECTPRIOLS = "LSP_DECTPRIOLS:";
+        public const string LSP_PARAMS = "LSP_PARAMS:";
+        public const string LSP_PRIORITYITEMS = "LSP_PRIORITYITEMS:";
+        public const string LSP_PRIORITYLIST = "LSP_PRIORITYLIST:";
+        public const string OCP_CheckPoints = "OCP_CheckPoints:";
+        public const string OCP_PARAMS = "OCP_PARAMS:";
+        public const string OPCMeasurement = "OPCMeasurement:";
+        public const string OPC_Params = "OPC_Params:";
+    }
+
 }

@@ -49,7 +49,10 @@ namespace EEC
 
 
             _cpsRuntimeDataBuffer = new BlockingCollection<CpsRuntimeData>();
+
             _rpcService = new RpcService(config["CpsIpAddress"], 10000, _cpsRuntimeDataBuffer);
+            
+            
             _globalData = new GlobalData();
 
             _repository = new Repository(_logger, config);
