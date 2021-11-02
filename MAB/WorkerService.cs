@@ -23,7 +23,7 @@ namespace MAB
         private readonly DataManager _dataManager;
         private readonly BlockingCollection<CpsRuntimeData> _cpsRuntimeDataBuffer;
         private readonly StoreLogs _storeLogs;
-        private readonly RpcService _rpcService;
+        private readonly CpsRpcService _rpcService;
         private readonly Repository _repository;
         private readonly RuntimeDataReceiver _runtimeDataReceiver;
         private readonly MABManager _mabManager;
@@ -37,10 +37,10 @@ namespace MAB
 
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
-                 _dataManager = new SqlServerDataManager(config["SQLServerNameOfStaticDataDatabase"], config["SQLServerDatabaseAddress"], config["SQLServerUser"], config["SQLServerPassword"]);
-                 //_dataManager = new Irisa.DataLayer.Oracle.OracleDataManager(config["OracleServicename"], config["OracleDatabaseAddress"], config["OracleStaticUser"], config["OracleStaticPassword"]);
-
-                _storeLogs = new StoreLogs(_dataManager, _logger, "[HIS].[HIS_LOGS_INSERT]");
+                //_dataManager = new SqlServerDataManager(config["SQLServerNameOfStaticDataDatabase"], config["SQLServerDatabaseAddress"], config["SQLServerUser"], config["SQLServerPassword"]);
+                //_storeLogs = new StoreLogs(_dataManager, _logger, "[HIS].[HIS_LOGS_INSERT]");
+                _dataManager = new Irisa.DataLayer.Oracle.OracleDataManager(config["OracleServicename"], config["OracleDatabaseAddress"], config["OracleStaticUser"], config["OracleStaticPassword"]);
+                _storeLogs = new StoreLogs(_dataManager, _logger, "SCADA.\"HIS_HisLogs_Insert\"");
 
             }
             else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
@@ -48,9 +48,17 @@ namespace MAB
                 _dataManager = new Irisa.DataLayer.Oracle.OracleDataManager(config["OracleServicename"], config["OracleDatabaseAddress"], config["OracleStaticUser"], config["OracleStaticPassword"]);
                 _storeLogs = new StoreLogs(_dataManager, _logger, "SCADA.\"HIS_HisLogs_Insert\"");
             }
+            var historyDataRequest = new HistoryDataRequest
+            {
+                RequireMeasurements = true,
+                RequireMarker = true,
+                RequireScadaEvent = false,
+                RequireEquipment = false,
+                RequireConnectivityNode = false,
+            };
 
             _cpsRuntimeDataBuffer = new BlockingCollection<CpsRuntimeData>();
-            _rpcService = new RpcService(config["CpsIpAddress"], 10000, _cpsRuntimeDataBuffer);
+            _rpcService = new CpsRpcService(config["CpsIpAddress"], 10000, historyDataRequest, _cpsRuntimeDataBuffer);
             _repository = new Repository(_logger, _dataManager, _RedisConnectorHelper);
             _mabManager = new MABManager(_logger, _repository, _rpcService.CommandService);
             _runtimeDataReceiver = new RuntimeDataReceiver(_logger, _repository, (IProcessing)_mabManager, _rpcService, _cpsRuntimeDataBuffer);

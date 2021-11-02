@@ -89,7 +89,8 @@ namespace EEC
         {
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
-                return "app.";
+                //return "app.";
+                return "APP_";
             }
 
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
@@ -374,10 +375,26 @@ namespace EEC
                 String sql = null;
                 if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                 {
-                    sql = $"Insert Into app.SFSC_EAFSPower( TelDateTime, SUMATION, PowerGrp1, PowerGrp2, " +
+                    //sql = $"Insert Into app.SFSC_EAFSPower( TelDateTime, SUMATION, PowerGrp1, PowerGrp2, " +
+                    //"Furnace1, Furnace2, Furnace3, Furnace4, Furnace5, Furnace6, Furnace7, Furnace8) " +
+                    //"VALUES( '" +
+                    //DateTime.Now.ToString() + "', '" +
+                    //(_BusbarPowers[0] + _BusbarPowers[1]) + "', '" +
+                    //_BusbarPowers[0] + "', '" +
+                    //_BusbarPowers[1] + "', '" +
+                    //_FurnacePowers[0] + "', '" +
+                    //_FurnacePowers[1] + "', '" +
+                    //_FurnacePowers[2] + "', '" +
+                    //_FurnacePowers[3] + "', '" +
+                    //_FurnacePowers[4] + "', '" +
+                    //_FurnacePowers[5] + "', '" +
+                    //_FurnacePowers[6] + "', '" +
+                    //_FurnacePowers[7] + "')";
+                    String Datatime = DateTime.Now.ToString(("yyyy-MMMM-dd HH:mm:ss"));
+                    sql = $"Insert Into APP_SFSC_EAFSPower( TelDateTime, SUMATION, PowerGrp1, PowerGrp2, " +
                     "Furnace1, Furnace2, Furnace3, Furnace4, Furnace5, Furnace6, Furnace7, Furnace8) " +
-                    "VALUES( '" +
-                    DateTime.Now.ToString() + "', '" +
+                    "VALUES( " +
+                     $"TO_DATE('{Datatime}', 'yyyy-mm-dd HH24:mi:ss')" + ",'" +
                     (_BusbarPowers[0] + _BusbarPowers[1]) + "', '" +
                     _BusbarPowers[0] + "', '" +
                     _BusbarPowers[1] + "', '" +
@@ -558,11 +575,17 @@ namespace EEC
 
                                 if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                                 {
-                                    sql = $"INSERT INTO app.SFSC_FURNACE_TO_SHED(TELDATETIME, FURNACE, GROUPPOWER) VALUES('" +
-                                        DateTime.Now.ToString() +
-                                        "', '" +
-                                        furnace +
-                                        "', '" + _BusbarPowers[busbar] + "')";
+                                    //sql = $"INSERT INTO app.SFSC_FURNACE_TO_SHED(TELDATETIME, FURNACE, GROUPPOWER) VALUES('" +
+                                    //    DateTime.Now.ToString() +
+                                    //    "', '" +
+                                    //    furnace +
+                                    //    "', '" + _BusbarPowers[busbar] + "')";
+                                    String Datatime = DateTime.Now.ToString(("yyyy-MMMM-dd HH:mm:ss"));
+                                    sql = $"INSERT INTO APP_SFSC_FURNACE_TO_SHED(TELDATETIME, FURNACE, GROUPPOWER) VALUES(" +
+                                         $"TO_DATE('{Datatime}', 'yyyy-mm-dd HH24:mi:ss')" +
+                                         ", '" +
+                                         furnace +
+                                         "', '" + _BusbarPowers[busbar] + "')";
                                 }
                                 else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
                                 {

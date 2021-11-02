@@ -22,7 +22,7 @@ namespace DCP
         private readonly DataManager _staticDataManager;
         private readonly DataManager _historicalDataManager;
         private readonly StoreLogs _storeLogs;
-        private readonly RpcService _rpcService;
+        private readonly CpsRpcService _rpcService;
         private readonly Repository _repository;
         private readonly BlockingCollection<CpsRuntimeData> _cpsRuntimeDataBuffer;
         private readonly RuntimeDataReceiver _runtimeDataReceiver;
@@ -35,9 +35,12 @@ namespace DCP
             _logger = serviceProvider.GetService<ILogger>();
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
-                _staticDataManager = new SqlServerDataManager(config["SQLServerNameOfStaticDataDatabase"], config["SQLServerDatabaseAddress"], config["SQLServerUser"], config["SQLServerPassword"]);
-                _historicalDataManager = new SqlServerDataManager(config["SQLServerNameOfHistoricalDatabase"], config["SQLServerDatabaseAddress"], config["SQLServerUser"], config["SQLServerPassword"]);
-                _storeLogs = new StoreLogs(_staticDataManager, _logger, "[HIS].[HIS_LOGS_INSERT]");
+                //_staticDataManager = new SqlServerDataManager(config["SQLServerNameOfStaticDataDatabase"], config["SQLServerDatabaseAddress"], config["SQLServerUser"], config["SQLServerPassword"]);
+                //_historicalDataManager = new SqlServerDataManager(config["SQLServerNameOfHistoricalDatabase"], config["SQLServerDatabaseAddress"], config["SQLServerUser"], config["SQLServerPassword"]);
+                //_storeLogs = new StoreLogs(_staticDataManager, _logger, "[HIS].[HIS_LOGS_INSERT]");
+                _staticDataManager = new Irisa.DataLayer.Oracle.OracleDataManager(config["OracleServicename"], config["OracleDatabaseAddress"], config["OracleStaticUser"], config["OracleStaticPassword"]);
+                _historicalDataManager = new Irisa.DataLayer.Oracle.OracleDataManager(config["OracleServicename"], config["OracleDatabaseAddress"], config["OracleHISUser"], config["OracleHISPassword"]);
+                _storeLogs = new StoreLogs(_staticDataManager, _logger, "SCADA.\"HIS_HisLogs_Insert\"");
             }
             else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
             {
@@ -47,10 +50,17 @@ namespace DCP
             }
 
             _linkDBpcsDataManager = new SqlServerDataManager(config["PCSLinkDatabaseName"], config["PCSLinkDatabaseAddress"], config["PCSLinkUser"], config["PCSLinkPassword"]);
-           
 
+            var historyDataRequest = new HistoryDataRequest
+            {
+                RequireMeasurements = true,
+                RequireMarker = true,
+                RequireScadaEvent = false,
+                RequireEquipment = false,
+                RequireConnectivityNode = false,
+            };
             _cpsRuntimeDataBuffer = new BlockingCollection<CpsRuntimeData>();
-            _rpcService = new RpcService(config["CpsIpAddress"], 10000, _cpsRuntimeDataBuffer);
+            _rpcService = new CpsRpcService(config["CpsIpAddress"], 10000, historyDataRequest, _cpsRuntimeDataBuffer);
 
             _repository = new Repository(_logger, _staticDataManager, _historicalDataManager, _linkDBpcsDataManager);
             _dcpManager = new DCPManager(_logger, _repository, _rpcService.CommandService);

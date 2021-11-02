@@ -56,8 +56,10 @@ namespace OCP
         {
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
-                return "app.";
+                //return "app.";
+                return "APP_";
                 //return string.Empty;
+
 
             }
 
@@ -241,7 +243,8 @@ namespace OCP
             string sql = null;
 
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-                sql = "SELECT * FROM dbo.NodesFullPath where FullPath = '" + networkpath + "'";
+                //sql = "SELECT * FROM dbo.NodesFullPath where FullPath = '" + networkpath + "'";
+                sql = "SELECT * FROM NodesFullPath where TO_CHAR(FullPath) = '" + networkpath + "'";
 
             else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
                 sql = "SELECT * FROM NodesFullPath where TO_CHAR(FullPath) = '" + networkpath + "'";

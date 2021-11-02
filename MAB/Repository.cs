@@ -73,8 +73,9 @@ namespace MAB
         {
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
-                return "app.";
-               // return string.Empty;
+                //return "app.";
+                return "APP_";
+                // return string.Empty;
 
             }
             
@@ -115,7 +116,8 @@ namespace MAB
                 _logger.WriteEntry("Loading Data from Database", LogLevels.Info);
                 string command = "";
                 if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-                    command = $"SELECT  Name, NetworkPath, DirectionType, SCADAType from app.MAB_Measurements";
+                    //command = $"SELECT  Name, NetworkPath, DirectionType, SCADAType from app.MAB_Measurements";
+                    command = $"SELECT  Name, NetworkPath, DirectionType, SCADAType from APP_MAB_PARAMS";
                 if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
                     command = $"SELECT  Name, NetworkPath, DirectionType, SCADAType from APP_MAB_PARAMS";
 
@@ -182,7 +184,8 @@ namespace MAB
             string sql = null;
 
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-                sql = "SELECT * FROM dbo.NodesFullPath where FullPath = '" + networkpath + "'";
+                //sql = "SELECT * FROM dbo.NodesFullPath where FullPath = '" + networkpath + "'";
+                sql = "SELECT * FROM NodesFullPath where TO_CHAR(FullPath) = '" + networkpath + "'";
 
             else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
                 sql = "SELECT * FROM NodesFullPath where TO_CHAR(FullPath) = '" + networkpath + "'";
@@ -221,21 +224,21 @@ namespace MAB
     static class RedisKeyPattern
     {
         public const string MAB_Measurements = "APP:MAB_Measurements:";
-        public const string DCIS_PARAMS = "DCIS_PARAMS:";
-        public const string DCP_PARAMS = "DCP_PARAMS:";
-        public const string EEC_EAFSPriority = "EEC_EAFSPriority:";
-        public const string EEC_PARAMS = "EEC_PARAMS:";
-        public const string LSP_DECTCOMB = "LSP_DECTCOMB:";
-        public const string LSP_DECTITEMS = "LSP_DECTITEMS:";
-        public const string LSP_DECTLIST = "LSP_DECTLIST:";
-        public const string LSP_DECTPRIOLS = "LSP_DECTPRIOLS:";
-        public const string LSP_PARAMS = "LSP_PARAMS:";
-        public const string LSP_PRIORITYITEMS = "LSP_PRIORITYITEMS:";
-        public const string LSP_PRIORITYLIST = "LSP_PRIORITYLIST:";
-        public const string OCP_CheckPoints = "OCP_CheckPoints:";
-        public const string OCP_PARAMS = "OCP_PARAMS:";
-        public const string OPCMeasurement = "OPCMeasurement:";
-        public const string OPC_Params = "OPC_Params:";
+        public const string DCIS_PARAMS = "APP:DCIS_PARAMS:";
+        public const string DCP_PARAMS = "APP:DCP_PARAMS:";
+        public const string EEC_EAFSPriority = "APP:EEC_EAFSPriority:";
+        public const string EEC_PARAMS = "APP:EEC_PARAMS:";
+        public const string LSP_DECTCOMB = "APP:LSP_DECTCOMB:";
+        public const string LSP_DECTITEMS = "APP:LSP_DECTITEMS:";
+        public const string LSP_DECTLIST = "APP:LSP_DECTLIST:";
+        public const string LSP_DECTPRIOLS = "APP:LSP_DECTPRIOLS:";
+        public const string LSP_PARAMS = "APP:LSP_PARAMS:";
+        public const string LSP_PRIORITYITEMS = "APP:LSP_PRIORITYITEMS:";
+        public const string LSP_PRIORITYLIST = "APP:LSP_PRIORITYLIST:";
+        public const string OCP_CheckPoints = "APP:OCP_CheckPoints:";
+        public const string OCP_PARAMS = "APP:OCP_PARAMS:";
+        public const string OPCMeasurement = "APP:OPCMeasurement:";
+        public const string OPC_Params = "APP:OPC_Params:";
     }
 
 }

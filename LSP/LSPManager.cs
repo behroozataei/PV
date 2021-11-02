@@ -65,12 +65,6 @@ namespace LSP
 			_scadaCommand = scadaCommand;
 
 
-			
-			SendCommandTestRetry();
-			//SendCommandTest2();
-			//SendCommandTest();
-
-			//return;
 
 			//-----------------------------------------------------------------------------------
 			// An array for Tag of all Digital Points in SCADA may be changed

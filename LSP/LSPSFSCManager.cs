@@ -32,7 +32,8 @@ namespace LSP
 		{
 			if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
 			{
-				return "app.";
+				//return "app.";
+				return "APP_";
 				//return string.Empty;
 
 			}

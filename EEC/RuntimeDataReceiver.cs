@@ -14,12 +14,12 @@ namespace EEC
         private readonly ILogger _logger;
         private readonly IRepository _repository;
         private readonly IProcessing _dataProcessing;
-        private readonly RpcService _rpcService;
+        private readonly CpsRpcService _rpcService;
         private readonly BlockingCollection<CpsRuntimeData> _cpsRuntimeDataBuffer;
         private bool _isWorking;
 
         internal RuntimeDataReceiver(ILogger logger, IRepository repository, IProcessing dataProcessing,
-            RpcService rpcService, BlockingCollection<CpsRuntimeData> cpsRuntimeDataBuffer)
+            CpsRpcService rpcService, BlockingCollection<CpsRuntimeData> cpsRuntimeDataBuffer)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _repository = repository ?? throw new ArgumentNullException(nameof(repository));
@@ -30,17 +30,8 @@ namespace EEC
 
         public void Start()
         {
-            var historyDataRequest = new HistoryDataRequest
-            {
-                RequireMeasurements = true,
-                RequireMarker = true,
-                RequireScadaEvent = false,
-                RequireEquipment = false,
-                RequireConnectivityNode = false,
-            };
-
             _isWorking = true;
-            _rpcService.ConnectAsync(historyDataRequest);
+            _rpcService.ConnectAsync();
             TakeDataAsync();
         }
 

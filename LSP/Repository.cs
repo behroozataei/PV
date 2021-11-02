@@ -3,6 +3,8 @@ using System.Data;
 using System.Runtime.InteropServices;
 using System.Collections.Generic;
 using Microsoft.Extensions.Configuration;
+using Newtonsoft.Json;
+using StackExchange.Redis;
 
 using Irisa.Logger;
 using Irisa.DataLayer;
@@ -23,18 +25,22 @@ namespace LSP
 
         private readonly Dictionary<Guid, LSPScadaPoint> _scadaPoints;
         private readonly Dictionary<string, LSPScadaPoint> _scadaPointsHelper;
+        private readonly RedisUtils _RedisConnectorHelper;
 
-        public Repository(ILogger logger, IConfiguration config)
+        private bool LoadfromRedis = false;
+        IDatabase _cache;
+
+        public Repository(ILogger logger, IConfiguration config, RedisUtils RedisConnectorHelper)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
-                _staticDataManager = new SqlServerDataManager(config["SQLServerNameOfStaticDataDatabase"], config["SQLServerDatabaseAddress"], config["SQLServerUser"], config["SQLServerPassword"]);
-                //_staticDataManager = new OracleDataManager(config["OracleServicename"], config["OracleDatabaseAddress"], config["OracleStaticUser"], config["OracleStaticPassword"]);
+                //_staticDataManager = new SqlServerDataManager(config["SQLServerNameOfStaticDataDatabase"], config["SQLServerDatabaseAddress"], config["SQLServerUser"], config["SQLServerPassword"]);
+                //_historicalDataManager = new SqlServerDataManager(config["SQLServerNameOfHistoricalDatabase"], config["SQLServerDatabaseAddress"], config["SQLServerUser"], config["SQLServerPassword"]);
+                _staticDataManager = new OracleDataManager(config["OracleServicename"], config["OracleDatabaseAddress"], config["OracleStaticUser"], config["OracleStaticPassword"]);
+                _historicalDataManager = new OracleDataManager(config["OracleServicename"], config["OracleDatabaseAddress"], config["OracleHISUser"], config["OracleHISPassword"]);
 
-                _historicalDataManager = new SqlServerDataManager(config["SQLServerNameOfHistoricalDatabase"], config["SQLServerDatabaseAddress"], config["SQLServerUser"], config["SQLServerPassword"]);
-                //_historicalDataManager = new OracleDataManager(config["OracleServicename"], config["OracleDatabaseAddress"], config["OracleHISUser"], config["OracleHISPassword"]);
 
             }
             else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
@@ -50,13 +56,15 @@ namespace LSP
 
             _scadaPoints = new Dictionary<Guid, LSPScadaPoint>();
             _scadaPointsHelper = new Dictionary<string, LSPScadaPoint>();
+            _RedisConnectorHelper = RedisConnectorHelper ?? throw new ArgumentNullException(nameof(RedisConnectorHelper));
         }
 
         private static string GetEndStringCommand()
         {
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
-                return "app.";
+                //return "app.";
+                return "APP_";
                 //return string.Empty;
 
             }
@@ -74,6 +82,23 @@ namespace LSP
         public bool Build()
         {
             var isBuild = false;
+            if (RedisUtils.IsConnected)
+            {
+                _logger.WriteEntry("Redis Connacted ", LogLevels.Info);
+                _cache = _RedisConnectorHelper.DataBase;
+                if (_RedisConnectorHelper.GetKeys(pattern: RedisKeyPattern.OCP_CheckPoints).Length != 0)
+                {
+                    LoadfromRedis = true;
+                }
+                else
+                {
+                    LoadfromRedis = false;
+                }
+            }
+            else
+            {
+                _logger.WriteEntry("Redis Connaction Fauiled.", LogLevels.Error);
+            }
 
             try
             {
@@ -100,6 +125,27 @@ namespace LSP
 
         private void FetchCheckPoints()
         {
+            if (LoadfromRedis)
+            {
+                _logger.WriteEntry("Loading Data from Cash", LogLevels.Info);
+
+                var keys = _RedisConnectorHelper.GetKeys(pattern: RedisKeyPattern.OCP_CheckPoints);
+                var rows = _RedisConnectorHelper.StringGet<OCPCheckPoint>(keys);
+
+                try
+                {
+                    foreach (var checkPoint in rows)
+                    {
+                        _checkPoints.Add(checkPoint.MeasurementId, checkPoint);
+                        _checkPointHelper.Add(checkPoint.Name, checkPoint);
+                        _checkPointHelperNumber.Add(Convert.ToInt16(checkPoint.CheckPointNumber), checkPoint);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.WriteEntry("Error load data from cash database", LogLevels.Error, ex);
+                }
+            }
             var dataTable = _staticDataManager.GetRecord("SELECT OCPSHEDPOINT_ID, " +
                                                                                   //  "GUID, " +
                                                                                     "NAME, " +
@@ -190,6 +236,8 @@ namespace LSP
                             _checkPoints.Add(checkPoint.MeasurementId, checkPoint);
                             _checkPointHelper.Add(checkPoint.Name, checkPoint);
                             _checkPointHelperNumber.Add(Convert.ToInt16(checkPoint.CheckPointNumber), checkPoint);
+                            if (RedisUtils.IsConnected)
+                                _cache.StringSet(RedisKeyPattern.OCP_CheckPoints + checkPoint.CheckPointNumber, JsonConvert.SerializeObject(checkPoint));
                         }
                         else
                         {
@@ -774,10 +822,14 @@ namespace LSP
                 string selectsql = "";
                 if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                 {
+                    // selectsql = "select ee.CB_NETWORKPATH, ee.CT_NETWORKPATH, ee.HASPARTNER, ee.PARTNERADDRESS, " +
+                    //"ee.FURNACE, es.CONSUMED_ENERGY_PER_HEAT, es.STATUS_OF_FURNACE, es.FURNACE, " +
+                    //"es.GROUPNUM from IrisaHistorical.app.EEC_SFSCEAFSPriority es, app.EEC_EAFSPriority ee " +
+                    //"where ee.FURNACE = es.FURNACE ";
                     selectsql = "select ee.CB_NETWORKPATH, ee.CT_NETWORKPATH, ee.HASPARTNER, ee.PARTNERADDRESS, " +
-                   "ee.FURNACE, es.CONSUMED_ENERGY_PER_HEAT, es.STATUS_OF_FURNACE, es.FURNACE, " +
-                   "es.GROUPNUM from IrisaHistorical.app.EEC_SFSCEAFSPriority es, app.EEC_EAFSPriority ee " +
-                   "where ee.FURNACE = es.FURNACE ";
+                  "ee.FURNACE, es.CONSUMED_ENERGY_PER_HEAT, es.STATUS_OF_FURNACE, es.FURNACE, " +
+                  "es.GROUPNUM from SCADAHIS.APP_EEC_SFSCEAFSPRIORITY es, SCADA.APP_EEC_EAFSPRIORITY ee " +
+                  "WHERE ee.FURNACE = es.FURNACE ";
                 }
                 else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
                 {
@@ -944,7 +996,8 @@ namespace LSP
             string sql = null;
 
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-                sql = "SELECT * FROM dbo.NodesFullPath where FullPath = '" + networkpath + "'";
+                //sql = "SELECT * FROM dbo.NodesFullPath where FullPath = '" + networkpath + "'";
+                sql = "SELECT * FROM NodesFullPath where TO_CHAR(FullPath) = '" + networkpath + "'";
 
             else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
                 sql = "SELECT * FROM NodesFullPath where TO_CHAR(FullPath) = '" + networkpath + "'";
@@ -980,5 +1033,24 @@ namespace LSP
         }
 
        
+    }
+    static class RedisKeyPattern
+    {
+        public const string MAB_Measurements = "APP:MAB_Measurements:";
+        public const string DCIS_PARAMS = "APP:DCIS_PARAMS:";
+        public const string DCP_PARAMS = "APP:DCP_PARAMS:";
+        public const string EEC_EAFSPriority = "APP:EEC_EAFSPriority:";
+        public const string EEC_PARAMS = "APP:EEC_PARAMS:";
+        public const string LSP_DECTCOMB = "APP:LSP_DECTCOMB:";
+        public const string LSP_DECTITEMS = "APP:LSP_DECTITEMS:";
+        public const string LSP_DECTLIST = "APP:LSP_DECTLIST:";
+        public const string LSP_DECTPRIOLS = "APP:LSP_DECTPRIOLS:";
+        public const string LSP_PARAMS = "APP:LSP_PARAMS:";
+        public const string LSP_PRIORITYITEMS = "APP:LSP_PRIORITYITEMS:";
+        public const string LSP_PRIORITYLIST = "APP:LSP_PRIORITYLIST:";
+        public const string OCP_CheckPoints = "APP:OCP_CheckPoints:";
+        public const string OCP_PARAMS = "APP:OCP_PARAMS:";
+        public const string OPCMeasurement = "APP:OPCMeasurement:";
+        public const string OPC_Params = "APP:OPC_Params:";
     }
 }

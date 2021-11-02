@@ -14,12 +14,12 @@ namespace MAB
         private readonly ILogger _logger;
         private readonly IRepository _repository;
         private readonly IProcessing _dataProcessing;
-        private readonly RpcService _rpcService;
+        private readonly CpsRpcService _rpcService;
         private readonly BlockingCollection<CpsRuntimeData> _cpsRuntimeDataBuffer;
         private bool _isWorking;
 
         internal RuntimeDataReceiver(ILogger logger, IRepository repository, IProcessing dataProcessing,
-            RpcService rpcService, BlockingCollection<CpsRuntimeData> cpsRuntimeDataBuffer)
+            CpsRpcService rpcService, BlockingCollection<CpsRuntimeData> cpsRuntimeDataBuffer)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _repository = repository ?? throw new ArgumentNullException(nameof(repository));
@@ -30,17 +30,10 @@ namespace MAB
 
         public void Start()
         {
-            var historyDataRequest = new HistoryDataRequest
-            {
-                RequireMeasurements = true,
-                RequireMarker = true,
-                RequireScadaEvent = false,
-                RequireEquipment = false,
-                RequireConnectivityNode = false,
-            };
+            
 
             _isWorking = true;
-            _rpcService.ConnectAsync(historyDataRequest);
+            _rpcService.ConnectAsync();
             TakeDataAsync();
         }
 
@@ -75,7 +68,12 @@ namespace MAB
         {
             foreach (var measurement in measurements)
             {
+                //if (measurement.MeasurementId == "3C1DB5EF-E08B-4861-8FAC-9C4041E2C857")
+                //    System.Diagnostics.Debugger.Break();
+
                 var scadaPoint = _repository.GetScadaPoint(Guid.Parse(measurement.MeasurementId));
+
+
 
                 if (scadaPoint != null && scadaPoint.PointDirectionType == PointDirectionType.Input)
                 {

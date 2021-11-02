@@ -19,24 +19,26 @@ namespace LSP
     {
         private readonly ILogger _logger;
         private readonly StoreLogs _storeLogs;
-        private readonly RpcService _rpcService;
+        private readonly CpsRpcService _rpcService;
         private readonly Repository _repository;
         private readonly DataManager _staticDataManager;
         private readonly RuntimeDataReceiver _runtimeDataReceiver;
         private readonly BlockingCollection<CpsRuntimeData> _cpsRuntimeDataBuffer;
         private readonly LSPManager _lspManager;
+        private readonly RedisUtils _RedisConnectorHelper;
 
         public WorkerService(IServiceProvider serviceProvider)
         {
             var config = serviceProvider.GetService<IConfiguration>();
 
             _logger = serviceProvider.GetService<ILogger>();
+            _RedisConnectorHelper = new RedisUtils(0);
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
-                _staticDataManager = new SqlServerDataManager(config["SQLServerNameOfStaticDataDatabase"], config["SQLServerDatabaseAddress"], config["SQLServerUser"], config["SQLServerPassword"]);
-                //_staticDataManager = new Irisa.DataLayer.Oracle.OracleDataManager(config["OracleServicename"], config["OracleDatabaseAddress"], config["OracleStaticUser"], config["OracleStaticPassword"]);
-
-                _storeLogs = new StoreLogs(_staticDataManager, _logger, "[HIS].[HIS_LOGS_INSERT]");
+                //_staticDataManager = new SqlServerDataManager(config["SQLServerNameOfStaticDataDatabase"], config["SQLServerDatabaseAddress"], config["SQLServerUser"], config["SQLServerPassword"]);
+                //_storeLogs = new StoreLogs(_staticDataManager, _logger, "[HIS].[HIS_LOGS_INSERT]");
+                _staticDataManager = new Irisa.DataLayer.Oracle.OracleDataManager(config["OracleServicename"], config["OracleDatabaseAddress"], config["OracleStaticUser"], config["OracleStaticPassword"]);
+                _storeLogs = new StoreLogs(_staticDataManager, _logger, "SCADA.\"HIS_HisLogs_Insert\"");
 
             }
             else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
@@ -45,10 +47,17 @@ namespace LSP
                 _storeLogs = new StoreLogs(_staticDataManager, _logger, "SCADA.\"HIS_HisLogs_Insert\"");
             }
 
-
+            var historyDataRequest = new HistoryDataRequest
+            {
+                RequireMeasurements = true,
+                RequireMarker = true,
+                RequireScadaEvent = false,
+                RequireEquipment = false,
+                RequireConnectivityNode = false,
+            };
             _cpsRuntimeDataBuffer = new BlockingCollection<CpsRuntimeData>();
-            _rpcService = new RpcService(config["CpsIpAddress"], 10000, _cpsRuntimeDataBuffer);
-            _repository = new Repository(_logger, config);
+            _rpcService = new CpsRpcService(config["CpsIpAddress"], 10000, historyDataRequest, _cpsRuntimeDataBuffer);
+            _repository = new Repository(_logger, config, _RedisConnectorHelper);
             _lspManager = new LSPManager(_logger, _repository, _rpcService.CommandService);
             _runtimeDataReceiver = new RuntimeDataReceiver(_logger, _repository, _lspManager, _rpcService, _cpsRuntimeDataBuffer);
         }

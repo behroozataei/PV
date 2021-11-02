@@ -29,11 +29,11 @@ namespace EEC
 
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
-                sqlDataMnager = new SqlServerDataManager(_configuration["SQLServerNameOfStaticDataDatabase"], _configuration["SQLServerDatabaseAddress"], _configuration["SQLServerUser"], _configuration["SQLServerPassword"]);
-                //sqlDataMnager = new OracleDataManager(_configuration["OracleServicename"], _configuration["OracleDatabaseAddress"], _configuration["OracleStaticUser"], _configuration["OracleStaticPassword"]);
+                //sqlDataMnager = new SqlServerDataManager(_configuration["SQLServerNameOfStaticDataDatabase"], _configuration["SQLServerDatabaseAddress"], _configuration["SQLServerUser"], _configuration["SQLServerPassword"]);
+                //_historicalDataManager = new SqlServerDataManager(configuration["SQLServerNameOfHistoricalDatabase"], configuration["SQLServerDatabaseAddress"], configuration["SQLServerUser"], configuration["SQLServerPassword"]);
+                sqlDataMnager = new OracleDataManager(_configuration["OracleServicename"], _configuration["OracleDatabaseAddress"], _configuration["OracleStaticUser"], _configuration["OracleStaticPassword"]);
+                _historicalDataManager = new OracleDataManager(configuration["OracleServicename"], configuration["OracleDatabaseAddress"], configuration["OracleHISUser"], configuration["OracleHISPassword"]);
 
-                _historicalDataManager = new SqlServerDataManager(configuration["SQLServerNameOfHistoricalDatabase"], configuration["SQLServerDatabaseAddress"], configuration["SQLServerUser"], configuration["SQLServerPassword"]);
-                //_historicalDataManager = new OracleDataManager(configuration["OracleServicename"], configuration["OracleDatabaseAddress"], configuration["OracleHISUser"], configuration["OracleHISPassword"]);
 
             }
             else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
@@ -55,7 +55,8 @@ namespace EEC
         {
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
-                return "app.";
+                //return "app.";
+                return "APP_";
                 //return string.Empty;
 
             }
@@ -190,7 +191,31 @@ namespace EEC
         {
             String Datatime = DateTime.Now.ToString("yyyy-MMMM-dd HH:mm:ss");
             String strSQL = null;
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                //strSQL = $"INSERT INTO app.EEC_TELEGRAMS" +
+                //"(TelDateTime, SentTime, ResidualTime, ResidualEnergy, MaxOverload1, MaxOverload2, ResidualEnergyEnd) " +
+                //"VALUES ('" +
+                //DateTime.Now.ToString("yyyy-MMMM-dd HH:mm:ss") + "', '" +
+                //" " + "', '" +
+                //RESTIME.ToString() + "', '" +
+                //ER_Cycle.ToString() + "', '" +
+                //PSend1.ToString() + "', '" +
+                //PSend2.ToString() + "', '" +
+                //m_EnergyResEnd.ToString() + "')";
+                strSQL = $"INSERT INTO APP_EEC_TELEGRAMS" +
+                "(TelDateTime, SentTime, ResidualTime, ResidualEnergy, MaxOverload1, MaxOverload2, ResidualEnergyEnd) " +
+                "VALUES (" +
+                $"TO_DATE('{Datatime}', 'yyyy-mm-dd HH24:mi:ss')" + "," +
+                $"TO_DATE('1900-01-01 00:00:00','yyyy-mm-dd HH24:mi:ss')" + ",'" +
+                RESTIME.ToString() + "', '" +
+                ER_Cycle.ToString() + "', '" +
+                PSend1.ToString() + "', '" +
+                PSend2.ToString() + "', '" +
+                m_EnergyResEnd.ToString() + "')";
+            }
+            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
             {
                 strSQL = $"INSERT INTO APP_EEC_TELEGRAMS" +
                 "(TelDateTime, SentTime, ResidualTime, ResidualEnergy, MaxOverload1, MaxOverload2, ResidualEnergyEnd) " +
@@ -204,19 +229,7 @@ namespace EEC
                 m_EnergyResEnd.ToString() + "')";
             }
 
-            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            { 
-                strSQL = $"INSERT INTO app.EEC_TELEGRAMS" +
-                "(TelDateTime, SentTime, ResidualTime, ResidualEnergy, MaxOverload1, MaxOverload2, ResidualEnergyEnd) " +
-                "VALUES ('" +
-                DateTime.Now.ToString("yyyy-MMMM-dd HH:mm:ss") + "', '" +
-                " " + "', '" +
-                RESTIME.ToString() + "', '" +
-                ER_Cycle.ToString() + "', '" +
-                PSend1.ToString() + "', '" +
-                PSend2.ToString() + "', '" +
-                m_EnergyResEnd.ToString() + "')";
-            }
+            
 
             try
             {
@@ -281,7 +294,8 @@ namespace EEC
             string sql = null;
 
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-                sql = "SELECT * FROM dbo.NodesFullPath where FullPath = '" + networkpath + "'";
+                //sql = "SELECT * FROM dbo.NodesFullPath where FullPath = '" + networkpath + "'";
+                sql = "SELECT * FROM NodesFullPath where TO_CHAR(FullPath) = '" + networkpath + "'";
 
             else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
                 sql = "SELECT * FROM NodesFullPath where TO_CHAR(FullPath) = '" + networkpath + "'";

@@ -20,7 +20,7 @@ namespace EEC
         private readonly ILogger _logger;
         private readonly DataManager _dataManager;
         private readonly StoreLogs _storeLogs;
-        private readonly RpcService _rpcService;
+        private readonly CpsRpcService _rpcService;
         private readonly Repository _repository;
         private readonly PowerCalculation _powerCalculation;
         private readonly EECManager _eecManager;
@@ -35,10 +35,10 @@ namespace EEC
             _logger = serviceProvider.GetService<ILogger>();
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
-                _dataManager = new SqlServerDataManager(config["SQLServerNameOfStaticDataDatabase"], config["SQLServerDatabaseAddress"], config["SQLServerUser"], config["SQLServerPassword"]);
-                //_dataManager = new Irisa.DataLayer.Oracle.OracleDataManager(config["OracleServicename"], config["OracleDatabaseAddress"], config["OracleStaticUser"], config["OracleStaticPassword"]);
-
-                _storeLogs = new StoreLogs(_dataManager, _logger, "[HIS].[HIS_LOGS_INSERT]");
+                //_dataManager = new SqlServerDataManager(config["SQLServerNameOfStaticDataDatabase"], config["SQLServerDatabaseAddress"], config["SQLServerUser"], config["SQLServerPassword"]);
+                //_storeLogs = new StoreLogs(_dataManager, _logger, "[HIS].[HIS_LOGS_INSERT]");
+                _dataManager = new Irisa.DataLayer.Oracle.OracleDataManager(config["OracleServicename"], config["OracleDatabaseAddress"], config["OracleStaticUser"], config["OracleStaticPassword"]);
+                _storeLogs = new StoreLogs(_dataManager, _logger, "SCADA.\"HIS_HisLogs_Insert\"");
 
             }
             else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
@@ -48,9 +48,17 @@ namespace EEC
             }
 
 
+            var historyDataRequest = new HistoryDataRequest
+            {
+                RequireMeasurements = true,
+                RequireMarker = true,
+                RequireScadaEvent = false,
+                RequireEquipment = false,
+                RequireConnectivityNode = false,
+            };
             _cpsRuntimeDataBuffer = new BlockingCollection<CpsRuntimeData>();
 
-            _rpcService = new RpcService(config["CpsIpAddress"], 10000, _cpsRuntimeDataBuffer);
+            _rpcService = new CpsRpcService(config["CpsIpAddress"], 10000, historyDataRequest, _cpsRuntimeDataBuffer);
             
             
             _globalData = new GlobalData();

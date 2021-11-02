@@ -9,7 +9,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 
-namespace MAB
+namespace LSP
 {
     public class RedisUtils
     {
@@ -73,9 +73,13 @@ namespace MAB
         private int _database = 0;
         public RedisUtils(int database)
         {
-            _database = database;          
+            _database = database;
+           
+
             Server = RedisConnection.GetServer(RedisConnection.GetEndPoints()[0]);
             DataBase = RedisConnection.GetDatabase(_database);
+
+            
         }
 
         private static Lazy<ConnectionMultiplexer> RedisConnections;

@@ -48,8 +48,9 @@ namespace DCP
         {
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
-                return "app.";
-               // return string.Empty;
+                //return "app.";
+                return "APP_";
+                // return string.Empty;
 
             }
 
@@ -366,7 +367,8 @@ namespace DCP
             String sql = "";
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
-                sql = $"Update app.EEC_TELEGRAMS Set SentTime='" + atime + "' Where TELDATETIME = '" + telDate + "'";
+                //sql = $"Update app.EEC_TELEGRAMS Set SentTime='" + atime + "' Where TELDATETIME = '" + telDate + "'";
+                sql = $"Update APP_EEC_TELEGRAMS Set SentTime=" + $"TO_DATE('{atime}', 'yyyy-mm-dd HH24:mi:ss')" + $" Where TELDATETIME = TO_DATE('{telDate}','yyyy-mm-dd HH24:mi:ss')";
             }
             else if(RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
             {                
@@ -553,7 +555,8 @@ namespace DCP
             string sql = null;
 
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-                sql = "SELECT * FROM dbo.NodesFullPath where FullPath = '" + networkpath + "'";
+                //sql = "SELECT * FROM dbo.NodesFullPath where FullPath = '" + networkpath + "'";
+                sql = "SELECT * FROM NodesFullPath where TO_CHAR(FullPath) = '" + networkpath + "'";
 
             else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
                 sql = "SELECT * FROM NodesFullPath where TO_CHAR(FullPath) = '" + networkpath + "'";
