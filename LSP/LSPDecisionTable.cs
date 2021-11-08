@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
+using System.Linq;
 
 using Irisa.Logger;
 
@@ -100,26 +101,28 @@ namespace LSP
                 List<SqlParameter> listNull = new List<SqlParameter>();
 
                 var dtbMeasurements = _repository.FetchItems(m_DectNo);
-
+                var rows = dtbMeasurements.Where(n => n.DECTNO.ToString() == m_DectNo.ToString())
+                                                                 .OrderBy(n => n.DECTITEMNO).ToArray();
+                //DECTNO = " + decisionTableNo.ToString()
                 int I = 1;
                 // -------------------------------------------------------------------------
                 // Read all detail info about decision tables from three tables
-                _logger.WriteEntry("------------------------  Load Decision Table Items  ----------------------------- ", LogLevels.Info);
-                foreach (DataRow dr in dtbMeasurements.Rows)
+                _logger.WriteEntry($"------------------------  Load Decision Table {m_DectNo} Items  ----------------------------- ", LogLevels.Info);
+                foreach (var dr in rows)
                 {
                     if (m_nItems > 0)
                     {
                         {
                             m_arrItems[I] = new CDectItem(_logger);
 
-                            m_arrItems[I].NetworkPath = dr["NetworkPath"].ToString();
-                            m_arrItems[I].ItemNo = Convert.ToByte(dr["DectItemNo"].ToString());
-                            //m_arrItems[I]._GUID = Guid.Parse(dr["GUID"].ToString());
+                            m_arrItems[I].NetworkPath = dr.NETWORKPATH.ToString();
+                            m_arrItems[I].ItemNo = Convert.ToByte(dr.DECTITEMNO.ToString());
+                            m_arrItems[I]._GUID = Guid.Parse(dr.ID.ToString());
                             m_arrItems[I]._GUID = _repository.GetGuid(m_arrItems[I].NetworkPath);
-                            m_arrItems[I]._Name = dr["Name"].ToString();
+                            m_arrItems[I]._Name = dr.NAME.ToString();
 
                             _logger.WriteEntry("DectItemNo = " + m_arrItems[I].ItemNo.ToString(), LogLevels.Info);
-                            _logger.WriteEntry("Item NetworkPath = " + m_arrItems[I].NetworkPath.ToString() + "; ItemName = " + dr["Name"].ToString(), LogLevels.Info);
+                            _logger.WriteEntry("Item NetworkPath = " + m_arrItems[I].NetworkPath.ToString() + "; ItemName = " + dr.NAME.ToString(), LogLevels.Info);
                         }
                     }
                     I++;
@@ -145,6 +148,9 @@ namespace LSP
             try
             {
                 var dtbMeasurements = _repository.FetchCombinations(m_DectNo);
+                var rows = dtbMeasurements.Rows.OfType<DataRow>().Where(n => n["DECTNO"].ToString()== m_DectNo.ToString())
+                                                                 .OrderBy(n => n["COMBINATIONNO"])
+                                                                 .ThenBy(n => n["DECTITEMNO"]).ToArray();
 
                 if (m_nCombinations > 0)
                 {
@@ -155,7 +161,7 @@ namespace LSP
                         m_arrCombinations[I].nItems = m_nItems;
                         m_arrCombinations[I].CombNo = I;
                     }
-                    foreach (DataRow dr in dtbMeasurements.Rows)
+                    foreach (var dr in rows)
                     {
                         I = Convert.ToByte(dr["COMBINATIONNO"].ToString());
                         byte K = Convert.ToByte(dr["DECTITEMNO"].ToString());
@@ -189,10 +195,13 @@ namespace LSP
             try
             {
                 DataTable dtbMeasurements = _repository.FetchPriorityListsNoForCombinations(m_DectNo);
+                var rows = dtbMeasurements.Rows.OfType<DataRow>().Where(n => n["DECTNO"].ToString() == m_DectNo.ToString())
+                                                                .OrderBy(n => n["COMBINATIONNO"]).ToArray();
+
 
                 if (m_nCombinations > 0)
                 {
-                    foreach (DataRow dr in dtbMeasurements.Rows)
+                    foreach (var dr in rows)
                     {
                         I = Convert.ToByte(dr["COMBINATIONNO"].ToString());
                         m_arrCombinations[I].PriorityListNo = Convert.ToByte(dr["PRIORITYLISTNO"].ToString());

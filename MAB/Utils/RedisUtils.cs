@@ -17,7 +17,7 @@ namespace MAB
         static RedisUtils()
         {
             
-            JObject o1 = JObject.Parse(File.ReadAllText(@"appsettings.json"));
+            JObject _settings = JObject.Parse(File.ReadAllText(@"appsettings.json"));
             RedisConnections = new Lazy<ConnectionMultiplexer>(() =>
                {
                
@@ -26,9 +26,9 @@ namespace MAB
                        {
                            EndPoints =
                            {
-                                o1.GetValue("RedisKeySentinel1").ToString(),
-                                o1.GetValue("RedisKeySentinel2").ToString(),
-                                o1.GetValue("RedisKeySentinel3").ToString()
+                                _settings.GetValue("RedisKeySentinel1").ToString(),
+                                _settings.GetValue("RedisKeySentinel2").ToString(),
+                                _settings.GetValue("RedisKeySentinel3").ToString()
                                 //System.Configuration.ConfigurationSettings.AppSettings["RedisKeySentinel2"],
                                 //System.Configuration.ConfigurationSettings.AppSettings["RedisKeySentinel3"]
                            },

@@ -1,5 +1,6 @@
 using System;
 using System.Data;
+using System.Linq;
 
 using Irisa.Common;
 using Irisa.Logger;
@@ -94,35 +95,35 @@ namespace LSP
         public bool LoadBreakersToShed()
         {
             int I;
-            DataTable dtbMeasurements = new DataTable();
+            //DataTable dtbMeasurements = new DataTable();
 
             try
             {
-                dtbMeasurements = _repository.FetchBreakersToShed(_priorityNo);
+                var dtbMeasurements = _repository.FetchBreakersToShed(_priorityNo);
+                var rows = dtbMeasurements.Where(n => n.PRIORITYLISTNO == _priorityNo)
+                                                                .OrderBy(n => n.ITEMNO).ToArray();
 
                 // -------------------------------------------------------------------------
                 // Read all detail info about decision tables from three tables
                 _logger.WriteEntry($"-----------------------   Load Items for Priority List {_priorityNo}  ------------------- ", LogLevels.Info);
                 I = 1;
-                foreach (DataRow dr in dtbMeasurements.Rows)
+                foreach (var dr in rows)
                 {
                     if (_nBreakers > 0)
                     {
                         _breakersToShed[I] = new LSPBreakerToShed(_logger);
-                        _breakersToShed[I].BreakerNo = Convert.ToByte(dr["ITEMNO"].ToString());
-                        _breakersToShed[I].NetworkPath_Cur = dr["NETWORKPATH_CURR"].ToString();
-                        _breakersToShed[I].NetworkPath_Item = dr["NetworkPath_Item"].ToString();
-                        _breakersToShed[I].HasPartner = dr["HASPARTNER"].ToString();
-                        _breakersToShed[I].AddressPartner = dr["ADDRESSPARTNER"].ToString();
-                        //_breakersToShed[I].guid_curr = Guid.Parse( dr["GUID_CURR"].ToString());
-                        _breakersToShed[I].guid_curr =_repository.GetGuid(_breakersToShed[I].NetworkPath_Cur);
-                        //_breakersToShed[I].guid_item = Guid.Parse(dr["GUID_ITEM"].ToString());
-                        _breakersToShed[I].guid_item = _repository.GetGuid(_breakersToShed[I].NetworkPath_Item);
+                        _breakersToShed[I].BreakerNo = Convert.ToByte(dr.ITEMNO);
+                        _breakersToShed[I].NetworkPath_Cur = dr.NETWORKPATH_CURR;
+                        _breakersToShed[I].NetworkPath_Item = dr.NETWORKPATH_ITEM;
+                        _breakersToShed[I].HasPartner = dr.HASPARTNER;
+                        _breakersToShed[I].AddressPartner = dr.ADDRESSPARTNER;
+                        _breakersToShed[I].guid_curr = Guid.Parse( dr.ID_CURR.ToString());
+                        _breakersToShed[I].guid_item = Guid.Parse(dr.ID_CB.ToString());
                         // TODO: Check 
                         _breakersToShed[I].FurnaceIndex = "";  // dr["Furnace"].ToString();
-                        //_breakersToShed[I].addressPartner_guid = Guid.Parse(dr["ADDRESSPARTNER_GUID"].ToString());
+                        
                         if(_breakersToShed[I].AddressPartner!="NULL")
-                            _breakersToShed[I].addressPartner_guid = _repository.GetGuid(_breakersToShed[I].AddressPartner);
+                            _breakersToShed[I].addressPartner_guid = Guid.Parse(dr.ID_CB_PARTNER.ToString());
 
                         _logger.WriteEntry("  BreakerNo = " + _breakersToShed[I].BreakerNo.ToString() +
                             "; NetworkPath_Cur = " + _breakersToShed[I].NetworkPath_Cur +

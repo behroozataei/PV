@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Linq;
 
 using Irisa.Logger;
 using Irisa.Common;
@@ -82,7 +83,9 @@ namespace LSP
 			{
 				_logger.WriteEntry("----------------------  FetchDecisionTables  ----------------------", LogLevels.Info);
 				var dtbMeasurements = _repository.FetchDecisionTables();
-				foreach (DataRow dr in dtbMeasurements.Rows)
+				var rows = dtbMeasurements.Rows.OfType<DataRow>().OrderBy(n => n["DECTNO"]).ToArray();
+
+				foreach (DataRow dr in rows)
 				{
 					var aDect = new CDecisionTable(_repository, _logger);
 					aDect.DectNo = Convert.ToByte(dr["DectNo"].ToString());
@@ -107,7 +110,8 @@ namespace LSP
 
 				//-------------------------------------------------------------------------
 				dtbMeasurements = _repository.FetchPriorityLists();
-				foreach (DataRow dr in dtbMeasurements.Rows)
+				var priol_rows = dtbMeasurements.Rows.OfType<DataRow>().OrderBy(n => n["PRIORITYLISTNO"]).ToArray();
+				foreach (DataRow dr in priol_rows)
 				{
 					var priol = new CPriorityList(_repository, _logger)
 					{

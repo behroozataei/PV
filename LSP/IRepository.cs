@@ -18,13 +18,13 @@ namespace LSP
 
         DataTable FetchDecisionTables();
 
-        DataTable FetchItems(byte decisionTableNo);
+        IEnumerable<LSP_DECTITEMS_Object> FetchItems(byte decisionTableNo);
 
         DataTable FetchCombinations(byte decisionTableNo);
 
         DataTable FetchPriorityListsNoForCombinations(byte decisionTableNo);
 
-        DataTable FetchBreakersToShed(byte priorityListNo);
+        IEnumerable<LSP_PRIORITYITEMS_Object> FetchBreakersToShed(byte priorityListNo);
 
         float GetTANSecondaryActivePower(byte Index);
         int GetTANBusbarPosition(byte Index);

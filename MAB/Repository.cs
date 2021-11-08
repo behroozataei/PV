@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Data;
+using Newtonsoft.Json;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using StackExchange.Redis;
-using Newtonsoft.Json;
+using System.Linq;
+
 
 using Irisa.Logger;
 using Irisa.DataLayer;
@@ -20,6 +22,7 @@ namespace MAB
 
         private bool LoadfromRedis = false;
         IDatabase _cache;
+        private bool isBuild = false;
 
         public Repository(ILogger logger, DataManager staticDataManager, RedisUtils RedisConnectorHelper)
         {
@@ -32,12 +35,12 @@ namespace MAB
 
         public bool Build()
         {
-            var isBuild = false;
+            
             if (RedisUtils.IsConnected)
             {
-                _logger.WriteEntry("Redis Connacted ", LogLevels.Info);
+                _logger.WriteEntry("Connected to Redis Cache", LogLevels.Info);
                 _cache = _RedisConnectorHelper.DataBase;
-                if (_RedisConnectorHelper.GetKeys(pattern: RedisKeyPattern.MAB_Measurements).Length != 0)
+                if (_RedisConnectorHelper.GetKeys(pattern: RedisKeyPattern.MAB_PARAMS).Length != 0)
                 {
                     LoadfromRedis = true;
                 }
@@ -48,7 +51,7 @@ namespace MAB
             }
             else
             {
-                _logger.WriteEntry("Redis Connaction Fauiled.", LogLevels.Error);
+                _logger.WriteEntry("Redis Connaction Failed.", LogLevels.Error);
             }
 
             try
@@ -92,23 +95,36 @@ namespace MAB
         {
             if (LoadfromRedis)
             {
-                _logger.WriteEntry("Loading Data from Cash", LogLevels.Info);
+                _logger.WriteEntry("Loading Data from Cache", LogLevels.Info);
 
-                var keys = _RedisConnectorHelper.GetKeys(pattern: RedisKeyPattern.MAB_Measurements);
-                var rows = _RedisConnectorHelper.StringGet<MABScadaPoint>(keys);
+                var keys = _RedisConnectorHelper.GetKeys(pattern: RedisKeyPattern.MAB_PARAMS);
+                var dataTable = _RedisConnectorHelper.StringGet<MAB_PARAMS_Object>(keys);
 
-                try
+                foreach (MAB_PARAMS_Object row in dataTable)
                 {
-                    foreach (var _mabscadapoint in rows)
+                    var name = row.Name;
+                    var networkPath = row.NetworkPath;
+                    var pointDirectionType = row.DirectionType;
+                    var scadaType = row.ScadaType;
+                    var id = Guid.Parse(row.ID.ToString());
+                    
+                    try
                     {
-
-                        _scadaPoints.Add(_mabscadapoint.Id, _mabscadapoint);
-                        _scadaPointsHelper.Add(_mabscadapoint.Name, _mabscadapoint);
+                        var scadaPoint = new MABScadaPoint(id, name, networkPath, (PointDirectionType)Enum.Parse(typeof(PointDirectionType), pointDirectionType), scadaType);
+                        if (!_scadaPoints.ContainsKey(id))
+                        {
+                            _scadaPoints.Add(id, scadaPoint);
+                            _scadaPointsHelper.Add(name, scadaPoint);
+                        }
                     }
-                }
-                catch (Exception ex)
-                {
-                    _logger.WriteEntry("Error load data from cash database", LogLevels.Error, ex);
+                    catch (Irisa.DataLayer.DataException ex)
+                    {
+                        _logger.WriteEntry(ex.ToString(), LogLevels.Error, ex);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.WriteEntry("Error in loading from Cache" + networkPath.ToString(), LogLevels.Error, ex);
+                    }
                 }
             }
             else
@@ -121,8 +137,8 @@ namespace MAB
                 if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
                     command = $"SELECT  Name, NetworkPath, DirectionType, SCADAType from APP_MAB_PARAMS";
 
+                MAB_PARAMS_Object _mab_param = new MAB_PARAMS_Object();
                 var dataTable = dataManager.GetRecord(command);
-
                 foreach (DataRow row in dataTable.Rows)
                 {
                     //var id = Guid.Parse(row["MeasurementId"].ToString());
@@ -132,7 +148,16 @@ namespace MAB
                     var scadaType = Convert.ToString(row["SCADAType"]);
                     var id = GetGuid(networkPath);
 
+                    _mab_param.Name = name;
+                    _mab_param.NetworkPath = networkPath;
+                    _mab_param.DirectionType = pointDirectionType;
+                    _mab_param.ScadaType = scadaType;
+                    _mab_param.ID = id;
 
+
+                    if (RedisUtils.IsConnected)
+                        _cache.StringSet(RedisKeyPattern.MAB_PARAMS + networkPath, JsonConvert.SerializeObject(_mab_param));
+                    
                     try
                     {
                         var scadaPoint = new MABScadaPoint(id, name, networkPath, (PointDirectionType)Enum.Parse(typeof(PointDirectionType), pointDirectionType), scadaType);
@@ -140,8 +165,6 @@ namespace MAB
                         {
                             _scadaPoints.Add(id, scadaPoint);
                             _scadaPointsHelper.Add(name, scadaPoint);
-                            if (RedisUtils.IsConnected)
-                                _cache.StringSet(RedisKeyPattern.MAB_Measurements + networkPath, JsonConvert.SerializeObject(scadaPoint));
                         }
                     }
                     catch (Irisa.DataLayer.DataException ex)
@@ -181,6 +204,14 @@ namespace MAB
         }
         public Guid GetGuid(String networkpath)
         {
+            if (isBuild)
+            {
+                var res = _scadaPoints.FirstOrDefault(n => n.Value.NetworkPath.Equals(networkpath)).Key;
+                if (res != Guid.Empty)
+                    return res;
+                else
+                    _logger.WriteEntry("The GUID could not read from Repository for Network   " + networkpath, LogLevels.Error);
+            }
             string sql = null;
 
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
@@ -223,7 +254,7 @@ namespace MAB
 
     static class RedisKeyPattern
     {
-        public const string MAB_Measurements = "APP:MAB_Measurements:";
+        public const string MAB_PARAMS = "APP:MAB_PARAMS:";
         public const string DCIS_PARAMS = "APP:DCIS_PARAMS:";
         public const string DCP_PARAMS = "APP:DCP_PARAMS:";
         public const string EEC_EAFSPriority = "APP:EEC_EAFSPriority:";
@@ -240,5 +271,13 @@ namespace MAB
         public const string OPCMeasurement = "APP:OPCMeasurement:";
         public const string OPC_Params = "APP:OPC_Params:";
     }
+     class MAB_PARAMS_Object
+     {
+        public string Name ;
+        public string NetworkPath;
+        public string DirectionType;
+        public string ScadaType;
+        public Guid   ID;
+    };
 
 }
