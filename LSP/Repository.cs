@@ -116,7 +116,7 @@ namespace LSP
                 FetchCheckPoints();
                 FetchScadaPoints();
 
-                if(!LoadfromCache)
+//                if(!LoadfromCache)
                     BuildCashe();
 
                 _staticDataManager.Close();
@@ -295,6 +295,16 @@ namespace LSP
                     scadaPoint3.SCADAType = "AnalogMeasurement";
                     checkPoint.Average = scadaPoint3;
 
+                    var scadaPoint4 = new LSPScadaPoint(GetGuid(Convert.ToString(row["CHECKPOINT_NETWORKPATH"]) + "/Sample"), "Sample", checkPoint.NetworkPath + "/Sample");
+                    scadaPoint4.DirectionType = "INPUT";
+                    scadaPoint4.SCADAType = "AnalogMeasurement";
+                    checkPoint.Sample = scadaPoint4;
+
+                    var scadaPoint5 = new LSPScadaPoint(GetGuid(Convert.ToString(row["CHECKPOINT_NETWORKPATH"]) + "/QualityError"), "QualityError", checkPoint.NetworkPath + "/QualityError");
+                    scadaPoint5.DirectionType = "INPUT";
+                    scadaPoint5.SCADAType = "AnalogMeasurement";
+                    checkPoint.QulityError = scadaPoint5;
+
                     _ocp_checkpoint_obj.OCPSHEDPOINT_ID = Convert.ToInt32(row["OCPSHEDPOINT_ID"]);
                     _ocp_checkpoint_obj.NAME = Convert.ToString(row["NAME"]);
                     _ocp_checkpoint_obj.NETWORKPATH = Convert.ToString(row["NetworkPath"]);
@@ -314,6 +324,8 @@ namespace LSP
                     _ocp_checkpoint_obj.IT_Id = scadaPoint1.Id.ToString();
                     _ocp_checkpoint_obj.AllowedActivePower_Id = scadaPoint2.Id.ToString();
                     _ocp_checkpoint_obj.Average_Id = scadaPoint3.Id.ToString();
+                    _ocp_checkpoint_obj.Sample_Id = scadaPoint4.Id.ToString();
+                    _ocp_checkpoint_obj.QualityErr_Id = scadaPoint5.Id.ToString();
 
 
                     if (RedisUtils.IsConnected)
@@ -939,6 +951,9 @@ namespace LSP
 
                     dataTable = _staticDataManager.GetRecord($"SELECT * from {GetEndStringCommand()}LSP_PRIORITYLIST");
                     _cache.StringSet(RedisKeyPattern.LSP_PRIORITYLIST, JsonConvert.SerializeObject(dataTable));
+
+                    dataTable = _historicalDataManager.GetRecord($"SELECT * from {GetEndStringCommand()}EEC_SFSCEAFSPRIORITY");
+                    _cache.StringSet(RedisKeyPattern.EEC_SFSCEAFSPRIORITY, JsonConvert.SerializeObject(dataTable));
                 }
 
 
@@ -996,10 +1011,10 @@ namespace LSP
             DataTable dataTable = null;
             try
             {
-                if(LoadfromCache)
+                //if(LoadfromCache)
                     dataTable= JsonConvert.DeserializeObject<DataTable>(_cache.StringGet(RedisKeyPattern.LSP_DECTLIST));
-                else
-                    dataTable = _staticDataManager.GetRecord($"SELECT * from {GetEndStringCommand()}LSP_DECTLIST ORDER BY DECTNO");
+                //else
+                //    dataTable = _staticDataManager.GetRecord($"SELECT * from {GetEndStringCommand()}LSP_DECTLIST ORDER BY DECTNO");
 
             }
             catch (Irisa.DataLayer.DataException ex)
@@ -1021,13 +1036,13 @@ namespace LSP
 
             try
             {
-                if (LoadfromCache)
-                {
+                //if (LoadfromCache)
+                //{
                       var keys = _RedisConnectorHelper.GetKeys(pattern: RedisKeyPattern.LSP_DECTITEMS);
                       row = _RedisConnectorHelper.StringGet<LSP_DECTITEMS_Object>(keys).ToArray();
-                }
-                else
-                    dataTable = _staticDataManager.GetRecord($"SELECT * from {GetEndStringCommand()}LSP_DECTITEMS WHERE DECTNO = " + decisionTableNo.ToString() + " ORDER BY DECTITEMNO ");
+                //}
+                //else
+                //    dataTable = _staticDataManager.GetRecord($"SELECT * from {GetEndStringCommand()}LSP_DECTITEMS WHERE DECTNO = " + decisionTableNo.ToString() + " ORDER BY DECTITEMNO ");
 
             }
             catch (Irisa.DataLayer.DataException ex)
@@ -1048,10 +1063,10 @@ namespace LSP
 
             try
             {
-                if (LoadfromCache)
+                //if (LoadfromCache)
                     dataTable = JsonConvert.DeserializeObject<DataTable>(_cache.StringGet(RedisKeyPattern.LSP_DECTCOMB));
-                else
-                dataTable = _staticDataManager.GetRecord($"SELECT * from {GetEndStringCommand()}LSP_DECTCOMB WHERE DECTNO = " + decisionTableNo.ToString() + " ORDER BY COMBINATIONNO, DECTITEMNO");
+                //else
+                //dataTable = _staticDataManager.GetRecord($"SELECT * from {GetEndStringCommand()}LSP_DECTCOMB WHERE DECTNO = " + decisionTableNo.ToString() + " ORDER BY COMBINATIONNO, DECTITEMNO");
 
             }
             catch (Irisa.DataLayer.DataException ex)
@@ -1072,13 +1087,13 @@ namespace LSP
 
             try
             {
-                if (LoadfromCache)
+                //if (LoadfromCache)
                     dataTable = JsonConvert.DeserializeObject<DataTable>(_cache.StringGet(RedisKeyPattern.LSP_DECTPRIOLS));
-                else
-                {
-                    string strSQL = $"SELECT * FROM {GetEndStringCommand()}LSP_DECTPRIOLS WHERE DECTNO = " + decisionTableNo.ToString() + " ORDER BY COMBINATIONNO";
-                    dataTable = _staticDataManager.GetRecord(strSQL);
-                }
+                //else
+                //{
+                //    string strSQL = $"SELECT * FROM {GetEndStringCommand()}LSP_DECTPRIOLS WHERE DECTNO = " + decisionTableNo.ToString() + " ORDER BY COMBINATIONNO";
+                //    dataTable = _staticDataManager.GetRecord(strSQL);
+                //}
 
             }
             catch (Irisa.DataLayer.DataException ex)
@@ -1100,16 +1115,16 @@ namespace LSP
 
             try
             {
-                if (LoadfromCache)
-                {
+                //if (LoadfromCache)
+                //{
                     var keys = _RedisConnectorHelper.GetKeys(pattern: RedisKeyPattern.LSP_PRIORITYITEMS);
                     row = _RedisConnectorHelper.StringGet<LSP_PRIORITYITEMS_Object>(keys).ToArray();
-                }
-                else
-                {
-                    string strSQL = $"SELECT * FROM {GetEndStringCommand()}LSP_PRIORITYITEMS WHERE PRIORITYLISTNO = " + priorityListNo.ToString() + " ORDER BY ITEMNO ";
-                    dataTable = _staticDataManager.GetRecord(strSQL);
-                }
+                //}
+                //else
+                //{
+                //    string strSQL = $"SELECT * FROM {GetEndStringCommand()}LSP_PRIORITYITEMS WHERE PRIORITYLISTNO = " + priorityListNo.ToString() + " ORDER BY ITEMNO ";
+                //    dataTable = _staticDataManager.GetRecord(strSQL);
+                //}
             }
             catch (Irisa.DataLayer.DataException ex)
             {
@@ -1248,10 +1263,10 @@ namespace LSP
 
             try
             {
-                if (LoadfromCache)
+                //if (LoadfromCache)
                     dataTable = JsonConvert.DeserializeObject<DataTable>(_cache.StringGet(RedisKeyPattern.LSP_PRIORITYLIST));
-                else
-                    dataTable = _staticDataManager.GetRecord($"SELECT * FROM {GetEndStringCommand()}LSP_PRIORITYLIST ORDER BY PRIORITYLISTNO");
+                //else
+                //    dataTable = _staticDataManager.GetRecord($"SELECT * FROM {GetEndStringCommand()}LSP_PRIORITYLIST ORDER BY PRIORITYLISTNO");
 
             }
             catch (Irisa.DataLayer.DataException ex)
@@ -1270,38 +1285,67 @@ namespace LSP
         {
             DataTable dataTable = null;
 
+            
+
             try
             {
-                string selectsql = "";
-                if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-                {
-                    // selectsql = "select ee.CB_NETWORKPATH, ee.CT_NETWORKPATH, ee.HASPARTNER, ee.PARTNERADDRESS, " +
-                    //"ee.FURNACE, es.CONSUMED_ENERGY_PER_HEAT, es.STATUS_OF_FURNACE, es.FURNACE, " +
-                    //"es.GROUPNUM from IrisaHistorical.app.EEC_SFSCEAFSPriority es, app.EEC_EAFSPriority ee " +
-                    //"where ee.FURNACE = es.FURNACE ";
-                    selectsql = "select ee.CB_NETWORKPATH, ee.CT_NETWORKPATH, ee.HASPARTNER, ee.PARTNERADDRESS, " +
-                  "ee.FURNACE, es.CONSUMED_ENERGY_PER_HEAT, es.STATUS_OF_FURNACE, es.FURNACE, " +
-                  "es.GROUPNUM from SCADAHIS.APP_EEC_SFSCEAFSPRIORITY es, SCADA.APP_EEC_EAFSPRIORITY ee " +
-                  "WHERE ee.FURNACE = es.FURNACE ";
-                }
-                else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-                {
-                    selectsql = "select ee.CB_NETWORKPATH, ee.CT_NETWORKPATH, ee.HASPARTNER, ee.PARTNERADDRESS, " +
-                  "ee.FURNACE, es.CONSUMED_ENERGY_PER_HEAT, es.STATUS_OF_FURNACE, es.FURNACE, " +
-                  "es.GROUPNUM from SCADAHIS.APP_EEC_SFSCEAFSPRIORITY es, SCADA.APP_EEC_EAFSPRIORITY ee " +
-                  "WHERE ee.FURNACE = es.FURNACE ";
+                //if (LoadfromCache)
+                //{
+                //    dataTable = JsonConvert.DeserializeObject<DataTable>(_cache.StringGet(RedisKeyPattern.EEC_EAFSPriority));
+                //    var eec_eafpriol_rows = dataTable.Rows.OfType<DataRow>().ToArray();
+                //    dataTable = JsonConvert.DeserializeObject<DataTable>(_cache.StringGet(RedisKeyPattern.EEC_SFSCEAFSPRIORITY));
+                //    var eec_sfsceafpriol_rows = dataTable.Rows.OfType<DataRow>().ToArray();
 
-                }
+                //   var data = from ee in eec_eafpriol_rows
+                //    join es in eec_sfsceafpriol_rows on ee["FURNACE"].ToString() equals es["FURNACE"].ToString()
+                //    select new
+                //    {
+                //        CB_NETWORKPATH = ee["CB_NETWORKPATH"].ToString(),
+                //        CT_NETWORKPATH = ee["CT_NETWORKPATH"].ToString(),
+                //        HASPARTNER = ee["HASPARTNER"].ToString(),
+                //        PARTNERADDRESS = ee["PARTNERADDRESS"].ToString(),
+                //        FURNACE = ee["FURNACE"].ToString(),
+                //        CONSUMED_ENERGY_PER_HEAT = es["CONSUMED_ENERGY_PER_HEAT"].ToString(),
+                //        STATUS_OF_FURNACE = es["STATUS_OF_FURNACE"].ToString(),
+                //        GROUPNUM = es["GROUPNUM"].ToString()
+                //    };
+
+
+
+                //}
+                //else
+                {
+                    string selectsql = "";
+                    if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                    {
+                        // selectsql = "select ee.CB_NETWORKPATH, ee.CT_NETWORKPATH, ee.HASPARTNER, ee.PARTNERADDRESS, " +
+                        //"ee.FURNACE, es.CONSUMED_ENERGY_PER_HEAT, es.STATUS_OF_FURNACE, es.FURNACE, " +
+                        //"es.GROUPNUM from IrisaHistorical.app.EEC_SFSCEAFSPriority es, app.EEC_EAFSPriority ee " +
+                        //"where ee.FURNACE = es.FURNACE ";
+                        selectsql = "select ee.CB_NETWORKPATH, ee.CT_NETWORKPATH, ee.HASPARTNER, ee.PARTNERADDRESS, " +
+                      "ee.FURNACE, es.CONSUMED_ENERGY_PER_HEAT, es.STATUS_OF_FURNACE, es.FURNACE, " +
+                      "es.GROUPNUM from SCADAHIS.APP_EEC_SFSCEAFSPRIORITY es, SCADA.APP_EEC_EAFSPRIORITY ee " +
+                      "WHERE ee.FURNACE = es.FURNACE ";
+                    }
+                    else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+                    {
+                        selectsql = "select ee.CB_NETWORKPATH, ee.CT_NETWORKPATH, ee.HASPARTNER, ee.PARTNERADDRESS, " +
+                      "ee.FURNACE, es.CONSUMED_ENERGY_PER_HEAT, es.STATUS_OF_FURNACE, es.FURNACE, " +
+                      "es.GROUPNUM from SCADAHIS.APP_EEC_SFSCEAFSPRIORITY es, SCADA.APP_EEC_EAFSPRIORITY ee " +
+                      "WHERE ee.FURNACE = es.FURNACE ";
+
+                    }
 
                     //  1399-10-03
                     //ToDO :
                     // why does for Line Overloaded (Line 914 or 915)  not considered grpnumber  ?
                     string selgrpNumber = (grpNumber != "") ? "AND GROUPNUM = '" + grpNumber + "'" : "";
 
-                string StringSql = selectsql + selgrpNumber + " AND STATUS_OF_FURNACE = '" + FurnaceStatus + "' " + strSQLException + " ORDER BY CAST( CONSUMED_ENERGY_PER_HEAT AS FLOAT) ASC";
-                //string StringSql = "SELECT * FROM app.EEC_EAFSPriority WHERE GROUPNUM = " + grpNumber + " AND STATUS_OF_FURNACE = '" + FurnaceStatus + "' " + strSQLException + " ORDER BY CONSUMED_ENERGY_PER_HEAT ASC";
+                    string StringSql = selectsql + selgrpNumber + " AND STATUS_OF_FURNACE = '" + FurnaceStatus + "' " + strSQLException + " ORDER BY CAST( CONSUMED_ENERGY_PER_HEAT AS FLOAT) ASC";
+                    //string StringSql = "SELECT * FROM app.EEC_EAFSPriority WHERE GROUPNUM = " + grpNumber + " AND STATUS_OF_FURNACE = '" + FurnaceStatus + "' " + strSQLException + " ORDER BY CONSUMED_ENERGY_PER_HEAT ASC";
 
-                dataTable = _staticDataManager.GetRecord(StringSql);
+                    dataTable = _staticDataManager.GetRecord(StringSql);
+                }
             }
             catch (Irisa.DataLayer.DataException ex)
             {
@@ -1554,6 +1598,7 @@ namespace LSP
         public const string OCP_PARAMS = "APP:OCP_PARAMS:";
         public const string OPCMeasurement = "APP:OPCMeasurement:";
         public const string OPC_Params = "APP:OPC_Params:";
+        public const string EEC_SFSCEAFSPRIORITY = "APP:EEC_SFSCEAFSPRIORITY:";
     }
     class OCP_CHECKPOINTS_Object
     {
@@ -1576,6 +1621,8 @@ namespace LSP
         public string  IT_Id;
         public string  AllowedActivePower_Id;
         public string  Average_Id;
+        public string  Sample_Id;
+        public string  QualityErr_Id;
     };
 
     class LSP_PARAMS_Object

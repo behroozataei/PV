@@ -25,12 +25,14 @@ namespace OCP
         private readonly BlockingCollection<CpsRuntimeData> _cpsRuntimeDataBuffer;
         private readonly RuntimeDataReceiver _runtimeDataReceiver;
         private readonly OCPManager _ocpManager;
+        private readonly RedisUtils _RedisConnectorHelper;
 
         public WorkerService(IServiceProvider serviceProvider)
         {
             var config = serviceProvider.GetService<IConfiguration>();
 
             _logger = serviceProvider.GetService<ILogger>();
+            _RedisConnectorHelper = new RedisUtils(0);
 
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
@@ -57,7 +59,7 @@ namespace OCP
             _cpsRuntimeDataBuffer = new BlockingCollection<CpsRuntimeData>();
             _rpcService = new CpsRpcService(config["CpsIpAddress"], 10000, historyDataRequest, _cpsRuntimeDataBuffer);
 
-            _repository = new Repository(_logger, _dataManager);
+            _repository = new Repository(_logger, _dataManager, _RedisConnectorHelper);
             _ocpManager = new OCPManager(_logger, _repository, _rpcService.CommandService);
             _runtimeDataReceiver = new RuntimeDataReceiver(_logger, _repository, (IProcessing)_ocpManager, _rpcService, _cpsRuntimeDataBuffer);
         }

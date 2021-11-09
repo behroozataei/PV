@@ -91,7 +91,7 @@ namespace OPC
             
             if (!_updateScadaPointOnServer.WriteSCADAPoint(scadaPoint))
             {
-                _logger.WriteEntry("Error in read a value from WS response!", LogLevels.Error);
+                _logger.WriteEntry("Error in write a value to scada!", LogLevels.Error);
             }
            // _logger.WriteEntry(scadaPoint.Id.ToString() + "  " + scadaPoint.Value.ToString(), LogLevels.Info);
 

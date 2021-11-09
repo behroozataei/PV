@@ -27,12 +27,14 @@ namespace EEC
         private readonly GlobalData _globalData;
         private readonly BlockingCollection<CpsRuntimeData> _cpsRuntimeDataBuffer;
         private readonly RuntimeDataReceiver _runtimeDataReceiver;
+        private readonly RedisUtils _RedisConnectorHelper;
 
         public WorkerService(IServiceProvider serviceProvider)
         {
             var config = serviceProvider.GetService<IConfiguration>();
 
             _logger = serviceProvider.GetService<ILogger>();
+            _RedisConnectorHelper = new RedisUtils(0);
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
                 //_dataManager = new SqlServerDataManager(config["SQLServerNameOfStaticDataDatabase"], config["SQLServerDatabaseAddress"], config["SQLServerUser"], config["SQLServerPassword"]);
@@ -63,7 +65,7 @@ namespace EEC
             
             _globalData = new GlobalData();
 
-            _repository = new Repository(_logger, config);
+            _repository = new Repository(_logger, config, _RedisConnectorHelper);
             _eecManager = new EECManager(_logger, _repository, _rpcService.CommandService, _globalData);
             _runtimeDataReceiver = new RuntimeDataReceiver(_logger, _repository, (IProcessing)_eecManager.RuntimeDataProcessing, _rpcService, _cpsRuntimeDataBuffer);
         }

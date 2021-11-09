@@ -25,6 +25,7 @@ namespace OPC
         private readonly DataManager _staticDataManager;
         private readonly RuntimeDataReceiver _runtimeDataReceiver;
         private readonly BlockingCollection<CpsRuntimeData> _cpsRuntimeDataBuffer;
+        private readonly RedisUtils _RedisConnectorHelper;
 
         public WorkerService(IServiceProvider serviceProvider)
         {
@@ -33,6 +34,8 @@ namespace OPC
             var config = serviceProvider.GetService<IConfiguration>();
 
             _logger = serviceProvider.GetService<ILogger>();
+            _RedisConnectorHelper = new RedisUtils(0);
+
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
                 //_staticDataManager = new SqlServerDataManager(config["SQLServerNameOfStaticDataDatabase"], config["SQLServerDatabaseAddress"], config["SQLServerUser"], config["SQLServerPassword"]);
@@ -58,7 +61,7 @@ namespace OPC
             };
             _cpsRuntimeDataBuffer = new BlockingCollection<CpsRuntimeData>();
             _rpcService = new CpsRpcService(config["CpsIpAddress"], 10000, historyDataRequest, _cpsRuntimeDataBuffer);
-            _repository = new Repository(_logger, _staticDataManager);
+            _repository = new Repository(_logger, _staticDataManager, _RedisConnectorHelper);
             _opcManager = new OPCManager(_logger, _repository, _rpcService.CommandService);
             _runtimeDataReceiver = new RuntimeDataReceiver(_logger, _repository, _opcManager, _rpcService, _cpsRuntimeDataBuffer);
             

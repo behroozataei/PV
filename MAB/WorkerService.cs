@@ -5,7 +5,6 @@ using System.Threading;
 using System.Collections.Concurrent;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Configuration;
-using ServiceStack.Redis;
 
 using Irisa.Logger;
 using Irisa.Message;

@@ -44,6 +44,8 @@ namespace LSP
         public LSPScadaPoint OverloadIT { get; set; }
         public LSPScadaPoint ActivePower { get; set; }
         public LSPScadaPoint Average { get; set; }
+        public LSPScadaPoint Sample { get; set; }
+        public LSPScadaPoint QulityError { get; set; }
         public CheckPointQuality Quality1 { get; set; }
         public CheckPointQuality Quality2 { get; set; }
         public CheckPointQuality Quality3 { get; set; }
