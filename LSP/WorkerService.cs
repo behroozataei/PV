@@ -6,6 +6,7 @@ using System.Collections.Concurrent;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Configuration;
 
+using COM;
 using Irisa.Logger;
 using Irisa.Message;
 using Irisa.Message.CPS;
@@ -33,19 +34,9 @@ namespace LSP
 
             _logger = serviceProvider.GetService<ILogger>();
             _RedisConnectorHelper = new RedisUtils(0);
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                //_staticDataManager = new SqlServerDataManager(config["SQLServerNameOfStaticDataDatabase"], config["SQLServerDatabaseAddress"], config["SQLServerUser"], config["SQLServerPassword"]);
-                //_storeLogs = new StoreLogs(_staticDataManager, _logger, "[HIS].[HIS_LOGS_INSERT]");
-                _staticDataManager = new Irisa.DataLayer.Oracle.OracleDataManager(config["OracleServicename"], config["OracleDatabaseAddress"], config["OracleStaticUser"], config["OracleStaticPassword"]);
-                _storeLogs = new StoreLogs(_staticDataManager, _logger, "SCADA.\"HIS_HisLogs_Insert\"");
-
-            }
-            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-            {
-                _staticDataManager = new Irisa.DataLayer.Oracle.OracleDataManager(config["OracleServicename"], config["OracleDatabaseAddress"], config["OracleStaticUser"], config["OracleStaticPassword"]);
-                _storeLogs = new StoreLogs(_staticDataManager, _logger, "SCADA.\"HIS_HisLogs_Insert\"");
-            }
+            
+            _staticDataManager = new Irisa.DataLayer.Oracle.OracleDataManager(config["OracleServicename"], config["OracleDatabaseAddress"], config["OracleStaticUser"], config["OracleStaticPassword"]);
+            _storeLogs = new StoreLogs(_staticDataManager, _logger, "SCADA.\"HIS_HisLogs_Insert\"");
 
             var historyDataRequest = new HistoryDataRequest
             {
@@ -76,9 +67,10 @@ namespace LSP
                 _logger.WriteEntry("Loading data from database is completed", LogLevels.Info);
 
             _rpcService.StateChanged += OnRpcStateChanged;
+            _lspManager.Initialize();
             _runtimeDataReceiver.Start();
             
-            _lspManager.Initialize();
+           
 
             return base.StartAsync(cancellationToken);
         }

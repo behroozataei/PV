@@ -8,7 +8,7 @@ using StackExchange.Redis;
 using System.Linq;
 using Newtonsoft.Json.Linq;
 
-
+using COM;
 using Irisa.Logger;
 using Irisa.DataLayer;
 using Irisa.DataLayer.SqlServer;
@@ -33,27 +33,16 @@ namespace LSP
 
         private bool LoadfromCache = false;
         IDatabase _cache;
-        private bool isBuild = false;
+        public bool isBuild = false;
 
         public Repository(ILogger logger, IConfiguration config, RedisUtils RedisConnectorHelper)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                //_staticDataManager = new SqlServerDataManager(config["SQLServerNameOfStaticDataDatabase"], config["SQLServerDatabaseAddress"], config["SQLServerUser"], config["SQLServerPassword"]);
-                //_historicalDataManager = new SqlServerDataManager(config["SQLServerNameOfHistoricalDatabase"], config["SQLServerDatabaseAddress"], config["SQLServerUser"], config["SQLServerPassword"]);
-                _staticDataManager = new OracleDataManager(config["OracleServicename"], config["OracleDatabaseAddress"], config["OracleStaticUser"], config["OracleStaticPassword"]);
-                _historicalDataManager = new OracleDataManager(config["OracleServicename"], config["OracleDatabaseAddress"], config["OracleHISUser"], config["OracleHISPassword"]);
+            
+            _staticDataManager = new OracleDataManager(config["OracleServicename"], config["OracleDatabaseAddress"], config["OracleStaticUser"], config["OracleStaticPassword"]);
+            _historicalDataManager = new OracleDataManager(config["OracleServicename"], config["OracleDatabaseAddress"], config["OracleHISUser"], config["OracleHISPassword"]);
 
-
-            }
-            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-            {
-
-                _staticDataManager = new OracleDataManager(config["OracleServicename"], config["OracleDatabaseAddress"], config["OracleStaticUser"], config["OracleStaticPassword"]);
-                _historicalDataManager = new OracleDataManager(config["OracleServicename"], config["OracleDatabaseAddress"], config["OracleHISUser"], config["OracleHISPassword"]);
-            }
             _linkDBpcsDataManager = new SqlServerDataManager(config["PCSLinkDatabaseName"], config["PCSLinkDatabaseAddress"], config["PCSLinkUser"], config["PCSLinkPassword"]);
             _checkPoints = new Dictionary<Guid, OCPCheckPoint>();
             _checkPointHelper = new Dictionary<string, OCPCheckPoint>();
@@ -117,7 +106,7 @@ namespace LSP
                 FetchScadaPoints();
 
 //                if(!LoadfromCache)
-                    BuildCashe();
+                BuildCashe();
 
                 _staticDataManager.Close();
                 _linkDBpcsDataManager.Close();
@@ -143,7 +132,7 @@ namespace LSP
                 _logger.WriteEntry("Loading OCP_Checkpoint Data from Cache", LogLevels.Info);
 
                 var keys = _RedisConnectorHelper.GetKeys(pattern: RedisKeyPattern.OCP_CheckPoints);
-                var dataTable_cache = _RedisConnectorHelper.StringGet<OCP_CHECKPOINTS_Object>(keys);
+                var dataTable_cache = _RedisConnectorHelper.StringGet<OCP_CHECKPOINTS_Str>(keys);
 
                 try
                 {
@@ -245,8 +234,8 @@ namespace LSP
                                                                                         //"SAMPLE_GUID, " +
                                                                                         //"AVERAGE_GUID, " +
                                                                                         "CHECKPOINT_NETWORKPATH " +
-                                                                                $"FROM  {GetEndStringCommand()}OCP_CHECKPOINTS");
-                OCP_CHECKPOINTS_Object _ocp_checkpoint_obj = new OCP_CHECKPOINTS_Object();
+                                                                                $"FROM  APP_OCP_CHECKPOINTS");
+                OCP_CHECKPOINTS_Str ocp_checkpoint_obj = new OCP_CHECKPOINTS_Str();
 
                 foreach (DataRow row in dataTable.Rows)
                 {
@@ -305,31 +294,31 @@ namespace LSP
                     scadaPoint5.SCADAType = "AnalogMeasurement";
                     checkPoint.QulityError = scadaPoint5;
 
-                    _ocp_checkpoint_obj.OCPSHEDPOINT_ID = Convert.ToInt32(row["OCPSHEDPOINT_ID"]);
-                    _ocp_checkpoint_obj.NAME = Convert.ToString(row["NAME"]);
-                    _ocp_checkpoint_obj.NETWORKPATH = Convert.ToString(row["NetworkPath"]);
-                    _ocp_checkpoint_obj.DECISIONTABLE = Convert.ToString(row["DECISIONTABLE"]);
-                    _ocp_checkpoint_obj.CHECKOVERLOAD = Convert.ToString(row["CHECKOVERLOAD"]);
-                    _ocp_checkpoint_obj.DESCRIPTION = Convert.ToString(row["DESCRIPTION"]);
-                    _ocp_checkpoint_obj.SHEDTYPE = Convert.ToString(row["ShedType"]);
-                    _ocp_checkpoint_obj.CATEGORY = Convert.ToString(row["CATEGORY"]);
-                    _ocp_checkpoint_obj.NOMINALVALUE = Convert.ToSingle(row["NominalValue"]);
-                    _ocp_checkpoint_obj.LIMITPERCENT = Convert.ToString(row["LIMITPERCENT"]);
-                    _ocp_checkpoint_obj.VOLTAGEENOM = Convert.ToString(row["VoltageEnom"]);
-                    _ocp_checkpoint_obj.VOLTAGEDENOM = Convert.ToString(row["VoltageDenom"]);
-                    _ocp_checkpoint_obj.POWERNUM = Convert.ToString(row["POWERNUM"]);
-                    _ocp_checkpoint_obj.POWERDENOM = Convert.ToString(row["POWERDENOM"]);
-                    _ocp_checkpoint_obj.CHECKPOINT_NETWORKPATH = Convert.ToString(row["CHECKPOINT_NETWORKPATH"]);
-                    _ocp_checkpoint_obj.Measurement_Id = checkPoint.MeasurementId.ToString();
-                    _ocp_checkpoint_obj.IT_Id = scadaPoint1.Id.ToString();
-                    _ocp_checkpoint_obj.AllowedActivePower_Id = scadaPoint2.Id.ToString();
-                    _ocp_checkpoint_obj.Average_Id = scadaPoint3.Id.ToString();
-                    _ocp_checkpoint_obj.Sample_Id = scadaPoint4.Id.ToString();
-                    _ocp_checkpoint_obj.QualityErr_Id = scadaPoint5.Id.ToString();
+                    ocp_checkpoint_obj.OCPSHEDPOINT_ID = Convert.ToInt32(row["OCPSHEDPOINT_ID"]);
+                    ocp_checkpoint_obj.NAME = Convert.ToString(row["NAME"]);
+                    ocp_checkpoint_obj.NETWORKPATH = Convert.ToString(row["NetworkPath"]);
+                    ocp_checkpoint_obj.DECISIONTABLE = Convert.ToString(row["DECISIONTABLE"]);
+                    ocp_checkpoint_obj.CHECKOVERLOAD = Convert.ToString(row["CHECKOVERLOAD"]);
+                    ocp_checkpoint_obj.DESCRIPTION = Convert.ToString(row["DESCRIPTION"]);
+                    ocp_checkpoint_obj.SHEDTYPE = Convert.ToString(row["ShedType"]);
+                    ocp_checkpoint_obj.CATEGORY = Convert.ToString(row["CATEGORY"]);
+                    ocp_checkpoint_obj.NOMINALVALUE = Convert.ToSingle(row["NominalValue"]);
+                    ocp_checkpoint_obj.LIMITPERCENT = Convert.ToString(row["LIMITPERCENT"]);
+                    ocp_checkpoint_obj.VOLTAGEENOM = Convert.ToString(row["VoltageEnom"]);
+                    ocp_checkpoint_obj.VOLTAGEDENOM = Convert.ToString(row["VoltageDenom"]);
+                    ocp_checkpoint_obj.POWERNUM = Convert.ToString(row["POWERNUM"]);
+                    ocp_checkpoint_obj.POWERDENOM = Convert.ToString(row["POWERDENOM"]);
+                    ocp_checkpoint_obj.CHECKPOINT_NETWORKPATH = Convert.ToString(row["CHECKPOINT_NETWORKPATH"]);
+                    ocp_checkpoint_obj.Measurement_Id = checkPoint.MeasurementId.ToString();
+                    ocp_checkpoint_obj.IT_Id = scadaPoint1.Id.ToString();
+                    ocp_checkpoint_obj.AllowedActivePower_Id = scadaPoint2.Id.ToString();
+                    ocp_checkpoint_obj.Average_Id = scadaPoint3.Id.ToString();
+                    ocp_checkpoint_obj.Sample_Id = scadaPoint4.Id.ToString();
+                    ocp_checkpoint_obj.QualityErr_Id = scadaPoint5.Id.ToString();
 
 
                     if (RedisUtils.IsConnected)
-                        _cache.StringSet(RedisKeyPattern.OCP_CheckPoints + _ocp_checkpoint_obj.OCPSHEDPOINT_ID, JsonConvert.SerializeObject(_ocp_checkpoint_obj));
+                        _cache.StringSet(RedisKeyPattern.OCP_CheckPoints + ocp_checkpoint_obj.OCPSHEDPOINT_ID, JsonConvert.SerializeObject(ocp_checkpoint_obj));
 
 
                     try
@@ -437,9 +426,9 @@ namespace LSP
                     _logger.WriteEntry("Loading LSP_PARAMS Data from Cache", LogLevels.Info);
 
                     var keys = _RedisConnectorHelper.GetKeys(pattern: RedisKeyPattern.LSP_PARAMS);
-                    var dataTable_cache = _RedisConnectorHelper.StringGet<LSP_PARAMS_Object>(keys);
+                    var dataTable_cache = _RedisConnectorHelper.StringGet<LSP_PARAMS_Str>(keys);
 
-                    foreach (LSP_PARAMS_Object row in dataTable_cache)
+                    foreach (LSP_PARAMS_Str row in dataTable_cache)
                     {
                         var id = Guid.Parse((row.ID).ToString());
                         var name = row.NAME;
@@ -469,8 +458,8 @@ namespace LSP
                 }
                 else 
                 {
-                    LSP_PARAMS_Object _lsp_param = new LSP_PARAMS_Object();
-                    var dataTable = _staticDataManager.GetRecord($"SELECT * FROM {GetEndStringCommand()}LSP_PARAMS");
+                    LSP_PARAMS_Str lsp_param = new LSP_PARAMS_Str();
+                    var dataTable = _staticDataManager.GetRecord($"SELECT * FROM APP_LSP_PARAMS");
                     foreach (DataRow row in dataTable.Rows)
                     {
                         //var id = Guid.Parse(row["GUID"].ToString());
@@ -478,15 +467,15 @@ namespace LSP
                         var name = row["NAME"].ToString();
                         var networkPath = row["NetworkPath"].ToString();
 
-                        _lsp_param.FUNCTIONNAME = row["FUNCTIONNAME"].ToString();
-                        _lsp_param.NAME = name;
-                        _lsp_param.DESCRIPTION = row["DESCRIPTION"].ToString();
-                        _lsp_param.DIRECTIONTYPE = row["DIRECTIONTYPE"].ToString();
-                        _lsp_param.NETWORKPATH = networkPath;
-                        _lsp_param.SCADATYPE = row["SCADATYPE"].ToString();
-                        _lsp_param.ID = id.ToString();
+                        lsp_param.FUNCTIONNAME = row["FUNCTIONNAME"].ToString();
+                        lsp_param.NAME = name;
+                        lsp_param.DESCRIPTION = row["DESCRIPTION"].ToString();
+                        lsp_param.DIRECTIONTYPE = row["DIRECTIONTYPE"].ToString();
+                        lsp_param.NETWORKPATH = networkPath;
+                        lsp_param.SCADATYPE = row["SCADATYPE"].ToString();
+                        lsp_param.ID = id.ToString();
                         if (RedisUtils.IsConnected)
-                            _cache.StringSet(RedisKeyPattern.LSP_PARAMS + networkPath, JsonConvert.SerializeObject(_lsp_param));
+                            _cache.StringSet(RedisKeyPattern.LSP_PARAMS + networkPath, JsonConvert.SerializeObject(lsp_param));
 
 
 
@@ -535,8 +524,8 @@ namespace LSP
                     _logger.WriteEntry("Loading LSP_DECTITEMS Data from Cache", LogLevels.Info);
 
                     var keys = _RedisConnectorHelper.GetKeys(pattern: RedisKeyPattern.LSP_DECTITEMS);
-                    var dataTable = _RedisConnectorHelper.StringGet<LSP_DECTITEMS_Object>(keys);
-                    foreach (LSP_DECTITEMS_Object row in dataTable)
+                    var dataTable = _RedisConnectorHelper.StringGet<LSP_DECTITEMS_Str>(keys);
+                    foreach (LSP_DECTITEMS_Str row in dataTable)
                     {
                         var id = Guid.Parse((row.ID).ToString());
                         //if (Guid.TryParse(row["GUID"].ToString(), out var id))
@@ -565,8 +554,8 @@ namespace LSP
                 }
                 else
                 {
-                    LSP_DECTITEMS_Object _lsp_dectitems = new LSP_DECTITEMS_Object();
-                    var dataTable = _staticDataManager.GetRecord($"SELECT * FROM {GetEndStringCommand()}LSP_DECTITEMS");
+                    LSP_DECTITEMS_Str lsp_dectitems = new LSP_DECTITEMS_Str();
+                    var dataTable = _staticDataManager.GetRecord($"SELECT * FROM APP_LSP_DECTITEMS");
 
                     foreach (DataRow row in dataTable.Rows)
                     {
@@ -581,13 +570,13 @@ namespace LSP
                             scadaPoint.DirectionType = pointDirectionType;
                             scadaPoint.SCADAType = "DigitalMeasurement";
 
-                            _lsp_dectitems.NAME = name;
-                            _lsp_dectitems.NETWORKPATH = networkPath;
-                            _lsp_dectitems.ID = id.ToString();
-                            _lsp_dectitems.DECTNO = Convert.ToInt32(row["DECTNO"]);
-                            _lsp_dectitems.DECTITEMNO = Convert.ToInt32(row["DECTITEMNO"]);
+                            lsp_dectitems.NAME = name;
+                            lsp_dectitems.NETWORKPATH = networkPath;
+                            lsp_dectitems.ID = id.ToString();
+                            lsp_dectitems.DECTNO = Convert.ToInt32(row["DECTNO"]);
+                            lsp_dectitems.DECTITEMNO = Convert.ToInt32(row["DECTITEMNO"]);
                             if (RedisUtils.IsConnected)
-                                _cache.StringSet(RedisKeyPattern.LSP_DECTITEMS +row["DECTNO"].ToString()+"-"+row["DECTITEMNO"].ToString(), JsonConvert.SerializeObject(_lsp_dectitems));
+                                _cache.StringSet(RedisKeyPattern.LSP_DECTITEMS +row["DECTNO"].ToString()+"-"+row["DECTITEMNO"].ToString(), JsonConvert.SerializeObject(lsp_dectitems));
 
                             if (!_scadaPoints.ContainsKey(id))
                             {
@@ -625,8 +614,8 @@ namespace LSP
                     _logger.WriteEntry("Loading LSP_DECTITEMS Data from Cache", LogLevels.Info);
 
                     var keys = _RedisConnectorHelper.GetKeys(pattern: RedisKeyPattern.LSP_PRIORITYITEMS);
-                    var dataTable = _RedisConnectorHelper.StringGet<LSP_PRIORITYITEMS_Object>(keys);
-                    foreach (LSP_PRIORITYITEMS_Object row in dataTable)
+                    var dataTable = _RedisConnectorHelper.StringGet<LSP_PRIORITYITEMS_Str>(keys);
+                    foreach (LSP_PRIORITYITEMS_Str row in dataTable)
                     {
                         var id_curr = Guid.Parse((row.ID_CURR).ToString());
                         var id_cb = Guid.Parse((row.ID_CB).ToString()); 
@@ -675,8 +664,8 @@ namespace LSP
 
                 else
                 {
-                    LSP_PRIORITYITEMS_Object _lsp_priorityitems = new LSP_PRIORITYITEMS_Object();
-                    var dataTable = _staticDataManager.GetRecord($"SELECT * FROM {GetEndStringCommand()}LSP_PRIORITYITEMS ORDER BY PRIORITYLISTNO, ITEMNO");
+                    LSP_PRIORITYITEMS_Str lsp_priorityitems = new LSP_PRIORITYITEMS_Str();
+                    var dataTable = _staticDataManager.GetRecord($"SELECT * FROM APP_LSP_PRIORITYITEMS ORDER BY PRIORITYLISTNO, ITEMNO");
 
                     foreach (DataRow row in dataTable.Rows)
                     {
@@ -686,19 +675,19 @@ namespace LSP
                         if (row["ADDRESSPARTNER"].ToString()!="NULL")
                              id_cb_partner = GetGuid(row["ADDRESSPARTNER"].ToString());
 
-                        _lsp_priorityitems.ID_CURR = id_curr.ToString();
-                        _lsp_priorityitems.ID_CB = id_cb.ToString();
-                        _lsp_priorityitems.ID_CB_PARTNER = id_cb_partner.ToString();
-                        _lsp_priorityitems.PRIORITYLISTNO = Convert.ToInt32(row["PRIORITYLISTNO"].ToString());
-                        _lsp_priorityitems.ITEMNO = Convert.ToInt32(row["ITEMNO"].ToString());
-                        _lsp_priorityitems.NETWORKPATH_CURR = row["NETWORKPATH_CURR"].ToString();
-                        _lsp_priorityitems.NETWORKPATH_ITEM = row["NETWORKPATH_ITEM"].ToString();
-                        _lsp_priorityitems.DESCRIPTION = row["DESCRIPTION"].ToString();
-                        _lsp_priorityitems.HASPARTNER = row["HASPARTNER"].ToString();
-                        _lsp_priorityitems.ADDRESSPARTNER = row["ADDRESSPARTNER"].ToString();
+                        lsp_priorityitems.ID_CURR = id_curr.ToString();
+                        lsp_priorityitems.ID_CB = id_cb.ToString();
+                        lsp_priorityitems.ID_CB_PARTNER = id_cb_partner.ToString();
+                        lsp_priorityitems.PRIORITYLISTNO = Convert.ToInt32(row["PRIORITYLISTNO"].ToString());
+                        lsp_priorityitems.ITEMNO = Convert.ToInt32(row["ITEMNO"].ToString());
+                        lsp_priorityitems.NETWORKPATH_CURR = row["NETWORKPATH_CURR"].ToString();
+                        lsp_priorityitems.NETWORKPATH_ITEM = row["NETWORKPATH_ITEM"].ToString();
+                        lsp_priorityitems.DESCRIPTION = row["DESCRIPTION"].ToString();
+                        lsp_priorityitems.HASPARTNER = row["HASPARTNER"].ToString();
+                        lsp_priorityitems.ADDRESSPARTNER = row["ADDRESSPARTNER"].ToString();
 
                         if (RedisUtils.IsConnected)
-                            _cache.StringSet(RedisKeyPattern.LSP_PRIORITYITEMS + row["PRIORITYLISTNO"].ToString() + "-" + row["ITEMNO"].ToString(), JsonConvert.SerializeObject(_lsp_priorityitems));
+                            _cache.StringSet(RedisKeyPattern.LSP_PRIORITYITEMS + row["PRIORITYLISTNO"].ToString() + "-" + row["ITEMNO"].ToString(), JsonConvert.SerializeObject(lsp_priorityitems));
 
                         //if (Guid.TryParse(row["GUID_CURR"].ToString(), out var id))
                         if (id_curr != Guid.Empty)
@@ -764,8 +753,8 @@ namespace LSP
                     _logger.WriteEntry("Loading EEC_EAFSPRIORITY Data from Cache", LogLevels.Info);
 
                     var keys = _RedisConnectorHelper.GetKeys(pattern: RedisKeyPattern.EEC_EAFSPriority);
-                    var dataTable = _RedisConnectorHelper.StringGet<EEC_EAFSPRIORITY_Object>(keys);
-                    foreach (EEC_EAFSPRIORITY_Object row in dataTable)
+                    var dataTable = _RedisConnectorHelper.StringGet<EEC_EAFSPRIORITY_Str>(keys);
+                    foreach (EEC_EAFSPRIORITY_Str row in dataTable)
                     {
                         var id_CB = Guid.Parse((row.ID_CB).ToString());
                         var id_CT = Guid.Parse((row.ID_CT).ToString());
@@ -831,8 +820,8 @@ namespace LSP
                 }
                 else
                 {
-                    EEC_EAFSPRIORITY_Object _eec_eafpriority = new EEC_EAFSPRIORITY_Object();
-                    var dataTable = _staticDataManager.GetRecord($"SELECT * FROM {GetEndStringCommand()}EEC_EAFSPRIORITY ORDER BY Furnace");
+                    EEC_EAFSPRIORITY_Str eec_eafpriority = new EEC_EAFSPRIORITY_Str();
+                    var dataTable = _staticDataManager.GetRecord($"SELECT * FROM APP_EEC_EAFSPRIORITY ORDER BY Furnace");
 
                     foreach (DataRow row in dataTable.Rows)
                     {
@@ -840,16 +829,16 @@ namespace LSP
                         var id_CT = GetGuid(row["CT_NETWORKPATH"].ToString());
                         var id_CB_Partner = GetGuid(row["PARTNERADDRESS"].ToString());
 
-                        _eec_eafpriority.ID_CB = id_CB.ToString();
-                        _eec_eafpriority.ID_CT = id_CT.ToString();
-                        _eec_eafpriority.ID_CB_PARTNER = id_CB_Partner.ToString();
-                        _eec_eafpriority.CB_NETWORKPATH = row["CB_NETWORKPATH"].ToString();
-                        _eec_eafpriority.CT_NETWORKPATH = row["CT_NETWORKPATH"].ToString();
-                        _eec_eafpriority.HASPARTNER = row["HASPARTNER"].ToString();
-                        _eec_eafpriority.PARTNERADDRESS = row["PARTNERADDRESS"].ToString();
-                        _eec_eafpriority.FURNACE = row["FURNACE"].ToString();
+                        eec_eafpriority.ID_CB = id_CB.ToString();
+                        eec_eafpriority.ID_CT = id_CT.ToString();
+                        eec_eafpriority.ID_CB_PARTNER = id_CB_Partner.ToString();
+                        eec_eafpriority.CB_NETWORKPATH = row["CB_NETWORKPATH"].ToString();
+                        eec_eafpriority.CT_NETWORKPATH = row["CT_NETWORKPATH"].ToString();
+                        eec_eafpriority.HASPARTNER = row["HASPARTNER"].ToString();
+                        eec_eafpriority.PARTNERADDRESS = row["PARTNERADDRESS"].ToString();
+                        eec_eafpriority.FURNACE = row["FURNACE"].ToString();
                         if (RedisUtils.IsConnected)
-                            _cache.StringSet(RedisKeyPattern.EEC_EAFSPriority + row["CB_NETWORKPATH"].ToString() , JsonConvert.SerializeObject(_eec_eafpriority));
+                            _cache.StringSet(RedisKeyPattern.EEC_EAFSPriority + row["CB_NETWORKPATH"].ToString() , JsonConvert.SerializeObject(eec_eafpriority));
 
 
 
@@ -937,23 +926,28 @@ namespace LSP
                 if (RedisUtils.IsConnected)
                 {
                     DataTable dataTable = null;
-                    dataTable = _staticDataManager.GetRecord($"SELECT * from {GetEndStringCommand()}LSP_DECTCOMB");
+                    dataTable = _staticDataManager.GetRecord($"SELECT * from APP_LSP_DECTCOMB");
                     //var ff1 = JsonConvert.SerializeObject(dataTable);
                     //var ff2 = JsonConvert.DeserializeObject<DataTable>(ff1);
                     _cache.StringSet(RedisKeyPattern.LSP_DECTCOMB, JsonConvert.SerializeObject(dataTable));
 
 
-                    dataTable = _staticDataManager.GetRecord($"SELECT * from {GetEndStringCommand()}LSP_DECTLIST");
+                    dataTable = _staticDataManager.GetRecord($"SELECT * from APP_LSP_DECTLIST");
                     _cache.StringSet(RedisKeyPattern.LSP_DECTLIST, JsonConvert.SerializeObject(dataTable));
 
-                    dataTable = _staticDataManager.GetRecord($"SELECT * from {GetEndStringCommand()}LSP_DECTPRIOLS");
+                    dataTable = _staticDataManager.GetRecord($"SELECT * from APP_LSP_DECTPRIOLS");
                    _cache.StringSet(RedisKeyPattern.LSP_DECTPRIOLS, JsonConvert.SerializeObject(dataTable));
 
-                    dataTable = _staticDataManager.GetRecord($"SELECT * from {GetEndStringCommand()}LSP_PRIORITYLIST");
+                    dataTable = _staticDataManager.GetRecord($"SELECT * from APP_LSP_PRIORITYLIST");
                     _cache.StringSet(RedisKeyPattern.LSP_PRIORITYLIST, JsonConvert.SerializeObject(dataTable));
+                    var appkeys= _RedisConnectorHelper.GetKeys("APP:*");
 
-                    dataTable = _historicalDataManager.GetRecord($"SELECT * from {GetEndStringCommand()}EEC_SFSCEAFSPRIORITY");
-                    _cache.StringSet(RedisKeyPattern.EEC_SFSCEAFSPRIORITY, JsonConvert.SerializeObject(dataTable));
+                    //foreach (RedisKey key in appkeys)
+                    //    _cache.KeyDelete(key);
+
+
+
+
                 }
 
 
@@ -1029,17 +1023,17 @@ namespace LSP
             return dataTable;
         }
 
-        public IEnumerable<LSP_DECTITEMS_Object> FetchItems(byte decisionTableNo)
+        public IEnumerable<LSP_DECTITEMS_Str> FetchItems(byte decisionTableNo)
         {
             DataTable dataTable = null;
-            IEnumerable< LSP_DECTITEMS_Object> row = null;
+            IEnumerable< LSP_DECTITEMS_Str> row = null;
 
             try
             {
                 //if (LoadfromCache)
                 //{
                       var keys = _RedisConnectorHelper.GetKeys(pattern: RedisKeyPattern.LSP_DECTITEMS);
-                      row = _RedisConnectorHelper.StringGet<LSP_DECTITEMS_Object>(keys).ToArray();
+                      row = _RedisConnectorHelper.StringGet<LSP_DECTITEMS_Str>(keys).ToArray();
                 //}
                 //else
                 //    dataTable = _staticDataManager.GetRecord($"SELECT * from {GetEndStringCommand()}LSP_DECTITEMS WHERE DECTNO = " + decisionTableNo.ToString() + " ORDER BY DECTITEMNO ");
@@ -1108,17 +1102,17 @@ namespace LSP
             return dataTable;
         }
 
-        public IEnumerable<LSP_PRIORITYITEMS_Object> FetchBreakersToShed(byte priorityListNo)
+        public IEnumerable<LSP_PRIORITYITEMS_Str> FetchBreakersToShed(byte priorityListNo)
         {
             DataTable dataTable = null;
-            IEnumerable<LSP_PRIORITYITEMS_Object> row = null;
+            IEnumerable<LSP_PRIORITYITEMS_Str> row = null;
 
             try
             {
                 //if (LoadfromCache)
                 //{
                     var keys = _RedisConnectorHelper.GetKeys(pattern: RedisKeyPattern.LSP_PRIORITYITEMS);
-                    row = _RedisConnectorHelper.StringGet<LSP_PRIORITYITEMS_Object>(keys).ToArray();
+                    row = _RedisConnectorHelper.StringGet<LSP_PRIORITYITEMS_Str>(keys).ToArray();
                 //}
                 //else
                 //{
@@ -1281,9 +1275,9 @@ namespace LSP
             return dataTable;
         }
 
-        public DataTable FetchEAFSPriority(string grpNumber, string FurnaceStatus, string strSQLException)
+        public FetchEAFSPriority_Str[] FetchEAFSPriority(string grpNumber, string FurnaceStatus, List<string> Exception)
         {
-            DataTable dataTable = null;
+            FetchEAFSPriority_Str[] dataTable =null;
 
             
 
@@ -1291,61 +1285,72 @@ namespace LSP
             {
                 //if (LoadfromCache)
                 //{
-                //    dataTable = JsonConvert.DeserializeObject<DataTable>(_cache.StringGet(RedisKeyPattern.EEC_EAFSPriority));
-                //    var eec_eafpriol_rows = dataTable.Rows.OfType<DataRow>().ToArray();
-                //    dataTable = JsonConvert.DeserializeObject<DataTable>(_cache.StringGet(RedisKeyPattern.EEC_SFSCEAFSPRIORITY));
-                //    var eec_sfsceafpriol_rows = dataTable.Rows.OfType<DataRow>().ToArray();
+                
+                if (GetRedisUtiles().GetKeys(pattern: RedisKeyPattern.EEC_SFSCEAFSPRIORITY).Length == 0)
+                {
+                    _logger.WriteEntry("Error in running get furnce number from EEC_SFSCEAFSPRIORITY cache", LogLevels.Error);
 
-                //   var data = from ee in eec_eafpriol_rows
-                //    join es in eec_sfsceafpriol_rows on ee["FURNACE"].ToString() equals es["FURNACE"].ToString()
-                //    select new
-                //    {
-                //        CB_NETWORKPATH = ee["CB_NETWORKPATH"].ToString(),
-                //        CT_NETWORKPATH = ee["CT_NETWORKPATH"].ToString(),
-                //        HASPARTNER = ee["HASPARTNER"].ToString(),
-                //        PARTNERADDRESS = ee["PARTNERADDRESS"].ToString(),
-                //        FURNACE = ee["FURNACE"].ToString(),
-                //        CONSUMED_ENERGY_PER_HEAT = es["CONSUMED_ENERGY_PER_HEAT"].ToString(),
-                //        STATUS_OF_FURNACE = es["STATUS_OF_FURNACE"].ToString(),
-                //        GROUPNUM = es["GROUPNUM"].ToString()
-                //    };
+                    return dataTable;
+                }
+
+                var keys = GetRedisUtiles().GetKeys(pattern: RedisKeyPattern.EEC_EAFSPriority);
+                if (keys.Length == 0)
+                {
+                    _logger.WriteEntry("Error in running get furnce number from EEC_EAFSPriority cache", LogLevels.Error);
+                    
+                    return dataTable;
+                }
 
 
+                EEC_EAFSPRIORITY_Str[] eec_eafprio_rows = new EEC_EAFSPRIORITY_Str[8];
+                EEC_SFSCEAFSPRIORITY_Str[] _eec_sfscprio_table = new EEC_SFSCEAFSPRIORITY_Str[8];
+                var _eec_eafprio_table = _RedisConnectorHelper.StringGet<EEC_EAFSPRIORITY_Str>(keys).ToArray();
+                    
+                for (int fur = 0; fur < 8; fur++)
+                {
+                    eec_eafprio_rows[fur] = _eec_eafprio_table.Where(n => n.FURNACE == (fur+1).ToString()).First();
+                    _eec_sfscprio_table[fur] = JsonConvert.DeserializeObject<EEC_SFSCEAFSPRIORITY_Str>(_cache.StringGet(RedisKeyPattern.EEC_SFSCEAFSPRIORITY + (fur + 1).ToString()));
+                }
 
+                var dataTable_1 = from ee in eec_eafprio_rows
+                                  join es in _eec_sfscprio_table on ee.FURNACE.ToString() equals es.FURNACE.ToString()
+                                    select new FetchEAFSPriority_Str
+                                    {
+                                        CB_NETWORKPATH = ee.CB_NETWORKPATH.ToString(),
+                                        CT_NETWORKPATH = ee.CT_NETWORKPATH.ToString(),
+                                        HASPARTNER = ee.HASPARTNER.ToString(),
+                                        PARTNERADDRESS = ee.PARTNERADDRESS.ToString(),
+                                        FURNACE = ee.FURNACE.ToString(),
+                                        CONSUMED_ENERGY_PER_HEAT = es.CONSUMED_ENERGY_PER_HEAT.ToString(),
+                                        STATUS_OF_FURNACE = es.STATUS_OF_FURNACE.ToString(),
+                                        GROUPNUM = es.GROUPNUM.ToString(),
+                                        ID_CB = ee.ID_CB,
+                                        ID_CT=ee.ID_CT,
+                                        ID_CB_PARTNER=ee.ID_CB_PARTNER
+                            } ;
+                var dataTable_2 = dataTable_1;
+                if (grpNumber != "")
+                    dataTable_2 = dataTable_1.Where(n => n.GROUPNUM == grpNumber).ToArray();
+                var dataTable_3 = dataTable_2.Where(n => n.STATUS_OF_FURNACE == FurnaceStatus).OrderBy(n => (Convert.ToDecimal(n.CONSUMED_ENERGY_PER_HEAT))).ToArray();
+                dataTable = dataTable_3.Where (n => !Exception.Contains(n.CB_NETWORKPATH)).ToArray();
                 //}
                 //else
-                {
-                    string selectsql = "";
-                    if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-                    {
-                        // selectsql = "select ee.CB_NETWORKPATH, ee.CT_NETWORKPATH, ee.HASPARTNER, ee.PARTNERADDRESS, " +
-                        //"ee.FURNACE, es.CONSUMED_ENERGY_PER_HEAT, es.STATUS_OF_FURNACE, es.FURNACE, " +
-                        //"es.GROUPNUM from IrisaHistorical.app.EEC_SFSCEAFSPriority es, app.EEC_EAFSPriority ee " +
-                        //"where ee.FURNACE = es.FURNACE ";
-                        selectsql = "select ee.CB_NETWORKPATH, ee.CT_NETWORKPATH, ee.HASPARTNER, ee.PARTNERADDRESS, " +
-                      "ee.FURNACE, es.CONSUMED_ENERGY_PER_HEAT, es.STATUS_OF_FURNACE, es.FURNACE, " +
-                      "es.GROUPNUM from SCADAHIS.APP_EEC_SFSCEAFSPRIORITY es, SCADA.APP_EEC_EAFSPRIORITY ee " +
-                      "WHERE ee.FURNACE = es.FURNACE ";
-                    }
-                    else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-                    {
-                        selectsql = "select ee.CB_NETWORKPATH, ee.CT_NETWORKPATH, ee.HASPARTNER, ee.PARTNERADDRESS, " +
-                      "ee.FURNACE, es.CONSUMED_ENERGY_PER_HEAT, es.STATUS_OF_FURNACE, es.FURNACE, " +
-                      "es.GROUPNUM from SCADAHIS.APP_EEC_SFSCEAFSPRIORITY es, SCADA.APP_EEC_EAFSPRIORITY ee " +
-                      "WHERE ee.FURNACE = es.FURNACE ";
+                //{
+                //    string selectsql = "select ee.CB_NETWORKPATH, ee.CT_NETWORKPATH, ee.HASPARTNER, ee.PARTNERADDRESS, " +
+                //      "ee.FURNACE, es.CONSUMED_ENERGY_PER_HEAT, es.STATUS_OF_FURNACE, es.FURNACE, " +
+                //      "es.GROUPNUM from SCADAHIS.APP_EEC_SFSCEAFSPRIORITY es, SCADA.APP_EEC_EAFSPRIORITY ee " +
+                //      "WHERE ee.FURNACE = es.FURNACE ";
 
-                    }
+                //    //  1399-10-03
+                //    //ToDO :
+                //    // why does for Line Overloaded (Line 914 or 915)  not considered grpnumber  ?
+                //    string selgrpNumber = (grpNumber != "") ? "AND GROUPNUM = '" + grpNumber + "'" : "";
 
-                    //  1399-10-03
-                    //ToDO :
-                    // why does for Line Overloaded (Line 914 or 915)  not considered grpnumber  ?
-                    string selgrpNumber = (grpNumber != "") ? "AND GROUPNUM = '" + grpNumber + "'" : "";
+                //    string StringSql = selectsql + selgrpNumber + " AND STATUS_OF_FURNACE = '" + FurnaceStatus + "' " + strSQLException + " ORDER BY CAST( CONSUMED_ENERGY_PER_HEAT AS FLOAT) ASC";
+                //    //string StringSql = "SELECT * FROM app.EEC_EAFSPriority WHERE GROUPNUM = " + grpNumber + " AND STATUS_OF_FURNACE = '" + FurnaceStatus + "' " + strSQLException + " ORDER BY CONSUMED_ENERGY_PER_HEAT ASC";
 
-                    string StringSql = selectsql + selgrpNumber + " AND STATUS_OF_FURNACE = '" + FurnaceStatus + "' " + strSQLException + " ORDER BY CAST( CONSUMED_ENERGY_PER_HEAT AS FLOAT) ASC";
-                    //string StringSql = "SELECT * FROM app.EEC_EAFSPriority WHERE GROUPNUM = " + grpNumber + " AND STATUS_OF_FURNACE = '" + FurnaceStatus + "' " + strSQLException + " ORDER BY CONSUMED_ENERGY_PER_HEAT ASC";
-
-                    dataTable = _staticDataManager.GetRecord(StringSql);
-                }
+                //    dataTable = _staticDataManager.GetRecord(StringSql);
+                //}
             }
             catch (Irisa.DataLayer.DataException ex)
             {
@@ -1487,6 +1492,11 @@ namespace LSP
 
             return false;
         }
+        public RedisUtils GetRedisUtiles()
+        {
+            return _RedisConnectorHelper;
+
+        }
 
         public Guid GetGuid(String networkpath)
         {
@@ -1499,13 +1509,7 @@ namespace LSP
                     _logger.WriteEntry("The GUID could not read from Repository for Network   " + networkpath, LogLevels.Error);
             }
             
-            string sql = null;
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-                //sql = "SELECT * FROM dbo.NodesFullPath where FullPath = '" + networkpath + "'";
-                sql = "SELECT * FROM NodesFullPath where TO_CHAR(FullPath) = '" + networkpath + "'";
-
-            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-                sql = "SELECT * FROM NodesFullPath where TO_CHAR(FullPath) = '" + networkpath + "'";
+            string sql = "SELECT * FROM NodesFullPath where TO_CHAR(FullPath) = '" + networkpath + "'";
 
             try
             {
@@ -1580,104 +1584,7 @@ namespace LSP
         
 
     }
-    static class RedisKeyPattern
-    {
-        public const string MAB_PARAMS = "APP:MAB_PARAMS:";
-        public const string DCIS_PARAMS = "APP:DCIS_PARAMS:";
-        public const string DCP_PARAMS = "APP:DCP_PARAMS:";
-        public const string EEC_EAFSPriority = "APP:EEC_EAFSPriority:";
-        public const string EEC_PARAMS = "APP:EEC_PARAMS:";
-        public const string LSP_DECTCOMB = "APP:LSP_DECTCOMB:";
-        public const string LSP_DECTITEMS = "APP:LSP_DECTITEMS:";
-        public const string LSP_DECTLIST = "APP:LSP_DECTLIST:";
-        public const string LSP_DECTPRIOLS = "APP:LSP_DECTPRIOLS:";
-        public const string LSP_PARAMS = "APP:LSP_PARAMS:";
-        public const string LSP_PRIORITYITEMS = "APP:LSP_PRIORITYITEMS:";
-        public const string LSP_PRIORITYLIST = "APP:LSP_PRIORITYLIST:";
-        public const string OCP_CheckPoints = "APP:OCP_CheckPoints:";
-        public const string OCP_PARAMS = "APP:OCP_PARAMS:";
-        public const string OPCMeasurement = "APP:OPCMeasurement:";
-        public const string OPC_Params = "APP:OPC_Params:";
-        public const string EEC_SFSCEAFSPRIORITY = "APP:EEC_SFSCEAFSPRIORITY:";
-    }
-    class OCP_CHECKPOINTS_Object
-    {
-        public int     OCPSHEDPOINT_ID;
-        public string  NAME;
-        public string  NETWORKPATH;
-        public string  DECISIONTABLE;
-        public string  CHECKOVERLOAD;
-        public string  DESCRIPTION;
-        public string  SHEDTYPE;
-        public string  CATEGORY;
-        public float   NOMINALVALUE;
-        public string  LIMITPERCENT;
-        public string  VOLTAGEENOM;
-        public string  VOLTAGEDENOM;
-        public string  POWERNUM;
-        public string  POWERDENOM;
-        public string  CHECKPOINT_NETWORKPATH;
-        public string  Measurement_Id;
-        public string  IT_Id;
-        public string  AllowedActivePower_Id;
-        public string  Average_Id;
-        public string  Sample_Id;
-        public string  QualityErr_Id;
-    };
-
-    class LSP_PARAMS_Object
-    {
-        public string ID;
-        public string FUNCTIONNAME;
-        public string NAME;
-        public string DESCRIPTION;
-        public string DIRECTIONTYPE;
-        public string NETWORKPATH;
-        public string SCADATYPE;
-    }
-    class LSP_DECTITEMS_Object
-    {
-        public string ID;
-        public int DECTNO;
-        public int DECTITEMNO;
-        public string NAME;
-        public string NETWORKPATH;
-    }
-
-    class LSP_PRIORITYITEMS_Object
-    {
-        public string ID_CURR;
-        public string ID_CB;
-        public string ID_CB_PARTNER;
-        public int PRIORITYLISTNO;
-        public int ITEMNO;
-        public string NETWORKPATH_CURR;
-        public string NETWORKPATH_ITEM;
-        public string DESCRIPTION;
-        public string HASPARTNER;
-        public string ADDRESSPARTNER;
-    }
-
-    class EEC_EAFSPRIORITY_Object
-    {
-        public string ID_CB;
-        public string ID_CT;
-        public string ID_CB_PARTNER;
-        public string CB_NETWORKPATH;
-        public string CT_NETWORKPATH;
-        public string HASPARTNER;
-        public string PARTNERADDRESS;
-        public string FURNACE;
-    }
-
-    class LSP_DECTLIST_Object
-    {
-        public int DECTNO;
-        public string NAME;
-        public string FULLNAME;
-        public int NITEMS;
-        public int NCOMBINATIONS;
-       
-    }
+   
+   
 
 }

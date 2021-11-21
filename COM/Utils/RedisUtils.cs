@@ -7,9 +7,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Extensions.Configuration;
+//using Microsoft.Extensions.Configuration;
 
-namespace MAB
+namespace COM
 {
     public class RedisUtils
     {
@@ -68,6 +68,16 @@ namespace MAB
         private static void RedisConnection_ConnectionFailed(object sender, ConnectionFailedEventArgs e)
         {
             
+        }
+
+        private static void RedisConnection_ErrorMessage(object sender, RedisErrorEventArgs e)
+        {
+
+        }
+
+        private static void RedisConnection_ConfigurationChanged(object sender, EndPointEventArgs e)
+        {
+
         }
 
         private int _database = 0;

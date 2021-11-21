@@ -2,7 +2,9 @@ using System;
 using System.Runtime.InteropServices;
 using System.Data;
 using System.Timers;
+using System.Linq;
 
+using COM;
 using Irisa.Logger;
 using Irisa.Message;
 
@@ -82,26 +84,7 @@ namespace DCP
 				_logger.WriteEntry(excep.Message, LogLevels.Error, excep);
 			}
 		}
-		private static string GetEndStringCommand()
-		{
-			if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-			{
-				//return "app.";
-				return "APP_";
-				// return string.Empty;
-
-			}
-
-			if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-			{
-
-				return "APP_";
-
-			}
-
-			return string.Empty;
-		}
-
+		
 		public void RunCyclicOperation4Second(object sender, ElapsedEventArgs e)
 		{
 			try
@@ -120,31 +103,33 @@ namespace DCP
 			{
 				var sql = "SELECT TelDateTime, Sumation, PowerGrp1, PowerGrp2, Furnace1, Furnace2, " +
 					"Furnace3, Furnace4, Furnace5, Furnace6, Furnace7, Furnace8 " +
-					$"from {GetEndStringCommand()}SFSC_EAFsPower Where ID = (Select Max(ID) From {GetEndStringCommand()}SFSC_EAFsPower)";
-				DataTable dataTable = _repository.GetFromHistoricalDB(sql);
-				if ((dataTable is null) || (dataTable.Rows.Count == 0))
+					$"from APP_SFSC_EAFsPower Where ID = (Select Max(ID) From APP_SFSC_EAFsPower)";
+				//DataTable dataTable = _repository.GetFromHistoricalDB(sql);
+				SFSC_EAFSPOWER_Str  sfsc_eafsp = _repository.GetFromHistoricalCache();
+				//var rows = dataTable1.Rows.OfType<SFSC_EAFSPOWER_Str>().ToArray();
+				if ((sfsc_eafsp is null))
 				{
-					_logger.WriteEntry($"Error: Select from Historical.{GetEndStringCommand()}SFSC_EAFsPower is null or no Row ", LogLevels.Error);
+					_logger.WriteEntry($"Error: Select from Historical APP_SFSC_EAFsPower is null or no Row ", LogLevels.Error);
 					return false;
 				}
 				else
 				{
-					DataRow dr = dataTable.Rows[0];
+					//DataRow dr = dataTable1.Rows[0];
 					sql = "INSERT INTO [PU10_PCS].[dbo].[T_EAFsPower](TelDateTime, Sumation, " +
 						"PowerGrp1, PowerGrp2, Furnace1, Furnace2, Furnace3, Furnace4, Furnace5, " +
 						"Furnace6, Furnace7, Furnace8) Values('" +
-						dr["TelDateTime"].ToString() + "', " +
-						dr["Sumation"].ToString() + ", " +
-						dr["PowerGrp1"].ToString() + ", " +
-						dr["PowerGrp2"].ToString() + ", " +
-						dr["Furnace1"].ToString() + ", " +
-						dr["Furnace2"].ToString() + ", " +
-						dr["Furnace3"].ToString() + ", " +
-						dr["Furnace4"].ToString() + ", " +
-						dr["Furnace5"].ToString() + ", " +
-						dr["Furnace6"].ToString() + ", " +
-						dr["Furnace7"].ToString() + ", " +
-						dr["Furnace8"].ToString() + " " +
+						sfsc_eafsp.TELDATETIME.ToString() + "', " +
+						sfsc_eafsp.SUMATION.ToString() + ", " +
+						sfsc_eafsp.POWERGRP1.ToString() + ", " +
+						sfsc_eafsp.POWERGRP2.ToString() + ", " +
+						sfsc_eafsp.FURNACE1.ToString() + ", " +
+						sfsc_eafsp.FURNACE2.ToString() + ", " +
+						sfsc_eafsp.FURNACE3.ToString() + ", " +
+						sfsc_eafsp.FURNACE4.ToString() + ", " +
+						sfsc_eafsp.FURNACE5.ToString() + ", " +
+						sfsc_eafsp.FURNACE6.ToString() + ", " +
+						sfsc_eafsp.FURNACE7.ToString() + ", " +
+						sfsc_eafsp.FURNACE8.ToString() + " " +
 						" );";
 					if (!_repository.ModifyOnLinkDB(sql))
 					{

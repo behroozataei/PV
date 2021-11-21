@@ -1,7 +1,11 @@
 using System;
 using System.Timers;
 using System.Data;
+using Newtonsoft.Json;
+using StackExchange.Redis;
+using System.Linq;
 
+using COM;
 using Irisa.Logger;
 
 namespace DCP
@@ -48,6 +52,7 @@ namespace DCP
 
 		private bool isWorking;
 		private bool isWoring_timer_EAFGroupReq;
+		IDatabase _cache;
 
 
 		//==============================================================================
@@ -430,6 +435,7 @@ namespace DCP
 				string strTelDate = "";
 				string strTime = "";
 				string strErrorPath = "";
+				EEC_TELEGRAM_Str _eec_telegram = new EEC_TELEGRAM_Str();
 
 				// Debug only
 				//if (isWorking)
@@ -473,43 +479,78 @@ namespace DCP
 
 				//--------------------------------------------------------------------------
 				// 5. Read Last Telegram from DB
-				var dtbEECTelegram = _repository.GetEECTELEGRAM();
-				foreach( DataRow dr in dtbEECTelegram.Rows)
-				{
-					var aTime = DateTime.Parse(dr["SENTTIME"].ToString()); 
-					if (aTime.Year != 1900 )
-					{
-						_logger.WriteEntry("There is no new EEC Telegram in the table to Send for PCS.", LogLevels.Warn);
-						isWorking = false;
-						return;
-					}
-					else
-					{
-						_logger.WriteEntry("TELDATETIME= " + dr["TELDATETIME"].ToString(), LogLevels.Info);
-					}
+				//var dtbEECTelegram = _repository.GetEECTELEGRAM();
+				//foreach( DataRow dr in dtbEECTelegram.Rows)
+				//{
+				//	var aTime = DateTime.Parse(dr["SENTTIME"].ToString()); 
+				//	if (aTime.Year != 1900 )
+				//	{
+				//		_logger.WriteEntry("There is no new EEC Telegram in the table to Send for PCS.", LogLevels.Warn);
+				//		isWorking = false;
+				//		return;
+				//	}
+				//	else
+				//	{
+				//		_logger.WriteEntry("TELDATETIME= " + dr["TELDATETIME"].ToString(), LogLevels.Info);
+				//	}
 
 					//--------------------------------------------------------------------------
+					
+
 					// 4. Preparing telegram members to Send
 					m_EECTelergramIsUpdated = true;
 
 					//_EECTelegram.m_TelegramID = aRecSet("T_CEECTELEGRAM_ID")
 					_EECTelegram = new EECTelegram();
-					_EECTelegram.m_Date = System.Convert.ToDateTime( dr["TELDATETIME"].ToString());
-					_EECTelegram.m_ResidualTime = dr["ResidualTime"].ToString();
-					_EECTelegram.m_ResidualEnergy = dr["ResidualEnergy"].ToString();
-					_EECTelegram.m_OverLoad1 = dr["MAXOVERLOAD1"].ToString();
-					_EECTelegram.m_OverLoad2 = dr["MAXOVERLOAD2"].ToString();
-					_EECTelegram.m_ResidualEnergyEnd = dr["ResidualEnergyEnd"].ToString();
 
-					strTelDate = Convert.ToDateTime(dr["TELDATETIME"]).ToString("yyyy-MM-dd HH:mm:ss");
+					var keys = _repository.GetRedisUtiles().GetKeys(pattern: RedisKeyPattern.EEC_TELEGRAM);
+					if (keys.Length == 0)
+					{
+
+						_logger.WriteEntry("There is no new EEC Telegram in the Cashe to Send for PCS.", LogLevels.Warn);
+						isWorking = false;
+						return;
+					}
+
+					var dataTable_cache = _repository.GetRedisUtiles().StringGet<EEC_TELEGRAM_Str>(keys);
 					
-				}
+					_eec_telegram = dataTable_cache.FirstOrDefault();
 
-				if (dtbEECTelegram.Rows.Count > 1)
-				{
-					// There is more than one telegram to send!
-					_logger.WriteEntry("There is more than one EEC Telegram to Send for PCS", LogLevels.Warn);
-				}
+					if (_eec_telegram.SENTTIME.Year != 1900)
+					{
+						_logger.WriteEntry("There is no new EEC Telegram in the Cashe to Send for PCS.", LogLevels.Warn);
+						isWorking = false;
+						return;
+					}
+					else
+					{
+						_logger.WriteEntry("TELDATETIME= " + _eec_telegram.TELDATETIME.ToString(), LogLevels.Info);
+					}
+
+					_EECTelegram.m_Date = _eec_telegram.TELDATETIME;
+					_EECTelegram.m_ResidualTime = _eec_telegram.RESIDUALTIME.ToString();
+					_EECTelegram.m_ResidualEnergy = _eec_telegram.RESIDUALENERGY.ToString();
+					_EECTelegram.m_OverLoad1 = _eec_telegram.MAXOVERLOAD1.ToString();
+					_EECTelegram.m_OverLoad2 = _eec_telegram.MAXOVERLOAD2.ToString();
+					_EECTelegram.m_ResidualEnergyEnd = _eec_telegram.RESIDUALENERGYEND.ToString();
+
+
+					//_EECTelegram.m_Date = System.Convert.ToDateTime( dr["TELDATETIME"].ToString());
+					//_EECTelegram.m_ResidualTime = dr["ResidualTime"].ToString();
+					//_EECTelegram.m_ResidualEnergy = dr["ResidualEnergy"].ToString();
+					//_EECTelegram.m_OverLoad1 = dr["MAXOVERLOAD1"].ToString();
+					//_EECTelegram.m_OverLoad2 = dr["MAXOVERLOAD2"].ToString();
+					//_EECTelegram.m_ResidualEnergyEnd = dr["ResidualEnergyEnd"].ToString();
+
+					//strTelDate = Convert.ToDateTime(dr["TELDATETIME"]).ToString("yyyy-MM-dd HH:mm:ss");
+					
+				//}
+
+				//if (dtbEECTelegram.Rows.Count > 1)
+				//{
+				//	// There is more than one telegram to send!
+				//	_logger.WriteEntry("There is more than one EEC Telegram to Send for PCS", LogLevels.Warn);
+				//}
 
 				//--------------------------------------------------------------------------
 				// 5. Check the sent time also ResTime
@@ -557,11 +598,16 @@ namespace DCP
 
 				//--------------------------------------------------------------------------
 				// 8. Updating sent record in the Table
-				strTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"); 
-				if (!_repository.UpdateEECTELEGRAM(strTime, strTelDate))
-				{
-					_logger.WriteEntry("Could not update T_EECTelegram Table", LogLevels.Error);
-				}
+				//strTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"); 
+
+				//if (!_repository.UpdateEECTELEGRAM(strTime, strTelDate))
+				//{
+				//	_logger.WriteEntry("Could not update T_EECTelegram Table", LogLevels.Error);
+				//}
+				_cache = _repository.GetRedisUtiles().DataBase;
+				_eec_telegram.SENTTIME = DateTime.Now;
+				_cache.StringSet(RedisKeyPattern.EEC_TELEGRAM, JsonConvert.SerializeObject(_eec_telegram));		
+
 			}
 			catch (System.Exception excep)
 			{

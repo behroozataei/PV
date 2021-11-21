@@ -3,7 +3,11 @@ using System.Data;
 using System.Runtime.InteropServices;
 using System.Timers;
 using System.Collections.Generic;
+using StackExchange.Redis;
+using Newtonsoft.Json;
+using System.Linq;
 
+using COM;
 using Irisa.Logger;
 using Irisa.Message;
 
@@ -28,25 +32,6 @@ namespace LSP
 		private bool isWorking_Shedding_To_SafeConsumption = false;
 		private bool isWorking_CheckLSPActivationFromSFSC = false;
 
-		private static string GetEndStringCommand()
-		{
-			if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-			{
-				//return "app.";
-				return "APP_";
-				//return string.Empty;
-
-			}
-
-			if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-			{
-
-				return "APP_";
-
-			}
-
-			return string.Empty;
-		}
 		internal LSPSFSCManager(ILogger logger, IRepository repository, ICpsCommandService scadaCommand, List<CPriorityList> priorityList)
 		{
 			try
@@ -69,19 +54,20 @@ namespace LSP
 
 				//------------------------------------------------------------
 				// Clearing pending shed commands
-				string sql = $"SELECT * FROM {GetEndStringCommand()}SFSC_FURNACE_TO_SHED";
-				DataTable datatable = _repository.GetFromHistoricalDB(sql);
-				if(datatable == null)
-					_logger.WriteEntry("Error in running: " + sql, LogLevels.Error);
-				if (datatable.Rows.Count != 0) 
-				{
-					sql = $"DELETE from {GetEndStringCommand()}SFSC_FURNACE_TO_SHED";
-					if (!_repository.ModifyOnHistoricalDB(sql))
-					{
-						_logger.WriteEntry("Error in running: " + sql, LogLevels.Error);
-					}
+				ClearSFSCTrigger();
+				//string sql = $"SELECT * FROM APP_SFSC_FURNACE_TO_SHED";
+				//DataTable datatable = _repository.GetFromHistoricalDB(sql);
+				//if(datatable == null)
+				//	_logger.WriteEntry("Error in running: " + sql, LogLevels.Error);
+				//if (datatable.Rows.Count != 0) 
+				//{
+				//	sql = $"DELETE from APP_SFSC_FURNACE_TO_SHED";
+				//	if (!_repository.ModifyOnHistoricalDB(sql))
+				//	{
+				//		_logger.WriteEntry("Error in running: " + sql, LogLevels.Error);
+				//	}
 
-				}
+				//}
 					
 
 				_timer_UpdateShedList = new Timer();
@@ -212,42 +198,29 @@ namespace LSP
 					_logger.WriteEntry("Error in finding SFSC/STATUS/Sent Warning", LogLevels.Error);
 				}
 
-				//	If Not IsMachineMaster() Then
-				//		Call theCTraceLogger.WriteLog(TraceInfo1, "Timer3_Timer", "Exit Because , System mode is: StandBy on Machine " & GetMachineName)
-				//		Timer3.Enabled = False
-				//		Exit Sub
-				//	End If
+				
+				var key_shed=_repository.GetRedisUtiles().GetKeys(RedisKeyPattern.SFSC_FURNACE_TO_SHED);
+				
+				//string sql = $"SELECT * FROM APP_SFSC_FURNACE_TO_SHED ORDER BY TELDATETIME DESC";
 
-				//   Call m_scada.ReadData("Network/Model Functions/SFSC/STATUS/Sent Warning", StringValue, True)
-
-				//   If StringValue<> eApp_Disapp.Appear Then
-				//   Exit Sub
-				//   Else
-
-				//   Call theCTraceLogger.WriteLog(TraceInfo1, "Timer3_Timer  ", "LSP Was Activated By SFSC")
-				string sql = $"SELECT * FROM {GetEndStringCommand()}SFSC_FURNACE_TO_SHED ORDER BY TELDATETIME DESC";
-
-				DataTable datatable = _repository.GetFromHistoricalDB(sql);
-				if (datatable is null)
+				//DataTable datatable = _repository.GetFromHistoricalDB(sql);
+				if (key_shed.Length == 0)
 				{
-					_logger.WriteEntry("Error in running " + sql, LogLevels.Error);
-					//    ''KAJI, 1394.08,  START of T8AN
-					_logger.WriteEntry("Sent Warning is Appeared in SFSC but no record is available in T_CSFSCSELECTEDFURNACETOSHED!", LogLevels.Warn);
+				//	_logger.WriteEntry("Error in running " + sql, LogLevels.Error);
+				//	//    ''KAJI, 1394.08,  START of T8AN
+				//	_logger.WriteEntry("Sent Warning is Appeared in SFSC but no record is available in T_CSFSCSELECTEDFURNACETOSHED!", LogLevels.Warn);
 
-					//if (!_updateScadaPointOnServer.WriteAnalog(scadapointWarning, (float)SinglePointStatus.Disappear))
-					//{
-					//	_logger.WriteEntry("Error in write SFSC Warning into SCADA. ", LogLevels.Error);
-					//}
-					//else
-					//	_logger.WriteEntry("Write Disappear In SCADA", LogLevels.Info);
+
 
 					isWorking_CheckLSPActivationFromSFSC = false;
 					return;
-					//    ''KAJI, 1394.08,  END of T8AN
+				//	//    ''KAJI, 1394.08,  END of T8AN
 				}
 
 				// Exit of method, because there is no Furnace to SHED 
-				if (  datatable.Rows.Count == 0)
+				SFSC_FURNACE_TO_SHED_Str sfsc_furnace_to_shed = null;
+				sfsc_furnace_to_shed=JsonConvert.DeserializeObject<SFSC_FURNACE_TO_SHED_Str>(_repository.GetRedisUtiles().DataBase.StringGet(RedisKeyPattern.SFSC_FURNACE_TO_SHED));
+				if (sfsc_furnace_to_shed == null)
 				{
 					isWorking_CheckLSPActivationFromSFSC = false;
 					return;
@@ -273,7 +246,7 @@ namespace LSP
 
                 _logger.WriteEntry(". .. ... .... ..... ...... SFSC is ACTIVATED ...... ..... .... ... .. . . .. ... .... ..... ...... " , LogLevels.Info);
 
-				DataRow dr_SFSC_FURNACE_TO_SHED = datatable.Rows[0];
+				//DataRow dr_SFSC_FURNACE_TO_SHED = datatable.Rows[0];
 
 				var scadapointLSPACTIVATED = _repository.GetLSPScadaPoint("LSPACTIVATED");
 				if (scadapointLSPACTIVATED is null)
@@ -285,41 +258,49 @@ namespace LSP
 				{
 					_logger.WriteEntry("Error in diappearing LSPACTIVATED ", LogLevels.Error);
 				}
-				if (!_updateScadaPointOnServer.SendAlarm(scadapointLSPACTIVATED, SinglePointStatus.Appear, "LSP is activated by SFSC for furnace " + dr_SFSC_FURNACE_TO_SHED["FURNACE"].ToString() + " with PowerGroup : " + dr_SFSC_FURNACE_TO_SHED["GROUPPOWER"].ToString()))
+				if (!_updateScadaPointOnServer.SendAlarm(scadapointLSPACTIVATED, SinglePointStatus.Appear, "LSP is activated by SFSC for furnace " + sfsc_furnace_to_shed.FURNACE + " with PowerGroup : " + sfsc_furnace_to_shed.GROUPPOWER))
 				{
 					_logger.WriteEntry("Error in send Alarm for LSPACTIVATED, " + 
-						"Activated by SFSC for Furnace " + 
-						dr_SFSC_FURNACE_TO_SHED["FURNACE"].ToString() + 
-						" with PowerGroup : " + 
-						dr_SFSC_FURNACE_TO_SHED["GROUPPOWER"].ToString()	,LogLevels.Error);
+						"Activated by SFSC for Furnace " +
+						sfsc_furnace_to_shed.FURNACE + 
+						" with PowerGroup : " +
+						sfsc_furnace_to_shed.GROUPPOWER	,LogLevels.Error);
 				}
 
-				_logger.WriteEntry("SELECTED FURNACE IS:" + dr_SFSC_FURNACE_TO_SHED["FURNACE"].ToString(), LogLevels.Info);
+				_logger.WriteEntry("SELECTED FURNACE IS:" + sfsc_furnace_to_shed.FURNACE, LogLevels.Info);
 
-				sql = $"SELECT * FROM {GetEndStringCommand()}EEC_EAFSPRIORITY WHERE FURNACE = " + dr_SFSC_FURNACE_TO_SHED["FURNACE"].ToString();
-				datatable = _repository.GetFromMasterDB(sql);
-				if (datatable is null || datatable.Rows.Count == 0)
+				var keys = _repository.GetRedisUtiles().GetKeys(pattern: RedisKeyPattern.EEC_EAFSPriority);
+				if (keys.Length == 0)
+					{
+						_logger.WriteEntry("Error in running get furnce number from cache", LogLevels.Error);
+						isWorking_CheckLSPActivationFromSFSC = false;
+						return;
+					}
+
+				var datatable = _repository.GetRedisUtiles().StringGet<EEC_EAFSPRIORITY_Str>(keys);
+				EEC_EAFSPRIORITY_Str dr_EEC_EAFSPriority = datatable.Where(n => n.FURNACE == sfsc_furnace_to_shed.FURNACE).First();
+
+				//sql = $"SELECT * FROM APP_EEC_EAFSPRIORITY WHERE FURNACE = " + dr_SFSC_FURNACE_TO_SHED["FURNACE"].ToString();
+				//datatable = _repository.GetFromMasterDB(sql);
+				if (dr_EEC_EAFSPriority is null)
 				{
-					_logger.WriteEntry("Error in running " + sql, LogLevels.Error);
-
+					_logger.WriteEntry("Error in running get furnce number from cache", LogLevels.Error);
 					isWorking_CheckLSPActivationFromSFSC = false;
-
 					return;
 				}
-				DataRow dr_EEC_EAFSPriority = datatable.Rows[0];
+				
 
-				_logger.WriteEntry("CB ADDRESS IS for sheding Furnace is: " + dr_EEC_EAFSPriority["CB_NETWORKPATH"].ToString(), LogLevels.Info);
-				//var guid = Guid.Parse(dr_EEC_EAFSPriority["CB_GUID"].ToString());
-				var guid = _repository.GetGuid(dr_EEC_EAFSPriority["CB_NETWORKPATH"].ToString());
-
+				_logger.WriteEntry("CB ADDRESS IS for sheding Furnace is: " + dr_EEC_EAFSPriority.CB_NETWORKPATH, LogLevels.Info);
+				var guid = Guid.Parse(dr_EEC_EAFSPriority.ID_CB.ToString());
+				
 				var cbToShed = _repository.GetLSPScadaPoint(guid);
 				if (cbToShed != null)
 				{
 					if ((DigitalDoubleStatus)cbToShed.Value == DigitalDoubleStatus.Close)
 					{
-						if (!SendCommandToSCADA(guid, dr_EEC_EAFSPriority["CB_NETWORKPATH"].ToString()))
+						if (!SendCommandToSCADA(guid, dr_EEC_EAFSPriority.CB_NETWORKPATH.ToString()))
 						{
-							_logger.WriteEntry("Error in SendCommandToSCADA for " + dr_EEC_EAFSPriority["CB_NETWORKPATH"].ToString(), LogLevels.Error);
+							_logger.WriteEntry("Error in SendCommandToSCADA for " + dr_EEC_EAFSPriority.CB_NETWORKPATH.ToString(), LogLevels.Error);
 
 							//return;
 						}
@@ -327,40 +308,39 @@ namespace LSP
 					}
 					else
 					{
-						_logger.WriteEntry("CB Status is OPEN: " + dr_EEC_EAFSPriority["CB_NETWORKPATH"].ToString(), LogLevels.Info);
+						_logger.WriteEntry("CB Status is OPEN: " + dr_EEC_EAFSPriority.CB_NETWORKPATH.ToString(), LogLevels.Info);
 					}
 				}
 				else
                 {
-					_logger.WriteEntry("Error to find CB ADDRESS in Repository: " + dr_EEC_EAFSPriority["CB_NETWORKPATH"].ToString(), LogLevels.Error);
+					_logger.WriteEntry("Error to find CB ADDRESS in Repository: " + dr_EEC_EAFSPriority.CB_NETWORKPATH.ToString(), LogLevels.Error);
 				}
 				
 
-				if (dr_EEC_EAFSPriority["HASPARTNER"].ToString() == "YES")
+				if (dr_EEC_EAFSPriority.HASPARTNER.ToString() == "YES")
 				{
-					_logger.WriteEntry("Sending Shed command for Partner CB ADDRESS :" + dr_EEC_EAFSPriority["PARTNERADDRESS"].ToString(), LogLevels.Info);
-					//var guidPartner = Guid.Parse(dr_EEC_EAFSPriority["PARTNER_GUID"].ToString());
-					var guidPartner = _repository.GetGuid(dr_EEC_EAFSPriority["PARTNERADDRESS"].ToString());
+					_logger.WriteEntry("Sending Shed command for Partner CB ADDRESS :" + dr_EEC_EAFSPriority.PARTNERADDRESS.ToString(), LogLevels.Info);
+					var guidPartner = Guid.Parse(dr_EEC_EAFSPriority.ID_CB_PARTNER.ToString());
 
 					var cbPartnerToShed = _repository.GetLSPScadaPoint(guidPartner);
 					if (cbPartnerToShed != null)
 					{
 						if ((DigitalDoubleStatus)cbPartnerToShed.Value == DigitalDoubleStatus.Close)
 						{
-							if (!SendCommandToSCADA(guidPartner, dr_EEC_EAFSPriority["PARTNERADDRESS"].ToString()))
+							if (!SendCommandToSCADA(guidPartner, dr_EEC_EAFSPriority.PARTNERADDRESS.ToString()))
 							{
-								_logger.WriteEntry("Error in SendCommandToSCADA for Partner " + dr_EEC_EAFSPriority["PARTNERADDRESS"].ToString(), LogLevels.Error);
+								_logger.WriteEntry("Error in SendCommandToSCADA for Partner " + dr_EEC_EAFSPriority.PARTNERADDRESS.ToString(), LogLevels.Error);
 
 							}
 						}
 						else
 						{
-							_logger.WriteEntry("CB Status is OPEN: " + dr_EEC_EAFSPriority["PARTNERADDRESS"].ToString(), LogLevels.Info);
+							_logger.WriteEntry("CB Status is OPEN: " + dr_EEC_EAFSPriority.PARTNERADDRESS.ToString(), LogLevels.Info);
 						}
 					}
                     else
                     {
-						_logger.WriteEntry("Error to find CB ADDRESS in Repository: " + dr_EEC_EAFSPriority["PARTNERADDRESS"].ToString(), LogLevels.Error);
+						_logger.WriteEntry("Error to find CB ADDRESS in Repository: " + dr_EEC_EAFSPriority.PARTNERADDRESS.ToString(), LogLevels.Error);
 					}
 				}
 
@@ -387,15 +367,20 @@ namespace LSP
 			{
 				_logger.WriteEntry("Error in finding LSPACTIVATED", LogLevels.Error);
 			}
-			string sql = $"DELETE from {GetEndStringCommand()}SFSC_FURNACE_TO_SHED";
-			if (!_updateScadaPointOnServer.SendAlarm(scadapointLSPACTIVATED, SinglePointStatus.Disappear, " "))
-			{
-				_logger.WriteEntry("Error in diappearing LSPACTIVATED ", LogLevels.Error);
-			}
-			if (!_repository.ModifyOnHistoricalDB(sql))
-			{
-				_logger.WriteEntry("Error in running: " + sql, LogLevels.Error);
-			}
+			//string sql = $"DELETE from APP_SFSC_FURNACE_TO_SHED";
+			if((SinglePointStatus)(int)scadapointLSPACTIVATED.Value == SinglePointStatus.Appear)
+				if (!_updateScadaPointOnServer.SendAlarm(scadapointLSPACTIVATED, SinglePointStatus.Disappear, " "))
+					{
+						_logger.WriteEntry("Error in diappearing LSPACTIVATED ", LogLevels.Error);
+					}
+			//if (!_repository.ModifyOnHistoricalDB(sql))
+			//{
+			//	_logger.WriteEntry("Error in running: " + sql, LogLevels.Error);
+			//}
+
+			var appkeys = _repository.GetRedisUtiles().GetKeys(RedisKeyPattern.SFSC_FURNACE_TO_SHED+"*");
+			foreach (RedisKey key in appkeys)
+				_repository.GetRedisUtiles().DataBase.KeyDelete(key);
 
 		}
 

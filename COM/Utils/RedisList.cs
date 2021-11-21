@@ -6,7 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace OCP
+namespace COM
 {
     public static class RedisHelperList
     {

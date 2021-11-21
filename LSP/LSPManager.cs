@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 
+using COM;
 using Irisa.Logger;
 using Irisa.Common;
 using Irisa.Message;
@@ -50,6 +51,7 @@ namespace LSP
 
 		// The number of priority lists in-use
 		private byte m_nPriols = 0;
+		private bool initialized =false;
 
 		public List<LSPScadaPoint> _LSPSCADAPoints = new List<LSPScadaPoint>();
 
@@ -64,6 +66,7 @@ namespace LSP
 			_changeControlStateOnServer = new ChangeControlStateOnServer(logger, scadaCommand);
 			_repository = repository;
 			_scadaCommand = scadaCommand;
+			
 
 
 
@@ -189,11 +192,13 @@ namespace LSP
 				_sfscManager = new LSPSFSCManager(_logger, _repository, _scadaCommand, _PriorityList);
 
 
-                //_logger.WriteEntry(" INITILIZE: Before SendCommandTestRetry ", LogLevels.Info);
-                //SendCommandTestRetry();
-                //_logger.WriteEntry(" INITILIZE: After SendCommandTestRetry", LogLevels.Info);
+				//_logger.WriteEntry(" INITILIZE: Before SendCommandTestRetry ", LogLevels.Info);
+				//SendCommandTestRetry();
+				//_logger.WriteEntry(" INITILIZE: After SendCommandTestRetry", LogLevels.Info);
+				initialized = true;
 
-            }
+
+			}
 
 
 			catch (System.Exception excep)
@@ -221,11 +226,14 @@ namespace LSP
 		{
 			try
 			{
+				while(!initialized)
+					System.Threading.Thread.Sleep(300);
 				string strGUID = measurement.MeasurementId.ToString();
 				string strValue = measurement.Value.ToString();
 
 				if (isCompleted == false)
 					return;
+
 
 				isCompleted = false;
 				//_logger.WriteEntry($"Guid = {measurementId} is received with value {value}", LogLevels.Info);
@@ -957,7 +965,9 @@ namespace LSP
 						}
 						priolNISLines._nBreakers = 0;
 
-						string strSQLException = "";
+						List<string> Exception = new List<string>();
+						Exception.Clear();
+
 						int iExcpType = 0;
 						if (!CheckExceptionInSheddingFurnaces(ref iExcpType))
 						{
@@ -966,38 +976,39 @@ namespace LSP
 						}
 
 						//"IMANIAN 1396.11.02. EXCLUDE MF8 FROM SHEDDING LIST
-						strSQLException += " AND CB_NETWORKPATH NOT LIKE '%MF8%' ";
+						Exception.Add("MF8");
+
 						//"IMANIAN 1396.11.02. EXCLUDE MF8 FROM SHEDDING LIST
 
 						if (iExcpType == 1)
 						{
-							strSQLException += " AND CB_NETWORKPATH NOT LIKE '%MF1%' ";
-							strSQLException += " AND CB_NETWORKPATH NOT LIKE '%MF3%' ";
-							strSQLException += " AND CB_NETWORKPATH NOT LIKE '%MF6%' ";
+							Exception.Add("MF1");
+							Exception.Add("MF3");
+							Exception.Add("MF6");
 						}
 
 						if (iExcpType == 2)
 						{
-							strSQLException += " AND CB_NETWORKPATH NOT LIKE '%MF3%' ";
+							Exception.Add("MF3");
 						}
 
 						if (iExcpType == 3)
 						{
-							strSQLException += " AND CB_NETWORKPATH NOT LIKE '%MF1%' ";
-							strSQLException += " AND CB_NETWORKPATH NOT LIKE '%MF6%' ";
+							Exception.Add("MF1");
+							Exception.Add("MF6");
 						}
 
 						//string strSql = "SELECT * FROM app.EEC_SFSCEAFSPriority  WHERE STATUS_OF_FURNACE='ON' ORDER BY CONSUMED_ENERGY_PER_HEAT ASC";
 						// TODO: Fetch data from its table
 						//var dtbEAFsGroup = _repository.FetchEAFsGroup(strSql);
-						var dtbEAFsGroup = _repository.FetchEAFSPriority("", "ON", strSQLException);
+						var dtbEAFsGroup = _repository.FetchEAFSPriority("", "ON", Exception);
 						var priorityNISLines = _PriorityList.Find(priol => priol._priorityNo == Constants.PRIORITYLISTNO_NISLINES);
 						if (priorityNISLines is null)
 						{
 							_logger.WriteEntry("Error in finding PRIORITYLISTNO_NISLINES for ProcessJobs . . . ", LogLevels.Error);
 						}
 						I = 1;
-						foreach (DataRow dr in dtbEAFsGroup.Rows)
+						foreach (FetchEAFSPriority_Str dr in dtbEAFsGroup)
 						{
 							_logger.WriteEntry("--------------- Update_m_arrPriol_IdxPriolsEAF -------------------", LogLevels.Info);
 
@@ -1006,24 +1017,21 @@ namespace LSP
 
 							priorityNISLines._nBreakers = (byte)(priorityNISLines._nBreakers + 1);
 							_logger.WriteEntry(" ----------------- Update_m_arrPriol_IdxPriolsEAF -----------------", LogLevels.Info);
-							priorityNISLines._breakersToShed[I].NetworkPath_Item = dr["CB_NETWORKPATH"].ToString();
+							priorityNISLines._breakersToShed[I].NetworkPath_Item = dr.CB_NETWORKPATH;
 							_logger.WriteEntry("m_arrPriols(IdxPriolsLINES).arrBreakers('" + I.ToString() + "').NetworkPath_Item = " + priorityNISLines._breakersToShed[I].NetworkPath_Item, LogLevels.Info);
-							priorityNISLines._breakersToShed[I].NetworkPath_Cur = dr["CT_NetworkPath"].ToString();
+							priorityNISLines._breakersToShed[I].NetworkPath_Cur = dr.CT_NETWORKPATH;
 							_logger.WriteEntry("m_arrPriols(IdxPriolsLINES).arrBreakers('" + I.ToString() + "').NetworkPath_Cur = " + priorityNISLines._breakersToShed[I].NetworkPath_Cur, LogLevels.Info);
-							priorityNISLines._breakersToShed[I].HasPartner = dr["HasPartner"].ToString();
+							priorityNISLines._breakersToShed[I].HasPartner = dr.HASPARTNER;
 							_logger.WriteEntry("m_arrPriols(IdxPriolsLINES).arrBreakers('" + I.ToString() + "').HasPartner = " + priorityNISLines._breakersToShed[I].HasPartner, LogLevels.Info);
-							priorityNISLines._breakersToShed[I].AddressPartner = dr["PartnerAddress"].ToString();
+							priorityNISLines._breakersToShed[I].AddressPartner = dr.PARTNERADDRESS;
 							_logger.WriteEntry("m_arrPriols(IdxPriolsLINES).arrBreakers('" + I.ToString() + "').AddressPartner = " + priorityNISLines._breakersToShed[I].AddressPartner, LogLevels.Info);
-							priorityNISLines._breakersToShed[I].FurnaceIndex = dr["Furnace"].ToString();
+							priorityNISLines._breakersToShed[I].FurnaceIndex = dr.FURNACE;
 							_logger.WriteEntry("m_arrPriols(IdxPriolsLINES).arrBreakers('" + I.ToString() + "').FurnaceIndex  = " + priorityNISLines._breakersToShed[I].FurnaceIndex, LogLevels.Info);
 
 							if(priorityNISLines._breakersToShed[I].HasPartner == "YES")
-								//priorityNISLines._breakersToShed[I].addressPartner_guid = Guid.Parse(dr["PARTNER_GUID"].ToString());
-								priorityNISLines._breakersToShed[I].addressPartner_guid = _repository.GetGuid(priorityNISLines._breakersToShed[I].AddressPartner);
-							//priorityNISLines._breakersToShed[I].guid_item = Guid.Parse(dr["CB_GUID"].ToString());
-							priorityNISLines._breakersToShed[I].guid_item = _repository.GetGuid(priorityNISLines._breakersToShed[I].NetworkPath_Cur);
-							//priorityNISLines._breakersToShed[I].guid_curr = Guid.Parse(dr["CT_GUID"].ToString());
-							priorityNISLines._breakersToShed[I].guid_curr = _repository.GetGuid(priorityNISLines._breakersToShed[I].NetworkPath_Item);
+								priorityNISLines._breakersToShed[I].addressPartner_guid = Guid.Parse(dr.ID_CB_PARTNER.ToString());
+							priorityNISLines._breakersToShed[I].guid_item = Guid.Parse(dr.ID_CB.ToString());
+							priorityNISLines._breakersToShed[I].guid_curr = Guid.Parse(dr.ID_CT.ToString());
 
 
 							if (I < 3)
@@ -1426,9 +1434,9 @@ namespace LSP
 
 				//' KAJI START of T8AN
 				int iExcpType = 0;
-				string strSQLException = "";
+				List<string> Exception = new List<string>();
+				Exception.Clear();
 
-				strSQLException = " ";
 
 				if (!CheckExceptionInSheddingFurnaces(ref iExcpType))
 				{
@@ -1438,20 +1446,21 @@ namespace LSP
 
 				if (iExcpType == 1)
 				{
-					strSQLException = strSQLException + " AND CB_NETWORKPATH NOT LIKE '%MF1%' ";
-					strSQLException = strSQLException + " AND CB_NETWORKPATH NOT LIKE '%MF3%' ";
-					strSQLException = strSQLException + " AND CB_NETWORKPATH NOT LIKE '%MF6%' ";
+					Exception.Add("MF1");
+					Exception.Add("MF3");
+					Exception.Add("MF6");
 				}
 
 				if (iExcpType == 2)
 				{
-					strSQLException = strSQLException + " AND CB_NETWORKPATH NOT LIKE '%MF3%' ";
+					Exception.Add("MF3");
 				}
 
 				if (iExcpType == 3)
 				{
-					strSQLException = strSQLException + " AND CB_NETWORKPATH NOT LIKE '%MF1%' ";
-					strSQLException = strSQLException + " AND CB_NETWORKPATH NOT LIKE '%MF6%' ";
+					Exception.Add("MF1");
+					Exception.Add("MF6");
+
 				}
 				//' KAJI END of T8AN
 
@@ -1534,7 +1543,7 @@ namespace LSP
 					var scadaPoint = _repository.GetLSPScadaPoint(TAN_BB);
 					_logger.WriteEntry(TAN_name + " TAN_BB = " + scadaPoint.Value.ToString(), LogLevels.Info);
 
-					var eafsPriolDT = _repository.FetchEAFSPriority(scadaPoint.Value.ToString(), "ON", strSQLException);
+					var eafsPriolDT = _repository.FetchEAFSPriority(scadaPoint.Value.ToString(), "ON", Exception);
 
 					if (scadaPoint.Value == 0)
 					{
@@ -1548,7 +1557,7 @@ namespace LSP
 					I = 1;
 					// TODO:
 					//var dtbMeasurements = _repository.FetchPriorityLists();
-					foreach (DataRow dr in eafsPriolDT.Rows)
+					foreach (FetchEAFSPriority_Str dr in eafsPriolDT)
 					{
 						// 2016.02.17 A.K
 						priol = _PriorityList.Find(priol => priol._priorityNo == Constants.PRIORITYLISTNO_EAF);
@@ -1556,30 +1565,27 @@ namespace LSP
 						priol._nBreakers++;
 
 						_logger.WriteEntry("Update_m_arrPriol_IdxPriolsEAF for TAN ----------------------------------", LogLevels.Info);
-						priol.GetArrBreakers(I).NetworkPath_Item = dr["CB_NETWORKPATH"].ToString();
+						priol.GetArrBreakers(I).NetworkPath_Item = dr.CB_NETWORKPATH.ToString();
 						_logger.WriteEntry("Breakers(" + I.ToString() + ").NetworkPath_Item = " + priol.GetArrBreakers(I).NetworkPath_Item.ToString(), LogLevels.Info);
 
-						priol.GetArrBreakers(I).NetworkPath_Cur = dr["CT_NETWORKPATH"].ToString();
+						priol.GetArrBreakers(I).NetworkPath_Cur = dr.CT_NETWORKPATH.ToString();
 						_logger.WriteEntry("Breakers(" + I.ToString() + ").NetworkPath_Cur = " + priol.GetArrBreakers(I).NetworkPath_Cur.ToString(), LogLevels.Info);
 
-						priol.GetArrBreakers(I).HasPartner = dr["HASPARTNER"].ToString();
+						priol.GetArrBreakers(I).HasPartner = dr.HASPARTNER.ToString();
 						_logger.WriteEntry("Breakers(" + I.ToString() + ").HasPartner = " + priol.GetArrBreakers(I).HasPartner.ToString(), LogLevels.Info);
 
-						priol.GetArrBreakers(I).AddressPartner = dr["PARTNERADDRESS"].ToString();
+						priol.GetArrBreakers(I).AddressPartner = dr.PARTNERADDRESS.ToString();
 						_logger.WriteEntry("Breakers(" + I.ToString() + ").AddressPartner = " + priol.GetArrBreakers(I).AddressPartner.ToString(), LogLevels.Info);
 
-						//priol.GetArrBreakers(I).guid_item = Guid.Parse(dr["CB_GUID"].ToString());
-						priol.GetArrBreakers(I).guid_item = _repository.GetGuid(priol.GetArrBreakers(I).NetworkPath_Item);
+						priol.GetArrBreakers(I).guid_item = Guid.Parse(dr.ID_CB.ToString());
 
-						//priol.GetArrBreakers(I).guid_curr = Guid.Parse(dr["CT_GUID"].ToString());
-						priol.GetArrBreakers(I).guid_curr = _repository.GetGuid(priol.GetArrBreakers(I).NetworkPath_Cur);
+						priol.GetArrBreakers(I).guid_curr = Guid.Parse(dr.ID_CT.ToString());
 
-						priol.GetArrBreakers(I).FurnaceIndex = dr["FURNACE"].ToString();
+						priol.GetArrBreakers(I).FurnaceIndex = dr.FURNACE.ToString();
 						_logger.WriteEntry("Breakers(" + I.ToString() + ").FurnaceIndex = " + priol.GetArrBreakers(I).FurnaceIndex.ToString(), LogLevels.Info);
 
 						if(priol.GetArrBreakers(I).HasPartner == "YES")
-							//priol.GetArrBreakers(I).addressPartner_guid = Guid.Parse(dr["PARTNER_GUID"].ToString());
-							priol.GetArrBreakers(I).addressPartner_guid = _repository.GetGuid(priol.GetArrBreakers(I).AddressPartner);
+							priol.GetArrBreakers(I).addressPartner_guid = Guid.Parse(dr.ID_CB_PARTNER.ToString());
 
 						if (I < 3)
 							I = (byte)(I + 1);

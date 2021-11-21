@@ -6,7 +6,7 @@ using System.Runtime.InteropServices;
 using StackExchange.Redis;
 using System.Linq;
 
-
+using COM;
 using Irisa.Logger;
 using Irisa.DataLayer;
 
@@ -72,25 +72,7 @@ namespace MAB
             return isBuild;
         }
 
-        private static string GetEndStringCommand()
-        {
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                //return "app.";
-                return "APP_";
-                // return string.Empty;
-
-            }
-            
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-            {
-                return "APP_";
-
-            }
-
-            return string.Empty;
-        }
-
+        
         private void GetInputScadaPoints(DataManager dataManager)
         {
             if (LoadfromRedis)
@@ -98,9 +80,9 @@ namespace MAB
                 _logger.WriteEntry("Loading Data from Cache", LogLevels.Info);
 
                 var keys = _RedisConnectorHelper.GetKeys(pattern: RedisKeyPattern.MAB_PARAMS);
-                var dataTable = _RedisConnectorHelper.StringGet<MAB_PARAMS_Object>(keys);
+                var dataTable = _RedisConnectorHelper.StringGet<MAB_PARAMS_Str>(keys);
 
-                foreach (MAB_PARAMS_Object row in dataTable)
+                foreach (MAB_PARAMS_Str row in dataTable)
                 {
                     var name = row.Name;
                     var networkPath = row.NetworkPath;
@@ -131,13 +113,9 @@ namespace MAB
             {
                 _logger.WriteEntry("Loading Data from Database", LogLevels.Info);
                 string command = "";
-                if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-                    //command = $"SELECT  Name, NetworkPath, DirectionType, SCADAType from app.MAB_Measurements";
-                    command = $"SELECT  Name, NetworkPath, DirectionType, SCADAType from APP_MAB_PARAMS";
-                if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-                    command = $"SELECT  Name, NetworkPath, DirectionType, SCADAType from APP_MAB_PARAMS";
+                command = $"SELECT  Name, NetworkPath, DirectionType, SCADAType from APP_MAB_PARAMS";
 
-                MAB_PARAMS_Object _mab_param = new MAB_PARAMS_Object();
+                MAB_PARAMS_Str mab_param = new MAB_PARAMS_Str();
                 var dataTable = dataManager.GetRecord(command);
                 foreach (DataRow row in dataTable.Rows)
                 {
@@ -148,15 +126,15 @@ namespace MAB
                     var scadaType = Convert.ToString(row["SCADAType"]);
                     var id = GetGuid(networkPath);
 
-                    _mab_param.Name = name;
-                    _mab_param.NetworkPath = networkPath;
-                    _mab_param.DirectionType = pointDirectionType;
-                    _mab_param.ScadaType = scadaType;
-                    _mab_param.ID = id;
+                    mab_param.Name = name;
+                    mab_param.NetworkPath = networkPath;
+                    mab_param.DirectionType = pointDirectionType;
+                    mab_param.ScadaType = scadaType;
+                    mab_param.ID = id;
 
 
                     if (RedisUtils.IsConnected)
-                        _cache.StringSet(RedisKeyPattern.MAB_PARAMS + networkPath, JsonConvert.SerializeObject(_mab_param));
+                        _cache.StringSet(RedisKeyPattern.MAB_PARAMS + networkPath, JsonConvert.SerializeObject(mab_param));
                     
                     try
                     {
@@ -212,14 +190,7 @@ namespace MAB
                 else
                     _logger.WriteEntry("The GUID could not read from Repository for Network   " + networkpath, LogLevels.Error);
             }
-            string sql = null;
-
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-                //sql = "SELECT * FROM dbo.NodesFullPath where FullPath = '" + networkpath + "'";
-                sql = "SELECT * FROM NodesFullPath where TO_CHAR(FullPath) = '" + networkpath + "'";
-
-            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-                sql = "SELECT * FROM NodesFullPath where TO_CHAR(FullPath) = '" + networkpath + "'";
+            string sql =  "SELECT * FROM NodesFullPath where TO_CHAR(FullPath) = '" + networkpath + "'";
 
             try
             {
@@ -252,32 +223,5 @@ namespace MAB
         }
     }
 
-    static class RedisKeyPattern
-    {
-        public const string MAB_PARAMS = "APP:MAB_PARAMS:";
-        public const string DCIS_PARAMS = "APP:DCIS_PARAMS:";
-        public const string DCP_PARAMS = "APP:DCP_PARAMS:";
-        public const string EEC_EAFSPriority = "APP:EEC_EAFSPriority:";
-        public const string EEC_PARAMS = "APP:EEC_PARAMS:";
-        public const string LSP_DECTCOMB = "APP:LSP_DECTCOMB:";
-        public const string LSP_DECTITEMS = "APP:LSP_DECTITEMS:";
-        public const string LSP_DECTLIST = "APP:LSP_DECTLIST:";
-        public const string LSP_DECTPRIOLS = "APP:LSP_DECTPRIOLS:";
-        public const string LSP_PARAMS = "APP:LSP_PARAMS:";
-        public const string LSP_PRIORITYITEMS = "APP:LSP_PRIORITYITEMS:";
-        public const string LSP_PRIORITYLIST = "APP:LSP_PRIORITYLIST:";
-        public const string OCP_CheckPoints = "APP:OCP_CheckPoints:";
-        public const string OCP_PARAMS = "APP:OCP_PARAMS:";
-        public const string OPCMeasurement = "APP:OPCMeasurement:";
-        public const string OPC_Params = "APP:OPC_Params:";
-    }
-     class MAB_PARAMS_Object
-     {
-        public string Name ;
-        public string NetworkPath;
-        public string DirectionType;
-        public string ScadaType;
-        public Guid   ID;
-    };
-
+   
 }

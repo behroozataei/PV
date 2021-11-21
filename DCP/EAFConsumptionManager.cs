@@ -2,7 +2,9 @@ using System;
 using System.Runtime.InteropServices;
 using System.Timers;
 using System.Data;
+using Newtonsoft.Json;
 
+using COM;
 using Irisa.Logger;
 using Irisa.Message;
 
@@ -92,34 +94,15 @@ namespace DCP
 				_timer_4_Seconds.Interval = EAFS_TIMER_4_Seconds_TICKS;
 				_timer_4_Seconds.Elapsed += Timer_4_Seconds_Tick;
 
-				_timer_1_Minute.Start();
-				_timer_4_Seconds.Start();
-			}
+                _timer_1_Minute.Start();
+                _timer_4_Seconds.Start();
+            }
 			catch (Exception ex)
 			{
 				_logger.WriteEntry(ex.Message, LogLevels.Error, ex);
 			}
 		}
-		private static string GetEndStringCommand()
-		{
-			if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-			{
-				//return "app.";
-				return "APP_";
-				// return string.Empty;
-
-			}
-
-			if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-			{
-
-				return "APP_";
-
-			}
-
-			return string.Empty;
-		}
-
+		
 		private void Timer_1_Minute_Tick(Object eventSender, EventArgs eventArgs)
 		{
 			// TODO : should be fixed, now it was commented!
@@ -232,19 +215,27 @@ namespace DCP
 						"WHERE Status='ON' " +
 						"ORDER BY [Consumed Energy Per Heat]";
 				dataTable = _repository.GetFromLinkDB(sql);
-				foreach (DataRow dr in dataTable.Rows)
-				{
-					sql = $"UPDATE {GetEndStringCommand()}EEC_SFSCEAFSPRIORITY SET CONSUMED_ENERGY_PER_HEAT='" +
-							dr["Consumed Energy Per Heat"].ToString() +
-							"',Reason = 'DCP.EAFsConsumption => CONSUMED_ENERGY_PER_HEAT is updated, 1-Minute', STATUS_OF_FURNACE='" +
-							dr["Status"].ToString() +
-							"' WHERE FURNACE='" +
-							dr["Furnace"].ToString() +
-							"'";
-					if (!_repository.ModifyOnHistoricalDB(sql))
-					{
-						_logger.WriteEntry($"UPDATE {GetEndStringCommand()}EEC_SFSCEAFSPriority SET CONSUMED_ENERGY_PER_HEAT is not possible!", LogLevels.Error);
-					}
+                foreach (DataRow dr in dataTable.Rows)
+                {
+                    //sql = $"UPDATE APP_EEC_SFSCEAFSPRIORITY SET CONSUMED_ENERGY_PER_HEAT='" +
+                    //        dr["Consumed Energy Per Heat"].ToString() +
+                    //        "',Reason = 'DCP.EAFsConsumption => CONSUMED_ENERGY_PER_HEAT is updated, 1-Minute', STATUS_OF_FURNACE='" +
+                    //        dr["Status"].ToString() +
+                    //        "' WHERE FURNACE='" +
+                    //        dr["Furnace"].ToString() +
+                    //        "'";
+                    //if (!_repository.ModifyOnHistoricalDB(sql))
+                    //{
+                    //    _logger.WriteEntry($"UPDATE APP_EEC_SFSCEAFSPriority SET CONSUMED_ENERGY_PER_HEAT is not possible!", LogLevels.Error);
+                    //}
+
+                    EEC_SFSCEAFSPRIORITY_Str eec_sfsceafprio = new EEC_SFSCEAFSPRIORITY_Str();
+					eec_sfsceafprio = JsonConvert.DeserializeObject<EEC_SFSCEAFSPRIORITY_Str>(_repository.GetRedisUtiles().DataBase.StringGet(RedisKeyPattern.EEC_SFSCEAFSPRIORITY + dr["Furnace"].ToString()));
+					eec_sfsceafprio.CONSUMED_ENERGY_PER_HEAT = dr["Consumed Energy Per Heat"].ToString();
+					eec_sfsceafprio.STATUS_OF_FURNACE = dr["Status"].ToString();
+					eec_sfsceafprio.REASON = "DCP.EAFsConsumption => CONSUMED_ENERGY_PER_HEAT is updated, 1-Minute";
+					_repository.GetRedisUtiles().DataBase.StringSet(RedisKeyPattern.EEC_SFSCEAFSPRIORITY + eec_sfsceafprio.FURNACE, JsonConvert.SerializeObject(eec_sfsceafprio));
+
 				}
 			}
 			catch (Exception ex)
@@ -266,17 +257,22 @@ namespace DCP
 				for (int nFurnace = 1; nFurnace <= 8; nFurnace++)
 				{
 					var scadaPoint = _repository.GetScadaPoint("Current_EAF" + nFurnace.ToString());
+					EEC_SFSCEAFSPRIORITY_Str eec_sfsceafprio = new EEC_SFSCEAFSPRIORITY_Str();
+					eec_sfsceafprio = JsonConvert.DeserializeObject<EEC_SFSCEAFSPRIORITY_Str>(_repository.GetRedisUtiles().DataBase.StringGet(RedisKeyPattern.EEC_SFSCEAFSPRIORITY + nFurnace.ToString()));
+
 					if (scadaPoint.Value > EAFS_ON_OFF_CURRENT_LIMIT)
 					{
 						sql_T_EAFsEnergyConsumption = "UPDATE [PU10_PCS].[dbo].[T_EAFsEnergyConsumption] SET [Status] ='ON' WHERE [Furnace]='" + nFurnace.ToString() + "'";
-						sql_EEC_SFSCEAFSPriority = $"UPDATE {GetEndStringCommand()}EEC_SFSCEAFSPRIORITY SET STATUS_OF_FURNACE='ON', Reason = 'DCP.EAFsConsumption => STATUS_OF_FURNACE goes ON' WHERE FURNACE='" + nFurnace.ToString() + "'";
+						sql_EEC_SFSCEAFSPriority = $"UPDATE APP_EEC_SFSCEAFSPRIORITY SET STATUS_OF_FURNACE='ON', Reason = 'DCP.EAFsConsumption => STATUS_OF_FURNACE goes ON' WHERE FURNACE='" + nFurnace.ToString() + "'";
 						_OnOff_furnces_New[nFurnace - 1] = "ON";
+						eec_sfsceafprio.STATUS_OF_FURNACE = "ON";
 					}
 					else
 					{
 						sql_T_EAFsEnergyConsumption = "UPDATE [PU10_PCS].[dbo].[T_EAFsEnergyConsumption] SET [Status] ='OFF' WHERE [Furnace]='" + nFurnace.ToString() + "'";
-						sql_EEC_SFSCEAFSPriority = $"UPDATE {GetEndStringCommand()}EEC_SFSCEAFSPRIORITY SET STATUS_OF_FURNACE='OFF', Reason = 'DCP.EAFsConsumption => STATUS_OF_FURNACE goes OFF' WHERE FURNACE='" + nFurnace.ToString() + "'";
+						sql_EEC_SFSCEAFSPriority = $"UPDATE APP_EEC_SFSCEAFSPRIORITY SET STATUS_OF_FURNACE='OFF', Reason = 'DCP.EAFsConsumption => STATUS_OF_FURNACE goes OFF' WHERE FURNACE='" + nFurnace.ToString() + "'";
 						_OnOff_furnces_New[nFurnace - 1] = "OFF";
+						eec_sfsceafprio.STATUS_OF_FURNACE = "OFF";
 					}
 
 					if (_OnOff_furnces_Old[nFurnace - 1] != _OnOff_furnces_New[nFurnace - 1])
@@ -286,10 +282,13 @@ namespace DCP
 							_logger.WriteEntry("'UPDATE [PU10_PCS].[dbo].[T_EAFsEnergyConsumption]' is not possible!", LogLevels.Error);
 						}
 
-						if (!_repository.ModifyOnHistoricalDB(sql_EEC_SFSCEAFSPriority))
-						{
-							_logger.WriteEntry("'UPDATE {GetEndStringCommand()}EEC_SFSCEAFSPriority SET STATUS_OF_FURNACE' is not possible!", LogLevels.Error);
-						}
+						//if (!_repository.ModifyOnHistoricalDB(sql_EEC_SFSCEAFSPriority))
+						//{
+						//	_logger.WriteEntry("'UPDATE APP_EEC_SFSCEAFSPriority SET STATUS_OF_FURNACE' is not possible!", LogLevels.Error);
+						//}
+
+						_repository.GetRedisUtiles().DataBase.StringSet(RedisKeyPattern.EEC_SFSCEAFSPRIORITY + eec_sfsceafprio.FURNACE, JsonConvert.SerializeObject(eec_sfsceafprio));
+
 					}
 					_OnOff_furnces_Old[nFurnace - 1] = _OnOff_furnces_New[nFurnace - 1];
 				}

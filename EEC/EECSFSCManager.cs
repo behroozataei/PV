@@ -2,7 +2,10 @@
 using System.Runtime.InteropServices;
 using System.Timers;
 using System.Data;
+using Newtonsoft.Json;
+using System.Linq;
 
+using COM;
 using Irisa.Logger;
 using Irisa.Message;
 
@@ -85,20 +88,7 @@ namespace EEC
         {
             _timer_4_Seconds.Start();
         }
-        private static string GetEndStringCommand()
-        {
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                //return "app.";
-                return "APP_";
-            }
-
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-            {
-                return "APP_";
-            }
-            return string.Empty;
-        }
+        
 
         private bool ClearOverloadAppear()
         {
@@ -264,16 +254,25 @@ namespace EEC
 
             try
             {
-                var sql = $"SELECT MAXOVERLOAD1, MAXOVERLOAD2, TELDATETIME FROM {GetEndStringCommand()}EEC_TELEGRAMS " +
-                            "WHERE TELDATETIME = " +
-                            $"(SELECT MAX(TELDATETIME) FROM {GetEndStringCommand()}EEC_TELEGRAMS)";
-                DataTable datatable_EEC = _repository.GetFromHistoricalDB(sql);
-                if (!(datatable_EEC is null) && datatable_EEC.Rows.Count > 0)
+                //var sql = $"SELECT MAXOVERLOAD1, MAXOVERLOAD2, TELDATETIME FROM APP_EEC_TELEGRAMS " +
+                //            "WHERE TELDATETIME = " +
+                //            $"(SELECT MAX(TELDATETIME) FROM APP_EEC_TELEGRAMS)";
+
+                EEC_TELEGRAM_Str _eec_tel = new EEC_TELEGRAM_Str();
+                if (_repository.GetRedisUtiles().GetKeys(RedisKeyPattern.EEC_TELEGRAM).Length == 0)
                 {
-                    DataRow dr = datatable_EEC.Rows[0];
-                    _MaxBusbarPowers[0] = Convert.ToSingle(dr["MAXOVERLOAD1"].ToString());
-                    _MaxBusbarPowers[1] = Convert.ToSingle(dr["MAXOVERLOAD2"].ToString());
-                    dTime = DateTime.Parse(dr["TELDATETIME"].ToString());
+                    _logger.WriteEntry("There EEC Calculation not Compeleted", LogLevels.Warn);
+                    return false;
+                }
+
+                _eec_tel = JsonConvert.DeserializeObject<EEC_TELEGRAM_Str>(_repository.GetRedisUtiles().DataBase.StringGet(RedisKeyPattern.EEC_TELEGRAM));
+
+               // DataTable datatable_EEC = _repository.GetFromHistoricalDB(sql);
+                if (!(_eec_tel is null) )
+                {
+                    _MaxBusbarPowers[0] = _eec_tel.MAXOVERLOAD1;
+                    _MaxBusbarPowers[1] = _eec_tel.MAXOVERLOAD2;
+                    dTime = _eec_tel.TELDATETIME;
                     var deltatime = DateTime.Now.Subtract(dTime).TotalSeconds;
                     if (deltatime > 65)
                     {
@@ -372,65 +371,36 @@ namespace EEC
         {
             try
             {
-                String sql = null;
-                if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                
+                
+                //String Datatime = DateTime.Now.ToString(("yyyy-MMMM-dd HH:mm:ss"));
+                //String sql = $"Insert Into APP_SFSC_EAFSPower( TelDateTime, SUMATION, PowerGrp1, PowerGrp2, " +
+                //    "Furnace1, Furnace2, Furnace3, Furnace4, Furnace5, Furnace6, Furnace7, Furnace8) " +
+                //    "VALUES( " +
+                //     $"TO_DATE('{Datatime}', 'yyyy-mm-dd HH24:mi:ss')" + ",'" +
+                //    (_BusbarPowers[0] + _BusbarPowers[1]) + "', '" +
+                //    _BusbarPowers[0] + "', '" +
+                //    _BusbarPowers[1] + "', '" +
+                //    _FurnacePowers[0] + "', '" +
+                //    _FurnacePowers[1] + "', '" +
+                //    _FurnacePowers[2] + "', '" +
+                //    _FurnacePowers[3] + "', '" +
+                //    _FurnacePowers[4] + "', '" +
+                //    _FurnacePowers[5] + "', '" +
+                //    _FurnacePowers[6] + "', '" +
+                //    _FurnacePowers[7] + "')";
+                
+                //if (!_repository.ModifyOnHistoricalDB(sql))
+                //{
+                //    _logger.WriteEntry($" Error in 'Insert Into APP_SFSCEAFSPOWER'", LogLevels.Error);
+                //}
+
+                if (!_repository.ModifyOnHistoricalCache(_BusbarPowers, _FurnacePowers))
                 {
-                    //sql = $"Insert Into app.SFSC_EAFSPower( TelDateTime, SUMATION, PowerGrp1, PowerGrp2, " +
-                    //"Furnace1, Furnace2, Furnace3, Furnace4, Furnace5, Furnace6, Furnace7, Furnace8) " +
-                    //"VALUES( '" +
-                    //DateTime.Now.ToString() + "', '" +
-                    //(_BusbarPowers[0] + _BusbarPowers[1]) + "', '" +
-                    //_BusbarPowers[0] + "', '" +
-                    //_BusbarPowers[1] + "', '" +
-                    //_FurnacePowers[0] + "', '" +
-                    //_FurnacePowers[1] + "', '" +
-                    //_FurnacePowers[2] + "', '" +
-                    //_FurnacePowers[3] + "', '" +
-                    //_FurnacePowers[4] + "', '" +
-                    //_FurnacePowers[5] + "', '" +
-                    //_FurnacePowers[6] + "', '" +
-                    //_FurnacePowers[7] + "')";
-                    String Datatime = DateTime.Now.ToString(("yyyy-MMMM-dd HH:mm:ss"));
-                    sql = $"Insert Into APP_SFSC_EAFSPower( TelDateTime, SUMATION, PowerGrp1, PowerGrp2, " +
-                    "Furnace1, Furnace2, Furnace3, Furnace4, Furnace5, Furnace6, Furnace7, Furnace8) " +
-                    "VALUES( " +
-                     $"TO_DATE('{Datatime}', 'yyyy-mm-dd HH24:mi:ss')" + ",'" +
-                    (_BusbarPowers[0] + _BusbarPowers[1]) + "', '" +
-                    _BusbarPowers[0] + "', '" +
-                    _BusbarPowers[1] + "', '" +
-                    _FurnacePowers[0] + "', '" +
-                    _FurnacePowers[1] + "', '" +
-                    _FurnacePowers[2] + "', '" +
-                    _FurnacePowers[3] + "', '" +
-                    _FurnacePowers[4] + "', '" +
-                    _FurnacePowers[5] + "', '" +
-                    _FurnacePowers[6] + "', '" +
-                    _FurnacePowers[7] + "')";
-                }
-                else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-                {
-                    String Datatime = DateTime.Now.ToString(("yyyy-MMMM-dd HH:mm:ss"));
-                    sql = $"Insert Into APP_SFSC_EAFSPower( TelDateTime, SUMATION, PowerGrp1, PowerGrp2, " +
-                    "Furnace1, Furnace2, Furnace3, Furnace4, Furnace5, Furnace6, Furnace7, Furnace8) " +
-                    "VALUES( " +
-                     $"TO_DATE('{Datatime}', 'yyyy-mm-dd HH24:mi:ss')" + ",'" +
-                    (_BusbarPowers[0] + _BusbarPowers[1]) + "', '" +
-                    _BusbarPowers[0] + "', '" +
-                    _BusbarPowers[1] + "', '" +
-                    _FurnacePowers[0] + "', '" +
-                    _FurnacePowers[1] + "', '" +
-                    _FurnacePowers[2] + "', '" +
-                    _FurnacePowers[3] + "', '" +
-                    _FurnacePowers[4] + "', '" +
-                    _FurnacePowers[5] + "', '" +
-                    _FurnacePowers[6] + "', '" +
-                    _FurnacePowers[7] + "')";
+                    _logger.WriteEntry($" Error in 'Insert Into APP_SFSCEAFSPOWER'", LogLevels.Error);
                 }
 
-                if (!_repository.ModifyOnHistoricalDB(sql))
-                {
-                    _logger.WriteEntry($" Error in 'Insert Into {GetEndStringCommand()}SFSCEAFSPOWER'", LogLevels.Error);
-                }
+
 
                 return true;
             }
@@ -532,17 +502,25 @@ namespace EEC
                         {
                             _logger.WriteEntry("Start of reporting Overload on busbar " + (busbar + 1) + "; previousCycle = " + previousCycle + "; previousCycleTime =" + _cycles[busbar, previousCycle] + "; Cycle = " + cycle + "; CycleTime =" + _cycles[busbar, cycle], LogLevels.Warn);
 
-                            var sql = $"SELECT FURNACE, CONSUMED_ENERGY_PER_HEAT FROM {GetEndStringCommand()}EEC_SFSCEAFSPRIORITY WHERE GROUPNUM = " +
-                                (busbar + 1).ToString() +
-                                " AND STATUS_OF_FURNACE='ON' ORDER BY CAST( CONSUMED_ENERGY_PER_HEAT AS FLOAT) ASC";
-                            DataTable datatable = _repository.GetFromHistoricalDB(sql);
-                            if ((datatable is null) || (datatable.Rows.Count == 0))
+                            //var sql = $"SELECT FURNACE, CONSUMED_ENERGY_PER_HEAT FROM APP_EEC_SFSCEAFSPRIORITY WHERE GROUPNUM = " +
+                            //    (busbar + 1).ToString() +
+                            //    " AND STATUS_OF_FURNACE='ON' ORDER BY CAST( CONSUMED_ENERGY_PER_HEAT AS FLOAT) ASC";
+                            EEC_SFSCEAFSPRIORITY_Str[] eec_sfsceafprio = new EEC_SFSCEAFSPRIORITY_Str[8];
+                            for(int fur = 0; fur <8; fur++) 
+                                eec_sfsceafprio[fur] = JsonConvert.DeserializeObject<EEC_SFSCEAFSPRIORITY_Str>(_repository.GetRedisUtiles().DataBase.StringGet(RedisKeyPattern.EEC_SFSCEAFSPRIORITY+(fur+1).ToString()));
+
+                            var datatable = eec_sfsceafprio.Where(n => n.GROUPNUM== (busbar + 1).ToString())
+                                                        .OrderBy(n =>Convert.ToDecimal(n.CONSUMED_ENERGY_PER_HEAT)).ToArray();
+
+                           // DataTable datatable = _repository.GetFromHistoricalDB(sql);
+                            if ((datatable is null))
                             {
-                                _logger.WriteEntry($"Error in 'SELECT FURNACE FROM {GetEndStringCommand()}EEC_SFSCEAFSPRIORITY'", LogLevels.Error);
+                                _logger.WriteEntry($"Error in 'SELECT FURNACE FROM APP_EEC_SFSCEAFSPRIORITY'", LogLevels.Error);
+                                continue;
                             }
                             else
                             {
-                                var furnace = Convert.ToInt32(datatable.Rows[0]["FURNACE"].ToString());
+                                var furnace = Convert.ToInt32(datatable[0].FURNACE.ToString());
                                 _updateScadaPointOnServer.SendAlarm(scadapointAlarm, DigitalSingleStatus.Close, "SFSC Shedded Furnace " + furnace + " Because EAFS exceed its Limit On BusBar " + (busbar + 1));
                                 _updateScadaPointOnServer.SendAlarm(scadapointAlarm, DigitalSingleStatus.Open, "SFSC Shedded Furnace " + furnace + " Because EAFS exceed its Limit On BusBar " + (busbar + 1));
 
@@ -573,56 +551,45 @@ namespace EEC
                                     _logger.WriteEntry("Error in finding Furnace to shed in SCADA, GroupPower " + _BusbarPowers[busbar], LogLevels.Error);
                                 }
 
-                                if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                                SFSC_FURNACE_TO_SHED_Str sfsc_furnace_to_shed = new SFSC_FURNACE_TO_SHED_Str();
+                                sfsc_furnace_to_shed.TELDATETIME = DateTime.Now;
+                                sfsc_furnace_to_shed.FURNACE = furnace.ToString();
+                                sfsc_furnace_to_shed.GROUPPOWER = _BusbarPowers[busbar].ToString();
+                                _repository.GetRedisUtiles().DataBase.StringSet(RedisKeyPattern.SFSC_FURNACE_TO_SHED , JsonConvert.SerializeObject(sfsc_furnace_to_shed));
+                               // RedisKeyPattern.EEC_PARAMS + networkPath, JsonConvert.SerializeObject(_eec_param);
+
+                                //String Datatime = DateTime.Now.ToString(("yyyy-MMMM-dd HH:mm:ss"));
+                                //    sql = $"INSERT INTO APP_SFSC_FURNACE_TO_SHED(TELDATETIME, FURNACE, GROUPPOWER) VALUES(" +
+                                //         $"TO_DATE('{Datatime}', 'yyyy-mm-dd HH24:mi:ss')" +
+                                //         ", '" +
+                                //         furnace +
+                                //         "', '" + _BusbarPowers[busbar] + "')";
+
+                                //if (!_repository.ModifyOnHistoricalDB(sql))
+                                //{
+                                //    _logger.WriteEntry($"Error in INSERT Into APP_SFSC_FURNACE_TO_SHED, Furnace " + furnace, LogLevels.Error);
+                                //}
+                                //else
+                                //{
+                                _logger.WriteEntry("Overloaded furnace " + furnace + " with POWER OVERLOAD " + _BusbarPowers[busbar], LogLevels.Warn);
+
+                                // For "Network/Model Functions/SFSC/STATUS/Sent Warning"
+                                ////var scadapoint = _repository.GetScadaPoint("SFSCShedding");
+                                var scadapoint = _repository.GetScadaPoint("SFCWarning");
+
+                                if (!_updateScadaPointOnServer.WriteAnalog(scadapoint, (int)DigitalSingleStatus.Open))
                                 {
-                                    //sql = $"INSERT INTO app.SFSC_FURNACE_TO_SHED(TELDATETIME, FURNACE, GROUPPOWER) VALUES('" +
-                                    //    DateTime.Now.ToString() +
-                                    //    "', '" +
-                                    //    furnace +
-                                    //    "', '" + _BusbarPowers[busbar] + "')";
-                                    String Datatime = DateTime.Now.ToString(("yyyy-MMMM-dd HH:mm:ss"));
-                                    sql = $"INSERT INTO APP_SFSC_FURNACE_TO_SHED(TELDATETIME, FURNACE, GROUPPOWER) VALUES(" +
-                                         $"TO_DATE('{Datatime}', 'yyyy-mm-dd HH24:mi:ss')" +
-                                         ", '" +
-                                         furnace +
-                                         "', '" + _BusbarPowers[busbar] + "')";
-                                }
-                                else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-                                {
-                                    String Datatime = DateTime.Now.ToString(("yyyy-MMMM-dd HH:mm:ss"));
-                                    sql = $"INSERT INTO APP_SFSC_FURNACE_TO_SHED(TELDATETIME, FURNACE, GROUPPOWER) VALUES(" +
-                                         $"TO_DATE('{Datatime}', 'yyyy-mm-dd HH24:mi:ss')" + 
-                                         ", '" +
-                                         furnace +
-                                         "', '" + _BusbarPowers[busbar] + "')";
+                                    _logger.WriteEntry("Error in write into SCADA for ... ", LogLevels.Error);
                                 }
 
-
-                                if (!_repository.ModifyOnHistoricalDB(sql))
-                                {
-                                    _logger.WriteEntry($"Error in INSERT Into {GetEndStringCommand()}SFSC_FURNACE_TO_SHED, Furnace " + furnace, LogLevels.Error);
-                                }
-                                else
-                                {
-                                    _logger.WriteEntry("Overloaded furnace " + furnace + " with POWER OVERLOAD " + _BusbarPowers[busbar], LogLevels.Warn);
-
-                                    // For "Network/Model Functions/SFSC/STATUS/Sent Warning"
-                                    ////var scadapoint = _repository.GetScadaPoint("SFSCShedding");
-                                    var scadapoint = _repository.GetScadaPoint("SFCWarning");
-
-                                    if (!_updateScadaPointOnServer.WriteAnalog(scadapoint, (int)DigitalSingleStatus.Open))
-                                    {
-                                        _logger.WriteEntry("Error in write into SCADA for ... ", LogLevels.Error);
-                                    }
-
-                                    // Clear Overload from cycles
-                                    for (int acycle = 0; acycle < NUMBER_OF_CYCLES_OVERLAD_CHECK; acycle++)
-                                        _IsOverloadAppear[busbar, acycle] = false;
-                                }
+                                // Clear Overload from cycles
+                                for (int acycle = 0; acycle < NUMBER_OF_CYCLES_OVERLAD_CHECK; acycle++)
+                                    _IsOverloadAppear[busbar, acycle] = false;
+                                //}
 
                                 // Log status of furnaces
-                                foreach (DataRow dr in datatable.Rows)
-                                    _logger.WriteEntry("SFSC Furnace selection: Furnace " + dr["FURNACE"].ToString() + " is ON, and " + "CONSUMED_ENERGY_PER_HEAT = " + dr["CONSUMED_ENERGY_PER_HEAT"].ToString(), LogLevels.Warn);
+                                foreach (EEC_SFSCEAFSPRIORITY_Str dr in datatable)
+                                    _logger.WriteEntry("SFSC Furnace selection: Furnace " + dr.FURNACE.ToString() + " is ON, and " + "CONSUMED_ENERGY_PER_HEAT = " + dr.CONSUMED_ENERGY_PER_HEAT.ToString(), LogLevels.Warn);
                             }
                         }
                     }
@@ -711,14 +678,20 @@ namespace EEC
                         int bbg = (int)scadapointEAFGroup.Value;
                         if (_BBG_furnces[furnace - 1] != bbg)
                         {
-                            var sql =$"UPDATE {GetEndStringCommand()}EEC_SFSCEAFSPRIORITY SET Reason = 'EEC.SFSCManager => GROUPNUM is updated', GROUPNUM = '" + scadapointEAFGroup.Value.ToString() + "' " +
-                                "Where FURNACE = '" + furnace.ToString() + "'";
+                            //var sql =$"UPDATE APP_EEC_SFSCEAFSPRIORITY SET Reason = 'EEC.SFSCManager => GROUPNUM is updated', GROUPNUM = '" + scadapointEAFGroup.Value.ToString() + "' " +
+                            //    "Where FURNACE = '" + furnace.ToString() + "'";
                             
 
-                            if (!_repository.ModifyOnHistoricalDB(sql))
-                            {
-                                _logger.WriteEntry($"'UPDATE {GetEndStringCommand()}EEC_SFSCEAFSPriority' is not possible!", LogLevels.Error);
-                            }
+                            //if (!_repository.ModifyOnHistoricalDB(sql))
+                            //{
+                            //    _logger.WriteEntry($"'UPDATE APP_EEC_SFSCEAFSPriority' is not possible!", LogLevels.Error);
+                            //}
+
+                            EEC_SFSCEAFSPRIORITY_Str eec_sfsceafprio = new EEC_SFSCEAFSPRIORITY_Str();
+                            eec_sfsceafprio = JsonConvert.DeserializeObject<EEC_SFSCEAFSPRIORITY_Str>(_repository.GetRedisUtiles().DataBase.StringGet(RedisKeyPattern.EEC_SFSCEAFSPRIORITY + furnace.ToString()));
+                            eec_sfsceafprio.GROUPNUM = scadapointEAFGroup.Value.ToString();
+                            eec_sfsceafprio.REASON = "EEC.SFSCManager => GROUPNUM is updated";
+                            _repository.GetRedisUtiles().DataBase.StringSet(RedisKeyPattern.EEC_SFSCEAFSPRIORITY + eec_sfsceafprio.FURNACE, JsonConvert.SerializeObject(eec_sfsceafprio));
 
                             _BBG_furnces[furnace - 1] = Convert.ToInt32(scadapointEAFGroup.Value.ToString());
                         }

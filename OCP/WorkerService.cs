@@ -6,6 +6,7 @@ using System.Collections.Concurrent;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Configuration;
 
+using COM;
 using Irisa.Logger;
 using Irisa.Message;
 using Irisa.Message.CPS;
@@ -34,19 +35,8 @@ namespace OCP
             _logger = serviceProvider.GetService<ILogger>();
             _RedisConnectorHelper = new RedisUtils(0);
 
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                // _dataManager = new SqlServerDataManager(config["SQLServerNameOfStaticDataDatabase"], config["SQLServerDatabaseAddress"], config["SQLServerUser"], config["SQLServerPassword"]);
-                // _storeLogs = new StoreLogs(_dataManager, _logger, "[HIS].[HIS_LOGS_INSERT]");
-                _dataManager = new Irisa.DataLayer.Oracle.OracleDataManager(config["OracleServicename"], config["OracleDatabaseAddress"], config["OracleStaticUser"], config["OracleStaticPassword"]);
-                _storeLogs = new StoreLogs(_dataManager, _logger, "SCADA.\"HIS_HisLogs_Insert\"");
-
-            }
-            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-            {
-                _dataManager = new Irisa.DataLayer.Oracle.OracleDataManager(config["OracleServicename"], config["OracleDatabaseAddress"], config["OracleStaticUser"], config["OracleStaticPassword"]);
-                _storeLogs = new StoreLogs(_dataManager, _logger, "SCADA.\"HIS_HisLogs_Insert\"");
-            }
+            _dataManager = new Irisa.DataLayer.Oracle.OracleDataManager(config["OracleServicename"], config["OracleDatabaseAddress"], config["OracleStaticUser"], config["OracleStaticPassword"]);
+            _storeLogs = new StoreLogs(_dataManager, _logger, "SCADA.\"HIS_HisLogs_Insert\"");
 
             var historyDataRequest = new HistoryDataRequest
             {

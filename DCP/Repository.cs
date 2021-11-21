@@ -2,7 +2,11 @@
 using System.Runtime.InteropServices;
 using System.Collections.Generic;
 using System.Data;
+using Newtonsoft.Json;
+using StackExchange.Redis;
+using System.Linq;
 
+using COM;
 using Irisa.Logger;
 using Irisa.DataLayer;
 using Irisa.DataLayer.SqlServer;
@@ -17,21 +21,43 @@ namespace DCP
         private readonly DataManager _historicalDataManager;
         private readonly Dictionary<Guid, DCPScadaPoint> _scadaPoints;
         private readonly Dictionary<string, DCPScadaPoint> _scadaPointsHelper;
+        private readonly RedisUtils _RedisConnectorHelper;
 
-        public Repository(ILogger logger, DataManager staticDataManager, DataManager historicalDataManager, SqlServerDataManager linkDBpcsDataManager)
+        private bool LoadfromCache = false;
+        IDatabase _cache;
+        private bool isBuild = false;
+
+        public Repository(ILogger logger, DataManager staticDataManager, DataManager historicalDataManager, SqlServerDataManager linkDBpcsDataManager, RedisUtils RedisConnectorHelper)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _staticDataManager = staticDataManager ?? throw new ArgumentNullException(nameof(staticDataManager));
             _historicalDataManager = historicalDataManager ?? throw new ArgumentNullException(nameof(historicalDataManager));
             _linkDBpcsDataManager = linkDBpcsDataManager ?? throw new ArgumentNullException(nameof(linkDBpcsDataManager));
+            _RedisConnectorHelper = RedisConnectorHelper ?? throw new ArgumentNullException(nameof(RedisConnectorHelper));
+
             _scadaPoints = new Dictionary<Guid, DCPScadaPoint>();
             _scadaPointsHelper = new Dictionary<string, DCPScadaPoint>();
         }
 
         public bool Build()
         {
-            var isBuild = false;
-
+            if (RedisUtils.IsConnected)
+            {
+                _logger.WriteEntry("Connected to Redis Cache", LogLevels.Info);
+                _cache = _RedisConnectorHelper.DataBase;
+                if (_RedisConnectorHelper.GetKeys(pattern: RedisKeyPattern.DCP_PARAMS).Length != 0)
+                {
+                    LoadfromCache = true;
+                }
+                else
+                {
+                    LoadfromCache = false;
+                }
+            }
+            else
+            {
+                _logger.WriteEntry("Redis Connaction Failed.", LogLevels.Error);
+            }
             try
             {
                 GetInputScadaPoints();
@@ -44,45 +70,73 @@ namespace DCP
 
             return isBuild;
         }
-        private static string GetEndStringCommand()
-        {
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                //return "app.";
-                return "APP_";
-                // return string.Empty;
-
-            }
-
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-            {
-                return "APP_";
-            }
-
-            return string.Empty;
-        }
-
+        
         private void GetInputScadaPoints()
         {
             try
             {
-                var dataTable = _staticDataManager.GetRecord($"SELECT Name, NetworkPath, DirectionType from {GetEndStringCommand()}DCP_PARAMS");
-
-                foreach (DataRow row in dataTable.Rows)
+                if (LoadfromCache)
                 {
-                    //var id = Guid.Parse(row["GUID"].ToString());
-                    var name = row["Name"].ToString();
-                    var networkPath = row["NetworkPath"].ToString();
-                    var pointDirectionType = row["DirectionType"].ToString();
-                    //if (name == "MAC_DS")
-                    //    System.Diagnostics.Debugger.Break();
-                    var id = GetGuid(networkPath);
-                    var scadaPoint = new DCPScadaPoint(id, name, networkPath, (PointDirectionType)Enum.Parse(typeof(PointDirectionType), pointDirectionType));
+                    _logger.WriteEntry("Loading DCP_PARAMS Data from Cache", LogLevels.Info);
 
-                    if (!_scadaPoints.ContainsKey(id))
+                    var keys = _RedisConnectorHelper.GetKeys(pattern: RedisKeyPattern.DCP_PARAMS);
+                    var dataTable_cache = _RedisConnectorHelper.StringGet<DCP_PARAMS_Str>(keys);
+
+                    foreach (DCP_PARAMS_Str row in dataTable_cache)
                     {
-                        _scadaPoints.Add(id, scadaPoint);
-                        _scadaPointsHelper.Add(name, scadaPoint);
+                        var id = Guid.Parse((row.ID).ToString());
+                        var name = row.NAME;
+                        var networkPath = row.NETWORKPATH;
+                        var pointDirectionType = row.DIRECTIONTYPE;
+
+                        if (id != Guid.Empty)
+                        {
+                            var scadaPoint = new DCPScadaPoint(id, name, networkPath, (PointDirectionType)Enum.Parse(typeof(PointDirectionType), pointDirectionType));
+
+                            if (!_scadaPoints.ContainsKey(id))
+                            {
+                                _scadaPoints.Add(id, scadaPoint);
+                                _scadaPointsHelper.Add(name, scadaPoint);
+                            }
+
+                        }
+
+                    }
+
+                }
+                else
+                {
+                    DCP_PARAMS_Str dcp_param = new DCP_PARAMS_Str();
+                    var dataTable = _staticDataManager.GetRecord($"SELECT * from APP_DCP_PARAMS");
+
+                    foreach (DataRow row in dataTable.Rows)
+                    {
+                        //var id = Guid.Parse(row["GUID"].ToString());
+                        var name = row["Name"].ToString();
+                        var networkPath = row["NetworkPath"].ToString();
+                        var pointDirectionType = row["DirectionType"].ToString();
+                        //if (name == "MAC_DS")
+                        //    System.Diagnostics.Debugger.Break();
+                        var id = GetGuid(networkPath);
+                        dcp_param.FUNCTIONNAME = row["FUNCTIONNAME"].ToString();
+                        dcp_param.NAME = name;
+                        dcp_param.DESCRIPTION = row["DESCRIPTION"].ToString();
+                        dcp_param.DIRECTIONTYPE = row["DIRECTIONTYPE"].ToString();
+                        dcp_param.NETWORKPATH = networkPath;
+                        dcp_param.SCADATYPE = row["SCADATYPE"].ToString();
+                       
+
+                        dcp_param.ID = id.ToString();
+                        if (RedisUtils.IsConnected)
+                            _cache.StringSet(RedisKeyPattern.DCP_PARAMS + networkPath, JsonConvert.SerializeObject(dcp_param));
+
+                        var scadaPoint = new DCPScadaPoint(id, name, networkPath, (PointDirectionType)Enum.Parse(typeof(PointDirectionType), pointDirectionType));
+
+                        if (!_scadaPoints.ContainsKey(id))
+                        {
+                            _scadaPoints.Add(id, scadaPoint);
+                            _scadaPointsHelper.Add(name, scadaPoint);
+                        }
                     }
                 }
             }
@@ -96,54 +150,55 @@ namespace DCP
             }
         }
 
-        public DataTable GetEAFSPARAMS()
+        //public DataTable GetFromMasterDB(string sql)
+        //{
+        //    DataTable dataTable = null;
+
+        //    try
+        //    {
+        //        dataTable = _staticDataManager.GetRecord(sql);
+        //    }
+        //    catch (Irisa.DataLayer.DataException ex)
+        //    {
+        //        _logger.WriteEntry(ex.ToString(), LogLevels.Error);
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        _logger.WriteEntry(ex.Message, LogLevels.Error, ex);
+        //    }
+
+        //    return dataTable;
+        //}
+
+        //public DataTable GetFromHistoricalDB(string sql)
+        //{
+        //    DataTable dataTable = null;
+
+        //    try
+        //    {
+        //        dataTable = _historicalDataManager.GetRecord(sql);
+        //    }
+        //    catch (Irisa.DataLayer.DataException ex)
+        //    {
+        //        _logger.WriteEntry(ex.ToString(), LogLevels.Error);
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        _logger.WriteEntry(ex.Message, LogLevels.Error, ex);
+        //    }
+        //    return dataTable;
+        //}
+        public SFSC_EAFSPOWER_Str GetFromHistoricalCache()
         {
-            DataTable dataTable = null;
+            SFSC_EAFSPOWER_Str dataTable = null;
 
             try
             {
-                string sql = $"select * from {GetEndStringCommand()}EFS_PARAMS";
-                dataTable = _staticDataManager.GetRecord(sql);
-            }
-            catch (Irisa.DataLayer.DataException ex)
-            {
-                _logger.WriteEntry(ex.ToString(), LogLevels.Error);
-            }
-            catch (Exception ex)
-            {
-                _logger.WriteEntry(ex.Message, LogLevels.Error, ex);
-            }
+                if (_RedisConnectorHelper.GetKeys(pattern: RedisKeyPattern.SFSC_EAFSPOWER).Length == 0)
+                    return dataTable;
 
-            return dataTable;
-        }
-
-        public DataTable GetFromMasterDB(string sql)
-        {
-            DataTable dataTable = null;
-
-            try
-            {
-                dataTable = _staticDataManager.GetRecord(sql);
-            }
-            catch (Irisa.DataLayer.DataException ex)
-            {
-                _logger.WriteEntry(ex.ToString(), LogLevels.Error);
-            }
-            catch (Exception ex)
-            {
-                _logger.WriteEntry(ex.Message, LogLevels.Error, ex);
-            }
-
-            return dataTable;
-        }
-
-        public DataTable GetFromHistoricalDB(string sql)
-        {
-            DataTable dataTable = null;
-
-            try
-            {
-                dataTable = _historicalDataManager.GetRecord(sql);
+                dataTable = JsonConvert.DeserializeObject<SFSC_EAFSPOWER_Str>(_cache.StringGet(RedisKeyPattern.SFSC_EAFSPOWER));
+               
             }
             catch (Irisa.DataLayer.DataException ex)
             {
@@ -341,59 +396,50 @@ namespace DCP
                 throw new InvalidOperationException($"Scada point with name {name} can not found");
         }
 
-        public DataTable GetEECTELEGRAM()
-        {
-            DataTable dataTable = null;
+        //public DataTable GetEECTELEGRAM()
+        //{
+        //    DataTable dataTable = null;
 
-            try
-            {
-                string sql = $"Select * FROM {GetEndStringCommand()}EEC_TELEGRAMS WHERE ID = (SELECT MAX(ID) FROM {GetEndStringCommand()}EEC_TELEGRAMS)";
-                dataTable = _historicalDataManager.GetRecord(sql);
-            }
-            catch (Irisa.DataLayer.DataException ex)
-            {
-                _logger.WriteEntry(ex.ToString(), LogLevels.Error);
-            }
-            catch (Exception ex)
-            {
-                _logger.WriteEntry(ex.Message, LogLevels.Error, ex);
-            }
+        //    try
+        //    {
+        //        string sql = $"Select * FROM APP_EEC_TELEGRAMS WHERE ID = (SELECT MAX(ID) FROM APP_EEC_TELEGRAMS)";
+        //        dataTable = _historicalDataManager.GetRecord(sql);
+        //    }
+        //    catch (Irisa.DataLayer.DataException ex)
+        //    {
+        //        _logger.WriteEntry(ex.ToString(), LogLevels.Error);
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        _logger.WriteEntry(ex.Message, LogLevels.Error, ex);
+        //    }
 
-            return dataTable;
-        }
+        //    return dataTable;
+        //}
 
-        public bool UpdateEECTELEGRAM(string atime, string telDate)
-        {
-            String sql = "";
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                //sql = $"Update app.EEC_TELEGRAMS Set SentTime='" + atime + "' Where TELDATETIME = '" + telDate + "'";
-                sql = $"Update APP_EEC_TELEGRAMS Set SentTime=" + $"TO_DATE('{atime}', 'yyyy-mm-dd HH24:mi:ss')" + $" Where TELDATETIME = TO_DATE('{telDate}','yyyy-mm-dd HH24:mi:ss')";
-            }
-            else if(RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-            {                
-                sql = $"Update APP_EEC_TELEGRAMS Set SentTime=" + $"TO_DATE('{atime}', 'yyyy-mm-dd HH24:mi:ss')" + $" Where TELDATETIME = TO_DATE('{telDate}','yyyy-mm-dd HH24:mi:ss')";
-            }
+        //public bool UpdateEECTELEGRAM(string atime, string telDate)
+        //{
+        //    String sql = $"Update APP_EEC_TELEGRAMS Set SentTime=" + $"TO_DATE('{atime}', 'yyyy-mm-dd HH24:mi:ss')" + $" Where TELDATETIME = TO_DATE('{telDate}','yyyy-mm-dd HH24:mi:ss')";
+        //    try
+        //    {
+        //        var rowAffected = _historicalDataManager.ExecuteNonQuery(sql);
+        //        if (rowAffected > 0)
+        //            return true;
+        //        else
+        //            return false;
+        //    }
 
-            try
-            {
-                var rowAffected = _historicalDataManager.ExecuteNonQuery(sql);
-                if (rowAffected > 0)
-                    return true;
-                else
-                    return false;
-            }
-            catch (Irisa.DataLayer.DataException ex)
-            {
-                _logger.WriteEntry(ex.ToString(), LogLevels.Error);
-            }
-            catch (Exception ex)
-            {
-                _logger.WriteEntry(ex.Message, LogLevels.Error, ex);
-            }
+        //    catch (Irisa.DataLayer.DataException ex)
+        //    {
+        //        _logger.WriteEntry(ex.ToString(), LogLevels.Error);
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        _logger.WriteEntry(ex.Message, LogLevels.Error, ex);
+        //    }
 
-            return false;
-        }
+        //    return false;
+        //}
 
         public bool InsertTELEGRAM(string sql)
         {
@@ -550,17 +596,16 @@ namespace DCP
             return false;
         }
 
+       
+        public RedisUtils GetRedisUtiles ()
+        {
+            return _RedisConnectorHelper;
+            
+        }
+
         public Guid GetGuid(String networkpath)
         {
-            string sql = null;
-
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-                //sql = "SELECT * FROM dbo.NodesFullPath where FullPath = '" + networkpath + "'";
-                sql = "SELECT * FROM NodesFullPath where TO_CHAR(FullPath) = '" + networkpath + "'";
-
-            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-                sql = "SELECT * FROM NodesFullPath where TO_CHAR(FullPath) = '" + networkpath + "'";
-
+            string sql =  "SELECT * FROM NodesFullPath where TO_CHAR(FullPath) = '" + networkpath + "'";
             try
             {
                 var dataTable = _staticDataManager.GetRecord(sql);
@@ -590,5 +635,8 @@ namespace DCP
                 return Guid.Empty;
             }
         }
+       
     }
+    
+   
 }

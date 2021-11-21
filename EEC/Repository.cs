@@ -7,6 +7,7 @@ using Newtonsoft.Json;
 using StackExchange.Redis;
 using System.Linq;
 
+using COM;
 using Irisa.Logger;
 using Irisa.DataLayer;
 using Irisa.DataLayer.SqlServer;
@@ -35,25 +36,8 @@ namespace EEC
             _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
             _RedisConnectorHelper = RedisConnectorHelper ?? throw new ArgumentNullException(nameof(RedisConnectorHelper));
 
-
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                //sqlDataMnager = new SqlServerDataManager(_configuration["SQLServerNameOfStaticDataDatabase"], _configuration["SQLServerDatabaseAddress"], _configuration["SQLServerUser"], _configuration["SQLServerPassword"]);
-                //_historicalDataManager = new SqlServerDataManager(configuration["SQLServerNameOfHistoricalDatabase"], configuration["SQLServerDatabaseAddress"], configuration["SQLServerUser"], configuration["SQLServerPassword"]);
-                sqlDataMnager = new OracleDataManager(_configuration["OracleServicename"], _configuration["OracleDatabaseAddress"], _configuration["OracleStaticUser"], _configuration["OracleStaticPassword"]);
-                _historicalDataManager = new OracleDataManager(configuration["OracleServicename"], configuration["OracleDatabaseAddress"], configuration["OracleHISUser"], configuration["OracleHISPassword"]);
-
-
-            }
-            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-            {
-
-                sqlDataMnager = new OracleDataManager(_configuration["OracleServicename"], _configuration["OracleDatabaseAddress"], _configuration["OracleStaticUser"], _configuration["OracleStaticPassword"]);
-                _historicalDataManager = new OracleDataManager(configuration["OracleServicename"], configuration["OracleDatabaseAddress"], configuration["OracleHISUser"], configuration["OracleHISPassword"]);
-            }
-
-
-            
+            sqlDataMnager = new OracleDataManager(_configuration["OracleServicename"], _configuration["OracleDatabaseAddress"], _configuration["OracleStaticUser"], _configuration["OracleStaticPassword"]);
+            _historicalDataManager = new OracleDataManager(configuration["OracleServicename"], configuration["OracleDatabaseAddress"], configuration["OracleHISUser"], configuration["OracleHISPassword"]);
 
             _scadaPoints = new Dictionary<Guid, EECScadaPoint>();
             _scadaPointsHelper = new Dictionary<string, EECScadaPoint>();
@@ -61,40 +45,34 @@ namespace EEC
            
         }
 
-        private static string GetEndStringCommand()
-        {
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                //return "app.";
-                return "APP_";
-                //return string.Empty;
-
-            }
-
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-            {
-              
-               return "APP_";
-
-            }
-
-            return string.Empty;
-        }
-
-        public bool Build()
+               public bool Build()
         {
             if (RedisUtils.IsConnected)
             {
                 _logger.WriteEntry("Connected to Redis Cache", LogLevels.Info);
                 _cache = _RedisConnectorHelper.DataBase;
-                if (_RedisConnectorHelper.GetKeys(pattern: RedisKeyPattern.EEC_PARAMS).Length != 0)
+                if (_RedisConnectorHelper.GetKeys(pattern: RedisKeyPattern.EEC_PARAMS).Length != 0 &&
+                    _RedisConnectorHelper.GetKeys(pattern: RedisKeyPattern.EEC_SFSCEAFSPRIORITY).Length != 0 )
                 {
                     LoadfromCache = true;
                 }
                 else
                 {
                     LoadfromCache = false;
-                }
+                    EEC_SFSCEAFSPRIORITY_Str[] eec_sfsceafsproi = new EEC_SFSCEAFSPRIORITY_Str[8];
+                    for (int furnace = 0; furnace <8 ; furnace++)
+                    {
+                        eec_sfsceafsproi[furnace] = new EEC_SFSCEAFSPRIORITY_Str();
+                        eec_sfsceafsproi[furnace].FURNACE = (furnace+1).ToString();
+                        eec_sfsceafsproi[furnace].GROUPNUM = "1";
+                        eec_sfsceafsproi[furnace].CONSUMED_ENERGY_PER_HEAT = "0";
+                        eec_sfsceafsproi[furnace].REASON = "";
+                        eec_sfsceafsproi[furnace].STATUS_OF_FURNACE = "OFF";
+
+                        _cache.StringSet(RedisKeyPattern.EEC_SFSCEAFSPRIORITY+ $"{ furnace + 1}", JsonConvert.SerializeObject(eec_sfsceafsproi[furnace]));
+                    }
+
+                }  
             }
             else
             {
@@ -121,7 +99,7 @@ namespace EEC
         {
             try
             {
-                var sql =  $"SELECT CONSUMED_ENERGY_PER_HEAT, STATUS_OF_FURNACE, FURNACE, GROUPNUM FROM {GetEndStringCommand()}EEC_SFSCEAFSPRIORITY";                
+                var sql =  $"SELECT CONSUMED_ENERGY_PER_HEAT, STATUS_OF_FURNACE, FURNACE, GROUPNUM FROM APP_EEC_SFSCEAFSPRIORITY";                
                 var dataTable = _historicalDataManager.GetRecord(sql);
                 if ( (dataTable is null) || (dataTable.Rows.Count == 0))
                 {
@@ -164,9 +142,9 @@ namespace EEC
                     _logger.WriteEntry("Loading EEC_PARAMS Data from Cache", LogLevels.Info);
 
                     var keys = _RedisConnectorHelper.GetKeys(pattern: RedisKeyPattern.EEC_PARAMS);
-                    var dataTable_cache = _RedisConnectorHelper.StringGet<EEC_PARAMS_Object>(keys);
+                    var dataTable_cache = _RedisConnectorHelper.StringGet<EEC_PARAMS_Str>(keys);
 
-                    foreach (EEC_PARAMS_Object row in dataTable_cache)
+                    foreach (EEC_PARAMS_Str row in dataTable_cache)
                     {
                         var id = Guid.Parse((row.ID).ToString());
                         var name = row.NAME;
@@ -190,8 +168,8 @@ namespace EEC
                 }
                 else
                 {
-                    EEC_PARAMS_Object _eec_param = new EEC_PARAMS_Object();
-                    var dataTable = sqlDataMnager.GetRecord($"SELECT * FROM {GetEndStringCommand()}EEC_PARAMS");
+                    EEC_PARAMS_Str eec_param = new EEC_PARAMS_Str();
+                    var dataTable = sqlDataMnager.GetRecord($"SELECT * FROM APP_EEC_PARAMS");
 
                     foreach (DataRow row in dataTable.Rows)
                     {
@@ -203,17 +181,17 @@ namespace EEC
                         //    System.Diagnostics.Debug.Print("PAMX1");
                         var id = GetGuid(networkPath);
 
-                        _eec_param.FUNCTIONNAME = row["FUNCTIONNAME"].ToString();
-                        _eec_param.NAME = name;
-                        _eec_param.DESCRIPTION = row["DESCRIPTION"].ToString();
-                        _eec_param.DIRECTIONTYPE = row["DIRECTIONTYPE"].ToString();
-                        _eec_param.NETWORKPATH = networkPath;
-                        _eec_param.SCADATYPE = row["SCADATYPE"].ToString();
-                        _eec_param.TYPE = row["TYPE"].ToString();
+                        eec_param.FUNCTIONNAME = row["FUNCTIONNAME"].ToString();
+                        eec_param.NAME = name;
+                        eec_param.DESCRIPTION = row["DESCRIPTION"].ToString();
+                        eec_param.DIRECTIONTYPE = row["DIRECTIONTYPE"].ToString();
+                        eec_param.NETWORKPATH = networkPath;
+                        eec_param.SCADATYPE = row["SCADATYPE"].ToString();
+                        eec_param.TYPE = row["TYPE"].ToString();
 
-                        _eec_param.ID = id.ToString();
+                        eec_param.ID = id.ToString();
                         if (RedisUtils.IsConnected)
-                            _cache.StringSet(RedisKeyPattern.EEC_PARAMS + networkPath, JsonConvert.SerializeObject(_eec_param));
+                            _cache.StringSet(RedisKeyPattern.EEC_PARAMS + networkPath, JsonConvert.SerializeObject(eec_param));
 
 
                         var scadaPoint = new EECScadaPoint(id, name, networkPath, (PointDirectionType)Enum.Parse(typeof(PointDirectionType), pointDirectionType));
@@ -263,55 +241,40 @@ namespace EEC
         public bool SendEECTelegramToDC(float RESTIME, float ER_Cycle, float PSend, float PSend1, float PSend2, float m_EnergyResEnd)
         {
             String Datatime = DateTime.Now.ToString("yyyy-MMMM-dd HH:mm:ss");
-            String strSQL = null;
+            String strSQL = $"INSERT INTO APP_EEC_TELEGRAMS" +
+                "(TelDateTime, SentTime, ResidualTime, ResidualEnergy, MaxOverload1, MaxOverload2, ResidualEnergyEnd) " +
+                "VALUES (" +
+                $"TO_DATE('{Datatime}', 'yyyy-mm-dd HH24:mi:ss')" + "," +
+                $"TO_DATE('1900-01-01 00:00:00','yyyy-mm-dd HH24:mi:ss')" + ",'" +
+                RESTIME.ToString() + "', '" +
+                ER_Cycle.ToString() + "', '" +
+                PSend1.ToString() + "', '" +
+                PSend2.ToString() + "', '" +
+                m_EnergyResEnd.ToString() + "')";
 
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                //strSQL = $"INSERT INTO app.EEC_TELEGRAMS" +
-                //"(TelDateTime, SentTime, ResidualTime, ResidualEnergy, MaxOverload1, MaxOverload2, ResidualEnergyEnd) " +
-                //"VALUES ('" +
-                //DateTime.Now.ToString("yyyy-MMMM-dd HH:mm:ss") + "', '" +
-                //" " + "', '" +
-                //RESTIME.ToString() + "', '" +
-                //ER_Cycle.ToString() + "', '" +
-                //PSend1.ToString() + "', '" +
-                //PSend2.ToString() + "', '" +
-                //m_EnergyResEnd.ToString() + "')";
-                strSQL = $"INSERT INTO APP_EEC_TELEGRAMS" +
-                "(TelDateTime, SentTime, ResidualTime, ResidualEnergy, MaxOverload1, MaxOverload2, ResidualEnergyEnd) " +
-                "VALUES (" +
-                $"TO_DATE('{Datatime}', 'yyyy-mm-dd HH24:mi:ss')" + "," +
-                $"TO_DATE('1900-01-01 00:00:00','yyyy-mm-dd HH24:mi:ss')" + ",'" +
-                RESTIME.ToString() + "', '" +
-                ER_Cycle.ToString() + "', '" +
-                PSend1.ToString() + "', '" +
-                PSend2.ToString() + "', '" +
-                m_EnergyResEnd.ToString() + "')";
-            }
-            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-            {
-                strSQL = $"INSERT INTO APP_EEC_TELEGRAMS" +
-                "(TelDateTime, SentTime, ResidualTime, ResidualEnergy, MaxOverload1, MaxOverload2, ResidualEnergyEnd) " +
-                "VALUES (" +
-                $"TO_DATE('{Datatime}', 'yyyy-mm-dd HH24:mi:ss')" + "," +
-                $"TO_DATE('1900-01-01 00:00:00','yyyy-mm-dd HH24:mi:ss')" + ",'" +
-                RESTIME.ToString() + "', '" +
-                ER_Cycle.ToString() + "', '" +
-                PSend1.ToString() + "', '" +
-                PSend2.ToString() + "', '" +
-                m_EnergyResEnd.ToString() + "')";
-            }
+
+            EEC_TELEGRAM_Str eec_telegram = new EEC_TELEGRAM_Str();
+            eec_telegram.TELDATETIME = DateTime.Now;
+            eec_telegram.SENTTIME = DateTime.Parse("1900-01-01 00:00:00");
+            eec_telegram.RESIDUALTIME = RESTIME;
+            eec_telegram.RESIDUALENERGY = ER_Cycle;
+            eec_telegram.MAXOVERLOAD1 = PSend1;
+            eec_telegram.MAXOVERLOAD2 = PSend2;
+            eec_telegram.RESIDUALENERGYEND = m_EnergyResEnd;
 
             
 
             try
             {
-                var RowAffected = _historicalDataManager.ExecuteNonQuery(strSQL);
+                if (RedisUtils.IsConnected)
+                    _cache.StringSet(RedisKeyPattern.EEC_TELEGRAM, JsonConvert.SerializeObject(eec_telegram));
+                //var RowAffected = _historicalDataManager.ExecuteNonQuery(strSQL);
 
-                if (RowAffected > 0)
-                    return true;
-                else
-                    return false;
+                //if (RowAffected > 0)
+                //    return true;
+                //else
+                //    return false;
+                return true;
             }
             catch (Irisa.DataLayer.DataException ex)
             {
@@ -362,6 +325,39 @@ namespace EEC
             return false;
         }
 
+        public bool ModifyOnHistoricalCache(float[] _BusbarPowers, float[] _FurnacePowers)
+        {
+            try
+            {
+                SFSC_EAFPOWER_Str sfsc_eafpower = new SFSC_EAFPOWER_Str();
+                sfsc_eafpower.TELDATETIME = DateTime.Now;
+                sfsc_eafpower.SUMATION = _BusbarPowers[0]+ _BusbarPowers[1];
+                sfsc_eafpower.POWERGRP1 = _BusbarPowers[0];
+                sfsc_eafpower.POWERGRP2 = _BusbarPowers[1];
+                sfsc_eafpower.FURNACE1 = _FurnacePowers[0];
+                sfsc_eafpower.FURNACE2 = _FurnacePowers[1];
+                sfsc_eafpower.FURNACE3 = _FurnacePowers[2];
+                sfsc_eafpower.FURNACE4 = _FurnacePowers[3];
+                sfsc_eafpower.FURNACE5 = _FurnacePowers[4];
+                sfsc_eafpower.FURNACE6 = _FurnacePowers[5];
+                sfsc_eafpower.FURNACE7 = _FurnacePowers[6];
+                sfsc_eafpower.FURNACE8 = _FurnacePowers[7];
+                if (RedisUtils.IsConnected)
+                    _cache.StringSet(RedisKeyPattern.SFSC_EAFSPOWER, JsonConvert.SerializeObject(sfsc_eafpower));
+            }
+            catch (Exception ex)
+            {
+                _logger.WriteEntry(ex.Message, LogLevels.Error, ex);
+            }
+
+            return true;
+        }
+        public RedisUtils GetRedisUtiles()
+        {
+            return _RedisConnectorHelper;
+
+        }
+
         public Guid GetGuid(String networkpath)
         {
             if (isBuild)
@@ -372,14 +368,7 @@ namespace EEC
                 else
                     _logger.WriteEntry("The GUID could not read from Repository for Network   " + networkpath, LogLevels.Error);
             }
-            string sql = null;
-
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-                //sql = "SELECT * FROM dbo.NodesFullPath where FullPath = '" + networkpath + "'";
-                sql = "SELECT * FROM NodesFullPath where TO_CHAR(FullPath) = '" + networkpath + "'";
-
-            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-                sql = "SELECT * FROM NodesFullPath where TO_CHAR(FullPath) = '" + networkpath + "'";
+            string sql = "SELECT * FROM NodesFullPath where TO_CHAR(FullPath) = '" + networkpath + "'";
 
             try
             {
@@ -411,36 +400,6 @@ namespace EEC
             }
         }
     }
-    static class RedisKeyPattern
-    {
-        public const string MAB_PARAMS = "APP:MAB_PARAMS:";
-        public const string DCIS_PARAMS = "APP:DCIS_PARAMS:";
-        public const string DCP_PARAMS = "APP:DCP_PARAMS:";
-        public const string EEC_EAFSPriority = "APP:EEC_EAFSPriority:";
-        public const string EEC_PARAMS = "APP:EEC_PARAMS:";
-        public const string LSP_DECTCOMB = "APP:LSP_DECTCOMB:";
-        public const string LSP_DECTITEMS = "APP:LSP_DECTITEMS:";
-        public const string LSP_DECTLIST = "APP:LSP_DECTLIST:";
-        public const string LSP_DECTPRIOLS = "APP:LSP_DECTPRIOLS:";
-        public const string LSP_PARAMS = "APP:LSP_PARAMS:";
-        public const string LSP_PRIORITYITEMS = "APP:LSP_PRIORITYITEMS:";
-        public const string LSP_PRIORITYLIST = "APP:LSP_PRIORITYLIST:";
-        public const string OCP_CheckPoints = "APP:OCP_CheckPoints:";
-        public const string OCP_PARAMS = "APP:OCP_PARAMS:";
-        public const string OPCMeasurement = "APP:OPCMeasurement:";
-        public const string OPC_Params = "APP:OPC_Params:";
-        public const string EEC_SFSCEAFSPRIORITY = "APP:EEC_SFSCEAFSPRIORITY:";
-    }
-    class EEC_PARAMS_Object
-    {
-        public string ID;
-        public string FUNCTIONNAME;
-        public string NAME;
-        public string DESCRIPTION;
-        public string DIRECTIONTYPE;
-        public string NETWORKPATH;
-        public string SCADATYPE;
-        public string TYPE;
-
-    }
+    
+   
 }

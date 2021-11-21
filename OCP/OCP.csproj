@@ -43,6 +43,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\COM\COM.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Reference Include="Irisa.Common">
       <HintPath>..\Requirement\Irisa.Common.dll</HintPath>
     </Reference>

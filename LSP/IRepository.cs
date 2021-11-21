@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Data;
 
+using COM;
+
 namespace LSP
 {
     internal interface IRepository
@@ -18,18 +20,18 @@ namespace LSP
 
         DataTable FetchDecisionTables();
 
-        IEnumerable<LSP_DECTITEMS_Object> FetchItems(byte decisionTableNo);
+        IEnumerable<LSP_DECTITEMS_Str> FetchItems(byte decisionTableNo);
 
         DataTable FetchCombinations(byte decisionTableNo);
 
         DataTable FetchPriorityListsNoForCombinations(byte decisionTableNo);
 
-        IEnumerable<LSP_PRIORITYITEMS_Object> FetchBreakersToShed(byte priorityListNo);
+        IEnumerable<LSP_PRIORITYITEMS_Str> FetchBreakersToShed(byte priorityListNo);
 
         float GetTANSecondaryActivePower(byte Index);
         int GetTANBusbarPosition(byte Index);
         DataTable FetchPriorityLists();
-        DataTable FetchEAFSPriority(string grpNumber, string FurnaceStatus, string strSQLException);
+        FetchEAFSPriority_Str[] FetchEAFSPriority(string grpNumber, string FurnaceStatus, List<string> Exception);
         DataTable FetchReducedPower(int furnaceIndex);
         DataTable FetchEAFsGroup(string sqlQuery);
         DataTable GetFromLinkDB(string sql);
@@ -38,6 +40,8 @@ namespace LSP
         DataTable GetFromMasterDB(string sql);
         bool ModifyOnHistoricalDB(string sql);
         Guid GetGuid(String networkpath);
+        public RedisUtils GetRedisUtiles();
+
 
 
 

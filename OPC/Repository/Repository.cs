@@ -6,6 +6,7 @@ using StackExchange.Redis;
 using System.Linq;
 using Newtonsoft.Json;
 
+using COM;
 using Irisa.Logger;
 using Irisa.DataLayer;
 using Irisa.DataLayer.SqlServer;
@@ -73,24 +74,7 @@ namespace OPC
 
             return isBuild;
         }
-        private static string GetEndStringCommand()
-        {
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                //return "app.";
-                return "APP_";
-                //return string.Empty;
-
-            }
-
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-            {
-                return "APP_";
-
-            }
-
-            return string.Empty;
-        }
+        
         private void PopulateOPCTags(DataManager dbQuery)
         {
             if (LoadfromRedis)
@@ -98,9 +82,9 @@ namespace OPC
                 _logger.WriteEntry("Loading Data from Cache", LogLevels.Info);
 
                 var keys = _RedisConnectorHelper.GetKeys(pattern: RedisKeyPattern.OPCMeasurement);
-                var dataTable = _RedisConnectorHelper.StringGet<OPC_MEAS_Object>(keys);
+                var dataTable = _RedisConnectorHelper.StringGet<OPC_MEAS_Str>(keys);
 
-                foreach (OPC_MEAS_Object row in dataTable)
+                foreach (OPC_MEAS_Str row in dataTable)
                 {
                     try
                     {
@@ -113,7 +97,7 @@ namespace OPC
                                 Description = row.Description.ToString(),
                                 MessageConfiguration = (int)row.MessageConfiguration,
                                 MeasurementId = Guid.Parse(row.ID.ToString()),
-                                Type = row.TagType
+                                Type = (OPC.Type)row.TagType
                             }
                           ) ;
                         //_entityMapper.Add(row["KeepServerTagName"].ToString(), Guid.Parse(row["GUID"].ToString()));
@@ -127,23 +111,23 @@ namespace OPC
             }
             else
             {
-                string sql = $"SELECT ScadaTagName, KeepServerTagName, Description, MessageConfiguration, TagType, NetworkPath  FROM {GetEndStringCommand()}OPC_MEASUREMENT";
+                string sql = $"SELECT ScadaTagName, KeepServerTagName, Description, MessageConfiguration, TagType, NetworkPath  FROM APP_OPC_MEASUREMENT";
                 var dataTable = dbQuery.GetRecord(sql);
-                OPC_MEAS_Object _opc_meas = new OPC_MEAS_Object();
+                OPC_MEAS_Str opc_meas = new OPC_MEAS_Str();
 
                 foreach (DataRow row in dataTable.Rows)
                 {
                     try
                     {
-                        _opc_meas.ScadaTagName = row["ScadaTagName"].ToString();
-                        _opc_meas.KeepServerTagName = row["KeepServerTagName"].ToString();
-                        _opc_meas.NetworkPath = row["NetworkPath"].ToString();
-                        _opc_meas.Description = row["Description"].ToString();
-                        _opc_meas.MessageConfiguration = (int)row["MessageConfiguration"];
-                        _opc_meas.ID= GetGuid(row["NetworkPath"].ToString());
-                        _opc_meas.TagType = row["TagType"].ToString() == "DMODigitalMeasurement" ? Type.Digital: Type.Analog;
+                        opc_meas.ScadaTagName = row["ScadaTagName"].ToString();
+                        opc_meas.KeepServerTagName = row["KeepServerTagName"].ToString();
+                        opc_meas.NetworkPath = row["NetworkPath"].ToString();
+                        opc_meas.Description = row["Description"].ToString();
+                        opc_meas.MessageConfiguration = (int)row["MessageConfiguration"];
+                        opc_meas.ID= GetGuid(row["NetworkPath"].ToString());
+                        opc_meas.TagType =(int) (row["TagType"].ToString() == "DMODigitalMeasurement" ? Type.Digital: Type.Analog);
                         if (RedisUtils.IsConnected)
-                            _cache.StringSet(RedisKeyPattern.OPCMeasurement + _opc_meas.NetworkPath, JsonConvert.SerializeObject(_opc_meas));
+                            _cache.StringSet(RedisKeyPattern.OPCMeasurement + opc_meas.NetworkPath, JsonConvert.SerializeObject(opc_meas));
 
                         _OPCRepository.OPCTags.Add
                           (
@@ -153,7 +137,7 @@ namespace OPC
                                 OPCName = row["KeepServerTagName"].ToString(),
                                 Description = row["Description"].ToString(),
                                 MessageConfiguration = (int)row["MessageConfiguration"],
-                                MeasurementId = _opc_meas.ID,
+                                MeasurementId = opc_meas.ID,
                                 Type = row["TagType"].ToString() == "DMODigitalMeasurement" ? Type.Digital : Type.Analog
                             }
                           );
@@ -172,12 +156,12 @@ namespace OPC
         }
         private void PopulateOPCParams(DataManager dbQuery)
         {
-            string sql = $"SELECT * FROM {GetEndStringCommand()}OPC_PARAMS";
+            string sql = $"SELECT * FROM APP_OPC_PARAMS";
             DataTable dataTable = new DataTable();
             if (LoadfromRedis)
             {
                 var keys = _RedisConnectorHelper.GetKeys(pattern: RedisKeyPattern.OPC_Params);
-                var paramTable = _RedisConnectorHelper.StringGet<OPC_PARAM_Object>(keys);
+                var paramTable = _RedisConnectorHelper.StringGet<OPC_PARAM_Str>(keys);
                 var row = paramTable.First();
                 _OPCRepository.Connection.Name = row.Name;
                 _OPCRepository.Connection.IP = row.IP;
@@ -192,14 +176,14 @@ namespace OPC
                 _OPCRepository.Connection.IP = row["IP"].ToString();
                 _OPCRepository.Connection.Port = row["Port"].ToString();
 
-                OPC_PARAM_Object _opc_param = new OPC_PARAM_Object();
-                _opc_param.Name = _OPCRepository.Connection.Name;
-                _opc_param.IP = _OPCRepository.Connection.IP;
-                _opc_param.Port = _OPCRepository.Connection.Port;
-                _opc_param.Description = row["Description"].ToString();
+                OPC_PARAM_Str opc_param = new OPC_PARAM_Str();
+                opc_param.Name = _OPCRepository.Connection.Name;
+                opc_param.IP = _OPCRepository.Connection.IP;
+                opc_param.Port = _OPCRepository.Connection.Port;
+                opc_param.Description = row["Description"].ToString();
 
                 if (RedisUtils.IsConnected)
-                    _cache.StringSet(RedisKeyPattern.OPC_Params, JsonConvert.SerializeObject(_opc_param));
+                    _cache.StringSet(RedisKeyPattern.OPC_Params, JsonConvert.SerializeObject(opc_param));
             }
         }
 
@@ -278,40 +262,6 @@ namespace OPC
             }
         }
     }
-    static class RedisKeyPattern
-    {
-        public const string MAB_PARAMS = "APP:MAB_PARAMS:";
-        public const string DCIS_PARAMS = "APP:DCIS_PARAMS:";
-        public const string DCP_PARAMS = "APP:DCP_PARAMS:";
-        public const string EEC_EAFSPriority = "APP:EEC_EAFSPriority:";
-        public const string EEC_PARAMS = "APP:EEC_PARAMS:";
-        public const string LSP_DECTCOMB = "APP:LSP_DECTCOMB:";
-        public const string LSP_DECTITEMS = "APP:LSP_DECTITEMS:";
-        public const string LSP_DECTLIST = "APP:LSP_DECTLIST:";
-        public const string LSP_DECTPRIOLS = "APP:LSP_DECTPRIOLS:";
-        public const string LSP_PARAMS = "APP:LSP_PARAMS:";
-        public const string LSP_PRIORITYITEMS = "APP:LSP_PRIORITYITEMS:";
-        public const string LSP_PRIORITYLIST = "APP:LSP_PRIORITYLIST:";
-        public const string OCP_CheckPoints = "APP:OCP_CheckPoints:";
-        public const string OCP_PARAMS = "APP:OCP_PARAMS:";
-        public const string OPCMeasurement = "APP:OPCMeasurement:";
-        public const string OPC_Params = "APP:OPC_Params:";
-    }
-    class OPC_MEAS_Object
-    {
-        public string ScadaTagName;
-        public string KeepServerTagName;
-        public string Description;
-        public int MessageConfiguration;
-        public Type TagType;
-        public string NetworkPath;
-        public Guid ID;
-    };
-    class OPC_PARAM_Object
-    {
-        public string Name;
-        public string IP;
-        public string Port;
-        public string Description;
-    };
+    
+    
 }

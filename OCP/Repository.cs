@@ -6,6 +6,7 @@ using Newtonsoft.Json;
 using StackExchange.Redis;
 using System.Linq;
 
+using COM;
 using Irisa.Logger;
 using Irisa.DataLayer;
 
@@ -77,27 +78,7 @@ namespace OCP
 
             return isBuild;
         }
-
-        private static string GetEndStringCommand()
-        {
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                //return "app.";
-                return "APP_";
-                //return string.Empty;
-
-
-            }
-
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-            {
-               return "APP_";
-
-            }
-
-            return string.Empty;
-        }
-
+       
         private void FetchCheckPoints()
         {
             if (LoadfromCache)
@@ -105,7 +86,7 @@ namespace OCP
                 _logger.WriteEntry("Loading OCP_Checkpoint Data from Cache", LogLevels.Info);
 
                 var keys = _RedisConnectorHelper.GetKeys(pattern: RedisKeyPattern.OCP_CheckPoints);
-                var dataTable_cache = _RedisConnectorHelper.StringGet<OCP_CHECKPOINTS_Object>(keys);
+                var dataTable_cache = _RedisConnectorHelper.StringGet<OCP_CHECKPOINTS_Str>(keys);
 
                 try
                 {
@@ -186,7 +167,7 @@ namespace OCP
                                                                                         "POWERNUM, " +
                                                                                         "POWERDENOM, " +
                                                                                         "CHECKPOINT_NETWORKPATH " +
-                                                                                $"FROM {GetEndStringCommand()}OCP_CheckPoints";
+                                                                                $"FROM APP_OCP_CheckPoints";
 
                 var dataTable = _dataManager.GetRecord(sql);
 
@@ -305,9 +286,9 @@ namespace OCP
                     _logger.WriteEntry("Loading LSP_PARAMS Data from Cache", LogLevels.Info);
 
                     var keys = _RedisConnectorHelper.GetKeys(pattern: RedisKeyPattern.OCP_PARAMS);
-                    var dataTable_cache = _RedisConnectorHelper.StringGet<OCP_PARAMS_Object>(keys);
+                    var dataTable_cache = _RedisConnectorHelper.StringGet<OCP_PARAMS_Str>(keys);
 
-                    foreach (OCP_PARAMS_Object row in dataTable_cache)
+                    foreach (OCP_PARAMS_Str row in dataTable_cache)
                     {
                         var id = Guid.Parse((row.ID).ToString());
                         var name = row.NAME;
@@ -333,8 +314,8 @@ namespace OCP
                 }
                 else
                 {
-                    OCP_PARAMS_Object _ocp_param = new OCP_PARAMS_Object();
-                    var dataTable = _dataManager.GetRecord($"SELECT * FROM {GetEndStringCommand()}OCP_PARAMS");
+                    OCP_PARAMS_Str ocp_param = new OCP_PARAMS_Str();
+                    var dataTable = _dataManager.GetRecord($"SELECT * FROM APP_OCP_PARAMS");
                     foreach (DataRow row in dataTable.Rows)
                     {
                         //var id = Guid.Parse(row["GUID"].ToString());
@@ -346,14 +327,14 @@ namespace OCP
                         scadaPoint.DirectionType = Convert.ToString(row["DirectionType"]);
                         scadaPoint.SCADAType = Convert.ToString(row["SCADAType"]);
 
-                        _ocp_param.FUNCTIONNAME = row["FUNCTIONNAME"].ToString();
-                        _ocp_param.NAME = name;
-                        _ocp_param.DIRECTIONTYPE = scadaPoint.DirectionType;
-                        _ocp_param.NETWORKPATH = networkPath;
-                        _ocp_param.SCADATYPE = scadaPoint.SCADAType;
-                        _ocp_param.ID = id.ToString();
+                        ocp_param.FUNCTIONNAME = row["FUNCTIONNAME"].ToString();
+                        ocp_param.NAME = name;
+                        ocp_param.DIRECTIONTYPE = scadaPoint.DirectionType;
+                        ocp_param.NETWORKPATH = networkPath;
+                        ocp_param.SCADATYPE = scadaPoint.SCADAType;
+                        ocp_param.ID = id.ToString();
                         if (RedisUtils.IsConnected)
-                            _cache.StringSet(RedisKeyPattern.OCP_PARAMS + networkPath, JsonConvert.SerializeObject(_ocp_param));
+                            _cache.StringSet(RedisKeyPattern.OCP_PARAMS + networkPath, JsonConvert.SerializeObject(ocp_param));
 
 
                         if (!_scadaPoints.ContainsKey(id))
@@ -392,14 +373,7 @@ namespace OCP
                 else
                     _logger.WriteEntry("The GUID could not read from Repository for Network   " + networkpath, LogLevels.Error);
             }
-            string sql = null;
-
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-                //sql = "SELECT * FROM dbo.NodesFullPath where FullPath = '" + networkpath + "'";
-                sql = "SELECT * FROM NodesFullPath where TO_CHAR(FullPath) = '" + networkpath + "'";
-
-            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-                sql = "SELECT * FROM NodesFullPath where TO_CHAR(FullPath) = '" + networkpath + "'";
+            string sql =  "SELECT * FROM NodesFullPath where TO_CHAR(FullPath) = '" + networkpath + "'";
 
             try
             {
@@ -431,57 +405,6 @@ namespace OCP
             }
         }
     }
-    static class RedisKeyPattern
-    {
-        public const string MAB_PARAMS = "APP:MAB_PARAMS:";
-        public const string DCIS_PARAMS = "APP:DCIS_PARAMS:";
-        public const string DCP_PARAMS = "APP:DCP_PARAMS:";
-        public const string EEC_EAFSPriority = "APP:EEC_EAFSPriority:";
-        public const string EEC_PARAMS = "APP:EEC_PARAMS:";
-        public const string LSP_DECTCOMB = "APP:LSP_DECTCOMB:";
-        public const string LSP_DECTITEMS = "APP:LSP_DECTITEMS:";
-        public const string LSP_DECTLIST = "APP:LSP_DECTLIST:";
-        public const string LSP_DECTPRIOLS = "APP:LSP_DECTPRIOLS:";
-        public const string LSP_PARAMS = "APP:LSP_PARAMS:";
-        public const string LSP_PRIORITYITEMS = "APP:LSP_PRIORITYITEMS:";
-        public const string LSP_PRIORITYLIST = "APP:LSP_PRIORITYLIST:";
-        public const string OCP_CheckPoints = "APP:OCP_CheckPoints:";
-        public const string OCP_PARAMS = "APP:OCP_PARAMS:";
-        public const string OPCMeasurement = "APP:OPCMeasurement:";
-        public const string OPC_Params = "APP:OPC_Params:";
-        public const string EEC_SFSCEAFSPRIORITY = "APP:EEC_SFSCEAFSPRIORITY:";
-    }
-    class OCP_PARAMS_Object
-    {
-        public string ID;
-        public string FUNCTIONNAME;
-        public string NAME;
-        public string DIRECTIONTYPE;
-        public string NETWORKPATH;
-        public string SCADATYPE;
-    }
-    class OCP_CHECKPOINTS_Object
-    {
-        public int OCPSHEDPOINT_ID;
-        public string NAME;
-        public string NETWORKPATH;
-        public string DECISIONTABLE;
-        public string CHECKOVERLOAD;
-        public string DESCRIPTION;
-        public string SHEDTYPE;
-        public string CATEGORY;
-        public float NOMINALVALUE;
-        public string LIMITPERCENT;
-        public string VOLTAGEENOM;
-        public string VOLTAGEDENOM;
-        public string POWERNUM;
-        public string POWERDENOM;
-        public string CHECKPOINT_NETWORKPATH;
-        public string Measurement_Id;
-        public string IT_Id;
-        public string AllowedActivePower_Id;
-        public string Average_Id;
-        public string Sample_Id;
-        public string QualityErr_Id;
-    };
+    
+    
 }

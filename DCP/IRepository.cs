@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Data;
 
+using COM;
+
 namespace DCP
 {
     public interface IRepository
@@ -13,10 +15,10 @@ namespace DCP
         bool ClearFromFurnace(int I);
         bool UpdateFurnace(int I, string time1, string TotalConsumption);
         bool UpdateEAFSComnsumption(int I, string eafConsumption);
-        DataTable GetFromMasterDB(string sql);
+        //DataTable GetFromMasterDB(string sql);
         DataTable GetFromLinkDB(string sql);
-        DataTable GetEECTELEGRAM();
-        bool UpdateEECTELEGRAM(string atime, string telDate);
+        //DataTable GetEECTELEGRAM();
+        //bool UpdateEECTELEGRAM(string atime, string telDate);
         bool InsertTELEGRAM(string sql);
         DataTable GetVMABEAFSGRPNUM();
         DataTable GetEAFGROUPREQUEST();
@@ -25,6 +27,11 @@ namespace DCP
         float GetPowerSumationFromT_EAFsPower(string sql);
         bool ModifyOnStaticDB(string sql);
         bool ModifyOnHistoricalDB(string sql);
-        DataTable GetFromHistoricalDB(string sql);
+        //DataTable GetFromHistoricalDB(string sql);
+        SFSC_EAFSPOWER_Str GetFromHistoricalCache();
+        public RedisUtils GetRedisUtiles();
+        
+
+
     }
 }
