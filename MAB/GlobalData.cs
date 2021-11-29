@@ -1,4 +1,4 @@
-﻿namespace EEC
+﻿namespace MAB
 {
     static class GlobalData
     {

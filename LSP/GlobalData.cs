@@ -1,4 +1,4 @@
-﻿namespace EEC
+﻿namespace LSP
 {
     static class GlobalData
     {

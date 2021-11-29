@@ -45,7 +45,7 @@ namespace MAB
         private bool _initialize_Voltage_Source;
         private bool _mabInitialized;
 
-        public MABManager(ILogger logger, IRepository repository, ICpsCommandService cpsCommandService)
+        internal MABManager(ILogger logger, IRepository repository, ICpsCommandService cpsCommandService)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _repository = repository ?? throw new ArgumentNullException(nameof(repository));
@@ -122,6 +122,17 @@ namespace MAB
             catch (Exception ex)
             {
                 _logger.WriteEntry(ex.Message, LogLevels.Error);
+            }
+        }
+
+        public void CheckCPSStatus()
+        {
+
+            while (!GlobalData.CPSStatus)
+            {
+                System.Threading.Thread.Sleep(5000);
+                _logger.WriteEntry("Waiting for Connecting to CPS", LogLevels.Info);
+
             }
         }
 

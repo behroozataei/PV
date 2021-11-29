@@ -1,4 +1,4 @@
-﻿namespace EEC
+﻿namespace OCP
 {
     static class GlobalData
     {

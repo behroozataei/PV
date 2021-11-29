@@ -1,6 +1,6 @@
-﻿namespace EEC
+﻿namespace DCP
 {
-    static class GlobalData
+    static public class GlobalData
     {
         public static bool CPSStatus = false;
     }

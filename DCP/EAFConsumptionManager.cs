@@ -250,7 +250,7 @@ namespace DCP
 			try
 			{
 				string sql_T_EAFsEnergyConsumption;
-				string sql_EEC_SFSCEAFSPriority;
+				//string sql_EEC_SFSCEAFSPriority;
 				string sql;
 
 				// Step 1: ON/OFF for furnaces
@@ -263,14 +263,14 @@ namespace DCP
 					if (scadaPoint.Value > EAFS_ON_OFF_CURRENT_LIMIT)
 					{
 						sql_T_EAFsEnergyConsumption = "UPDATE [PU10_PCS].[dbo].[T_EAFsEnergyConsumption] SET [Status] ='ON' WHERE [Furnace]='" + nFurnace.ToString() + "'";
-						sql_EEC_SFSCEAFSPriority = $"UPDATE APP_EEC_SFSCEAFSPRIORITY SET STATUS_OF_FURNACE='ON', Reason = 'DCP.EAFsConsumption => STATUS_OF_FURNACE goes ON' WHERE FURNACE='" + nFurnace.ToString() + "'";
+						//sql_EEC_SFSCEAFSPriority = $"UPDATE APP_EEC_SFSCEAFSPRIORITY SET STATUS_OF_FURNACE='ON', Reason = 'DCP.EAFsConsumption => STATUS_OF_FURNACE goes ON' WHERE FURNACE='" + nFurnace.ToString() + "'";
 						_OnOff_furnces_New[nFurnace - 1] = "ON";
 						eec_sfsceafprio.STATUS_OF_FURNACE = "ON";
 					}
 					else
 					{
 						sql_T_EAFsEnergyConsumption = "UPDATE [PU10_PCS].[dbo].[T_EAFsEnergyConsumption] SET [Status] ='OFF' WHERE [Furnace]='" + nFurnace.ToString() + "'";
-						sql_EEC_SFSCEAFSPriority = $"UPDATE APP_EEC_SFSCEAFSPRIORITY SET STATUS_OF_FURNACE='OFF', Reason = 'DCP.EAFsConsumption => STATUS_OF_FURNACE goes OFF' WHERE FURNACE='" + nFurnace.ToString() + "'";
+						//sql_EEC_SFSCEAFSPriority = $"UPDATE APP_EEC_SFSCEAFSPRIORITY SET STATUS_OF_FURNACE='OFF', Reason = 'DCP.EAFsConsumption => STATUS_OF_FURNACE goes OFF' WHERE FURNACE='" + nFurnace.ToString() + "'";
 						_OnOff_furnces_New[nFurnace - 1] = "OFF";
 						eec_sfsceafprio.STATUS_OF_FURNACE = "OFF";
 					}

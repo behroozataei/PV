@@ -19,6 +19,7 @@ namespace OCP
         private readonly BlockingCollection<CpsRuntimeData> _cpsRuntimeDataBuffer;
         private bool _isWorking;
 
+
         internal RuntimeDataReceiver(ILogger logger, IRepository repository, IProcessing dataProcessing,
             CpsRpcService rpcService, BlockingCollection<CpsRuntimeData> cpsRuntimeDataBuffer)
         {

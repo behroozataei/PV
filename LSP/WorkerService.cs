@@ -51,6 +51,9 @@ namespace LSP
             _repository = new Repository(_logger, config, _RedisConnectorHelper);
             _lspManager = new LSPManager(_logger, _repository, _rpcService.CommandService);
             _runtimeDataReceiver = new RuntimeDataReceiver(_logger, _repository, _lspManager, _rpcService, _cpsRuntimeDataBuffer);
+            
+
+
         }
 
         public override Task StartAsync(CancellationToken cancellationToken)
@@ -66,12 +69,11 @@ namespace LSP
             else
                 _logger.WriteEntry("Loading data from database is completed", LogLevels.Info);
 
-            _rpcService.StateChanged += OnRpcStateChanged;
-            _lspManager.Initialize();
-            _runtimeDataReceiver.Start();
-            
            
-
+            _rpcService.StateChanged += OnRpcStateChanged;
+            _runtimeDataReceiver.Start();
+            _lspManager.CheckCPSStatus();  //waiting for connection
+            _lspManager.Initialize();
             return base.StartAsync(cancellationToken);
         }
 
@@ -119,16 +121,19 @@ namespace LSP
                 Task.Run(() =>
                 {
                     Thread.Sleep(3000);
+                    GlobalData.CPSStatus = true;
                 });
             }
 
             if (e.State == GrpcCommunicationState.Disconnect)
             {
+                GlobalData.CPSStatus = false;
                 _logger.WriteEntry("CPS is going to Disconnect", LogLevels.Info);
             }
 
             if (e.State == GrpcCommunicationState.Connecting)
             {
+                GlobalData.CPSStatus = false;
                 _logger.WriteEntry("CPS is going to Connecting", LogLevels.Info);
             }
         }

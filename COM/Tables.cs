@@ -236,6 +236,9 @@ namespace COM
         public DateTime TELDATETIME;
         public string FURNACE;
         public string GROUPPOWER;
+        public DateTime SHEADTIME;
+        public bool SHEADCOMMAND;
+
     }
 
 

@@ -940,13 +940,6 @@ namespace LSP
 
                     dataTable = _staticDataManager.GetRecord($"SELECT * from APP_LSP_PRIORITYLIST");
                     _cache.StringSet(RedisKeyPattern.LSP_PRIORITYLIST, JsonConvert.SerializeObject(dataTable));
-                    var appkeys= _RedisConnectorHelper.GetKeys("APP:*");
-
-                    //foreach (RedisKey key in appkeys)
-                    //    _cache.KeyDelete(key);
-
-
-
 
                 }
 

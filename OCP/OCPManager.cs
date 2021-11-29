@@ -128,6 +128,17 @@ namespace OCP
             }
         }
 
+        public void CheckCPSStatus()
+        {
+
+            while (!GlobalData.CPSStatus)
+            {
+                System.Threading.Thread.Sleep(5000);
+                _logger.WriteEntry("Waiting for Connecting to CPS", LogLevels.Info);
+
+            }
+        }
+
         //------------------------------------------------------------------------------
         // StartTimeServiceDemo - Initiates the timer
         //------------------------------------------------------------------------------

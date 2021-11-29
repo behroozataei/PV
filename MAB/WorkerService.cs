@@ -72,6 +72,8 @@ namespace MAB
 
             _rpcService.StateChanged += RpcStateChanged;
             _runtimeDataReceiver.Start();
+            _mabManager.CheckCPSStatus();
+
 
             var taskWaiting = Task.Delay(3000, cancellationToken);
             taskWaiting.ContinueWith((t) =>
@@ -122,15 +124,22 @@ namespace MAB
             {
                 _mabManager.ClearEAFGroupsLocal();
                 _logger.WriteEntry("CPS is going to Connect", LogLevels.Info);
+                Task.Run(() =>
+                {
+                    Thread.Sleep(3000);
+                    GlobalData.CPSStatus = true;
+                });
             }
 
             if (e.State == GrpcCommunicationState.Disconnect)
             {
+                GlobalData.CPSStatus = false;
                 _mabManager.ClearEAFGroupsLocal();
                 _logger.WriteEntry("CPS is going to Disconnect", LogLevels.Info);
             }
             if (e.State == GrpcCommunicationState.Connecting)
             {
+                GlobalData.CPSStatus = false;
                 _mabManager.ClearEAFGroupsLocal();
                 _logger.WriteEntry("CPS is going to Connecting", LogLevels.Info);
             }

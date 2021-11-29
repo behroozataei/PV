@@ -66,7 +66,7 @@ namespace LSP
 			_changeControlStateOnServer = new ChangeControlStateOnServer(logger, scadaCommand);
 			_repository = repository;
 			_scadaCommand = scadaCommand;
-			
+
 
 
 
@@ -218,6 +218,17 @@ namespace LSP
 			catch (System.Exception excep)
 			{
 				_logger.WriteEntry(excep.Message, LogLevels.Error, excep);
+			}
+		}
+
+		public void CheckCPSStatus()
+		{
+			
+			while (!GlobalData.CPSStatus)
+			{
+				System.Threading.Thread.Sleep(5000);
+				_logger.WriteEntry("Waiting for Connecting to CPS", LogLevels.Info);
+				
 			}
 		}
 

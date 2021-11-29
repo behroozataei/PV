@@ -70,6 +70,7 @@ namespace OCP
 
             _rpcService.StateChanged += RpcStateChanged;
             _runtimeDataReceiver.Start();
+            _ocpManager.CheckCPSStatus();
 
             _ocpManager.StartTimeService();
 
@@ -140,8 +141,5 @@ namespace OCP
         }
     }
 
-    class GlobalData
-    {
-        public static bool CPSStatus = false;
-    }
+    
 }

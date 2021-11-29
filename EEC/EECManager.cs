@@ -18,14 +18,12 @@ namespace EEC
         private readonly Timer _timer_1_Minute;
         private UpdateScadaPointOnServer _updateScadaPointOnServer;
         private EECSFSCManager _SFSCManager = null;
-        private GlobalData _globalData;
        
-        internal EECManager(ILogger logger, IRepository repository, ICpsCommandService commandService, GlobalData globalData)
+        internal EECManager(ILogger logger, IRepository repository, ICpsCommandService commandService)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _repository = repository ?? throw new ArgumentNullException(nameof(repository));
             _cycleValidator = new EECCycleValidator(_logger);
-            _globalData = globalData;
 
             _timer_1_Minute = new Timer();
             _timer_1_Minute.Interval = TIMER_TICKS;
@@ -71,7 +69,7 @@ namespace EEC
                     return;
                 }
 
-                if(!_globalData.CPSStatus)
+                if(!GlobalData.CPSStatus)
                 {
                     
                     if (!_updateScadaPointOnServer.SendAlarm(_repository.GetScadaPoint("SCADAError"), (DigitalSingleStatus)DigitalSingleStatusOnOff.On, "CPS communication could not established"))
@@ -153,7 +151,7 @@ namespace EEC
         public void CheckCPSStatus()
         {
             int counter = 0;
-            while (!_globalData.CPSStatus)
+            while (!GlobalData.CPSStatus)
             {
                 System.Threading.Thread.Sleep(5000);
                 _logger.WriteEntry("Waiting for Connecting to CPS", LogLevels.Info);

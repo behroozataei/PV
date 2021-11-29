@@ -70,6 +70,7 @@ namespace DCP
                 return Task.FromException<Exception>(new Exception("Create repository is failed"));
             else
                 _logger.WriteEntry("Loading data from database is completed", LogLevels.Info);
+            _rpcService.StateChanged += RpcStateChanged;
 
             _runtimeDataReceiver.Start();
 
@@ -109,6 +110,35 @@ namespace DCP
                 Console.WriteLine($"{e.TimeStamp.ToIranStandardTime()} ==>   \n\tCall site: {e.CallSite} \n\t{e.Message}");
 
             Console.ResetColor();
+        }
+        private void RpcStateChanged(object sender, GrpcStateChangeEventArgs e)
+        {
+            _logger.WriteEntry("RpcClientManager_StateChanged ... " + e.State.ToString(), LogLevels.Info);
+
+            if (e.State == GrpcCommunicationState.Connect)
+            {
+                _logger.WriteEntry("CPS is going to Connect", LogLevels.Info);
+
+                Task.Run(() =>
+                {
+                    System.Threading.Thread.Sleep(3000);
+                    GlobalData.CPSStatus = true;
+                });
+
+            }
+
+            if (e.State == GrpcCommunicationState.Disconnect)
+            {
+                GlobalData.CPSStatus = false;
+                _logger.WriteEntry("CPS is going to Disconnect", LogLevels.Info);
+            }
+
+            if (e.State == GrpcCommunicationState.Connecting)
+            {
+
+                GlobalData.CPSStatus = false;
+                _logger.WriteEntry("CPS is going to Connecting", LogLevels.Info);
+            }
         }
     }
 }

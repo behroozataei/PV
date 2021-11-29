@@ -48,10 +48,10 @@ namespace COM
             , LazyThreadSafetyMode.ExecutionAndPublication);
             
 
-            RedisConnection.ConnectionFailed += (sender, e) => { ConnectionFailed.Invoke(sender, e); };
-            RedisConnection.ConnectionRestored += (sender, e) => { ConnectionRestored.Invoke(sender, e); };
-            RedisConnection.ErrorMessage += (sender, e) => { ErrorMessage.Invoke(sender, e); };
-            RedisConnection.ConfigurationChanged += (sender, e) => { ConfigurationChanged.Invoke(sender, e); };
+            //RedisConnection.ConnectionFailed += (sender, e) => { ConnectionFailed.Invoke(sender, e); };
+            //RedisConnection.ConnectionRestored += (sender, e) => { ConnectionRestored.Invoke(sender, e); };
+            //RedisConnection.ErrorMessage += (sender, e) => { ErrorMessage.Invoke(sender, e); };
+            //RedisConnection.ConfigurationChanged += (sender, e) => { ConfigurationChanged.Invoke(sender, e); };
 
 
         }

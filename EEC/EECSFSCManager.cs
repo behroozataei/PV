@@ -506,8 +506,21 @@ namespace EEC
                             //    (busbar + 1).ToString() +
                             //    " AND STATUS_OF_FURNACE='ON' ORDER BY CAST( CONSUMED_ENERGY_PER_HEAT AS FLOAT) ASC";
                             EEC_SFSCEAFSPRIORITY_Str[] eec_sfsceafprio = new EEC_SFSCEAFSPRIORITY_Str[8];
-                            for(int fur = 0; fur <8; fur++) 
-                                eec_sfsceafprio[fur] = JsonConvert.DeserializeObject<EEC_SFSCEAFSPRIORITY_Str>(_repository.GetRedisUtiles().DataBase.StringGet(RedisKeyPattern.EEC_SFSCEAFSPRIORITY+(fur+1).ToString()));
+
+                                 
+                            for (int fur = 0; fur <8; fur++)
+                            {
+                                if (_repository.GetRedisUtiles().GetKeys(pattern: RedisKeyPattern.EEC_SFSCEAFSPRIORITY + (fur + 1).ToString()).Length != 0)
+                                    eec_sfsceafprio[fur] = JsonConvert.DeserializeObject<EEC_SFSCEAFSPRIORITY_Str>(_repository.GetRedisUtiles().DataBase.StringGet(RedisKeyPattern.EEC_SFSCEAFSPRIORITY + (fur + 1).ToString()));
+                                else
+                                {
+                                    _logger.WriteEntry($"Error in 'SELECT PRIORITY TABLE FROM APP_EEC_SFSCEAFSPRIORITY'", LogLevels.Error);
+                                    return false;
+                                }
+
+                            }
+                                
+                            
 
                             var datatable = eec_sfsceafprio.Where(n => n.GROUPNUM== (busbar + 1).ToString())
                                                         .OrderBy(n =>Convert.ToDecimal(n.CONSUMED_ENERGY_PER_HEAT)).ToArray();
@@ -555,6 +568,9 @@ namespace EEC
                                 sfsc_furnace_to_shed.TELDATETIME = DateTime.Now;
                                 sfsc_furnace_to_shed.FURNACE = furnace.ToString();
                                 sfsc_furnace_to_shed.GROUPPOWER = _BusbarPowers[busbar].ToString();
+                                sfsc_furnace_to_shed.SHEADTIME=DateTime.Parse("1900-01-01 00:00:00");
+                                sfsc_furnace_to_shed.SHEADCOMMAND = true;
+
                                 _repository.GetRedisUtiles().DataBase.StringSet(RedisKeyPattern.SFSC_FURNACE_TO_SHED , JsonConvert.SerializeObject(sfsc_furnace_to_shed));
                                // RedisKeyPattern.EEC_PARAMS + networkPath, JsonConvert.SerializeObject(_eec_param);
 

@@ -31,6 +31,7 @@ namespace LSP
 
 		private bool isWorking_Shedding_To_SafeConsumption = false;
 		private bool isWorking_CheckLSPActivationFromSFSC = false;
+		SFSC_FURNACE_TO_SHED_Str _sfsc_furnace_to_shed = null;
 
 		internal LSPSFSCManager(ILogger logger, IRepository repository, ICpsCommandService scadaCommand, List<CPriorityList> priorityList)
 		{
@@ -41,6 +42,7 @@ namespace LSP
 				_updateScadaPointOnServer = new UpdateScadaPointOnServer(logger, scadaCommand);
 				_changeControlStateOnServer = new ChangeControlStateOnServer(logger, scadaCommand);
 				_priorityList = priorityList;
+				_sfsc_furnace_to_shed = new SFSC_FURNACE_TO_SHED_Str();
 
 				//_timer_1_Minute = new Timer();
 				//_timer_1_Minute.Interval = TIMER_1_TICKS;
@@ -54,7 +56,7 @@ namespace LSP
 
 				//------------------------------------------------------------
 				// Clearing pending shed commands
-				ClearSFSCTrigger();
+				ClearSFSCTrigger(_sfsc_furnace_to_shed);
 				//string sql = $"SELECT * FROM APP_SFSC_FURNACE_TO_SHED";
 				//DataTable datatable = _repository.GetFromHistoricalDB(sql);
 				//if(datatable == null)
@@ -218,15 +220,22 @@ namespace LSP
 				}
 
 				// Exit of method, because there is no Furnace to SHED 
-				SFSC_FURNACE_TO_SHED_Str sfsc_furnace_to_shed = null;
-				sfsc_furnace_to_shed=JsonConvert.DeserializeObject<SFSC_FURNACE_TO_SHED_Str>(_repository.GetRedisUtiles().DataBase.StringGet(RedisKeyPattern.SFSC_FURNACE_TO_SHED));
-				if (sfsc_furnace_to_shed == null)
+				
+				_sfsc_furnace_to_shed=JsonConvert.DeserializeObject<SFSC_FURNACE_TO_SHED_Str>(_repository.GetRedisUtiles().DataBase.StringGet(RedisKeyPattern.SFSC_FURNACE_TO_SHED));
+				if (_sfsc_furnace_to_shed == null)
 				{
 					isWorking_CheckLSPActivationFromSFSC = false;
 					return;
 				}
 
-                var SFSC_STATUS = _repository.GetLSPScadaPoint("SFSC_STATUS");
+				if (_sfsc_furnace_to_shed.SHEADCOMMAND == false)
+				{
+					isWorking_CheckLSPActivationFromSFSC = false;
+					return;
+				}
+
+
+				var SFSC_STATUS = _repository.GetLSPScadaPoint("SFSC_STATUS");
                 if (SFSC_STATUS is null)
                 {
                     _logger.WriteEntry("Error in finding SFSC_STATUS", LogLevels.Error);
@@ -237,7 +246,7 @@ namespace LSP
                 if (SFSC_STATUS.Value == 0.0)
                 {
                     _logger.WriteEntry("LSP_SFSC Triggered, LSP_SFSC Function is OFF!", LogLevels.Error);
-                    ClearSFSCTrigger();
+                    ClearSFSCTrigger(_sfsc_furnace_to_shed);
                     isWorking_CheckLSPActivationFromSFSC = false;
                     return;
                 }
@@ -258,16 +267,16 @@ namespace LSP
 				{
 					_logger.WriteEntry("Error in diappearing LSPACTIVATED ", LogLevels.Error);
 				}
-				if (!_updateScadaPointOnServer.SendAlarm(scadapointLSPACTIVATED, SinglePointStatus.Appear, "LSP is activated by SFSC for furnace " + sfsc_furnace_to_shed.FURNACE + " with PowerGroup : " + sfsc_furnace_to_shed.GROUPPOWER))
+				if (!_updateScadaPointOnServer.SendAlarm(scadapointLSPACTIVATED, SinglePointStatus.Appear, "LSP is activated by SFSC for furnace " + _sfsc_furnace_to_shed.FURNACE + " with PowerGroup : " + _sfsc_furnace_to_shed.GROUPPOWER))
 				{
 					_logger.WriteEntry("Error in send Alarm for LSPACTIVATED, " + 
 						"Activated by SFSC for Furnace " +
-						sfsc_furnace_to_shed.FURNACE + 
+						_sfsc_furnace_to_shed.FURNACE + 
 						" with PowerGroup : " +
-						sfsc_furnace_to_shed.GROUPPOWER	,LogLevels.Error);
+						_sfsc_furnace_to_shed.GROUPPOWER	,LogLevels.Error);
 				}
 
-				_logger.WriteEntry("SELECTED FURNACE IS:" + sfsc_furnace_to_shed.FURNACE, LogLevels.Info);
+				_logger.WriteEntry("SELECTED FURNACE IS:" + _sfsc_furnace_to_shed.FURNACE, LogLevels.Info);
 
 				var keys = _repository.GetRedisUtiles().GetKeys(pattern: RedisKeyPattern.EEC_EAFSPriority);
 				if (keys.Length == 0)
@@ -278,7 +287,7 @@ namespace LSP
 					}
 
 				var datatable = _repository.GetRedisUtiles().StringGet<EEC_EAFSPRIORITY_Str>(keys);
-				EEC_EAFSPRIORITY_Str dr_EEC_EAFSPriority = datatable.Where(n => n.FURNACE == sfsc_furnace_to_shed.FURNACE).First();
+				EEC_EAFSPRIORITY_Str dr_EEC_EAFSPriority = datatable.Where(n => n.FURNACE == _sfsc_furnace_to_shed.FURNACE).First();
 
 				//sql = $"SELECT * FROM APP_EEC_EAFSPRIORITY WHERE FURNACE = " + dr_SFSC_FURNACE_TO_SHED["FURNACE"].ToString();
 				//datatable = _repository.GetFromMasterDB(sql);
@@ -343,8 +352,8 @@ namespace LSP
 						_logger.WriteEntry("Error to find CB ADDRESS in Repository: " + dr_EEC_EAFSPriority.PARTNERADDRESS.ToString(), LogLevels.Error);
 					}
 				}
-
-				ClearSFSCTrigger();
+				_sfsc_furnace_to_shed.SHEADTIME = DateTime.Now;
+				ClearSFSCTrigger(_sfsc_furnace_to_shed);
 
 				//if (!_updateScadaPointOnServer.WriteAnalog(scadapointWarning, (float)SinglePointStatus.Disappear))
 				//{
@@ -359,7 +368,7 @@ namespace LSP
 			}
 		}
 
-		private void ClearSFSCTrigger()
+		private void ClearSFSCTrigger(SFSC_FURNACE_TO_SHED_Str  sfsc_furnace_to_shed)
         {
 			_logger.WriteEntry("Clear SFSC Trigger", LogLevels.Info);
 			var scadapointLSPACTIVATED = _repository.GetLSPScadaPoint("LSPACTIVATED");
@@ -378,9 +387,12 @@ namespace LSP
 			//	_logger.WriteEntry("Error in running: " + sql, LogLevels.Error);
 			//}
 
-			var appkeys = _repository.GetRedisUtiles().GetKeys(RedisKeyPattern.SFSC_FURNACE_TO_SHED+"*");
-			foreach (RedisKey key in appkeys)
-				_repository.GetRedisUtiles().DataBase.KeyDelete(key);
+			sfsc_furnace_to_shed.SHEADCOMMAND = false;
+			_repository.GetRedisUtiles().DataBase.StringSet(RedisKeyPattern.SFSC_FURNACE_TO_SHED, JsonConvert.SerializeObject(sfsc_furnace_to_shed));
+
+			//var appkeys = _repository.GetRedisUtiles().GetKeys(RedisKeyPattern.SFSC_FURNACE_TO_SHED+"*");
+			//foreach (RedisKey key in appkeys)
+			//	_repository.GetRedisUtiles().DataBase.KeyDelete(key);
 
 		}
 

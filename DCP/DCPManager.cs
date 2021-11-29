@@ -84,11 +84,22 @@ namespace DCP
 				_logger.WriteEntry(excep.Message, LogLevels.Error, excep);
 			}
 		}
-		
+		public void CheckCPSStatus()
+		{
+
+			while (!GlobalData.CPSStatus)
+			{
+				System.Threading.Thread.Sleep(5000);
+				_logger.WriteEntry("Waiting for Connecting to CPS", LogLevels.Info);
+
+			}
+		}
+
 		public void RunCyclicOperation4Second(object sender, ElapsedEventArgs e)
 		{
 			try
 			{
+				CheckCPSStatus();
 				Retrive_Power();
 			}
 			catch (System.Exception excep)

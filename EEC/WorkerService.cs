@@ -23,9 +23,7 @@ namespace EEC
         private readonly StoreLogs _storeLogs;
         private readonly CpsRpcService _rpcService;
         private readonly Repository _repository;
-        private readonly PowerCalculation _powerCalculation;
         private readonly EECManager _eecManager;
-        private readonly GlobalData _globalData;
         private readonly BlockingCollection<CpsRuntimeData> _cpsRuntimeDataBuffer;
         private readonly RuntimeDataReceiver _runtimeDataReceiver;
         private readonly RedisUtils _RedisConnectorHelper;
@@ -55,10 +53,9 @@ namespace EEC
             _rpcService = new CpsRpcService(config["CpsIpAddress"], 10000, historyDataRequest, _cpsRuntimeDataBuffer);
             
             
-            _globalData = new GlobalData();
 
             _repository = new Repository(_logger, config, _RedisConnectorHelper);
-            _eecManager = new EECManager(_logger, _repository, _rpcService.CommandService, _globalData);
+            _eecManager = new EECManager(_logger, _repository, _rpcService.CommandService);
             _runtimeDataReceiver = new RuntimeDataReceiver(_logger, _repository, (IProcessing)_eecManager.RuntimeDataProcessing, _rpcService, _cpsRuntimeDataBuffer);
         }
 
@@ -126,21 +123,21 @@ namespace EEC
                 Task.Run(() =>
                 {
                     _eecManager.ReinitializeCurrentFromNewAfterCPSStartToWork();
-                    _globalData.CPSStatus = true;
+                    GlobalData.CPSStatus = true;
                 });
             }
 
             if (e.State == GrpcCommunicationState.Disconnect)
             {
 
-                _globalData.CPSStatus = false;
+                GlobalData.CPSStatus = false;
                 _logger.WriteEntry("CPS is going to Disconnect", LogLevels.Info);
             }
 
             if (e.State == GrpcCommunicationState.Connecting)
             {
 
-                _globalData.CPSStatus = false;
+                GlobalData.CPSStatus = false;
                 _logger.WriteEntry("CPS is going to Connecting", LogLevels.Info);
             }
         }

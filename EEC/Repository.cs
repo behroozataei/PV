@@ -23,7 +23,6 @@ namespace EEC
         private readonly DataManager _historicalDataManager;
         private readonly Dictionary<Guid, EECScadaPoint> _scadaPoints;
         private readonly Dictionary<string, EECScadaPoint> _scadaPointsHelper;
-        public Dictionary<int, EECEAFPoint> _dEAFsPriority { get; private set; }
         private readonly RedisUtils _RedisConnectorHelper;
 
         private bool LoadfromCache = false;
@@ -41,18 +40,17 @@ namespace EEC
 
             _scadaPoints = new Dictionary<Guid, EECScadaPoint>();
             _scadaPointsHelper = new Dictionary<string, EECScadaPoint>();
-            _dEAFsPriority = new Dictionary<int, EECEAFPoint>();
-           
+
         }
 
-               public bool Build()
+        public bool Build()
         {
             if (RedisUtils.IsConnected)
             {
                 _logger.WriteEntry("Connected to Redis Cache", LogLevels.Info);
                 _cache = _RedisConnectorHelper.DataBase;
                 if (_RedisConnectorHelper.GetKeys(pattern: RedisKeyPattern.EEC_PARAMS).Length != 0 &&
-                    _RedisConnectorHelper.GetKeys(pattern: RedisKeyPattern.EEC_SFSCEAFSPRIORITY).Length != 0 )
+                    _RedisConnectorHelper.GetKeys(pattern: RedisKeyPattern.EEC_SFSCEAFSPRIORITY).Length != 0)
                 {
                     LoadfromCache = true;
                 }
@@ -60,19 +58,19 @@ namespace EEC
                 {
                     LoadfromCache = false;
                     EEC_SFSCEAFSPRIORITY_Str[] eec_sfsceafsproi = new EEC_SFSCEAFSPRIORITY_Str[8];
-                    for (int furnace = 0; furnace <8 ; furnace++)
+                    for (int furnace = 0; furnace < 8; furnace++)
                     {
                         eec_sfsceafsproi[furnace] = new EEC_SFSCEAFSPRIORITY_Str();
-                        eec_sfsceafsproi[furnace].FURNACE = (furnace+1).ToString();
+                        eec_sfsceafsproi[furnace].FURNACE = (furnace + 1).ToString();
                         eec_sfsceafsproi[furnace].GROUPNUM = "1";
                         eec_sfsceafsproi[furnace].CONSUMED_ENERGY_PER_HEAT = "0";
                         eec_sfsceafsproi[furnace].REASON = "";
                         eec_sfsceafsproi[furnace].STATUS_OF_FURNACE = "OFF";
 
-                        _cache.StringSet(RedisKeyPattern.EEC_SFSCEAFSPRIORITY+ $"{ furnace + 1}", JsonConvert.SerializeObject(eec_sfsceafsproi[furnace]));
+                        _cache.StringSet(RedisKeyPattern.EEC_SFSCEAFSPRIORITY + $"{ furnace + 1}", JsonConvert.SerializeObject(eec_sfsceafsproi[furnace]));
                     }
 
-                }  
+                }
             }
             else
             {
@@ -82,56 +80,19 @@ namespace EEC
             try
             {
                 GetInputScadaPoints();
-                GetEAFsPriority();
-
+               
                 isBuild = true;
             }
             catch (Exception ex)
             {
                 _logger.WriteEntry(ex.Message, LogLevels.Error, ex);
             }
-            
+
 
             return isBuild;
         }
 
-        private void GetEAFsPriority()
-        {
-            try
-            {
-                var sql =  $"SELECT CONSUMED_ENERGY_PER_HEAT, STATUS_OF_FURNACE, FURNACE, GROUPNUM FROM APP_EEC_SFSCEAFSPRIORITY";                
-                var dataTable = _historicalDataManager.GetRecord(sql);
-                if ( (dataTable is null) || (dataTable.Rows.Count == 0))
-                {
-                    _logger.WriteEntry("Error in running GetEAFsPriority!", LogLevels.Error);
-                    return;
-                }
-
-                foreach (DataRow row in dataTable.Rows)
-                {
-                    var FURNACE = Convert.ToInt32(row["FURNACE"].ToString());
-                    var GROUPNUM = row["GROUPNUM"].ToString();
-                    var STATUS_OF_FURNACE = row["STATUS_OF_FURNACE"].ToString();
-                    
-                    string CONSUMED_ENERGY_PER_HEAT;
-                    if (DBNull.Value == row["CONSUMED_ENERGY_PER_HEAT"])
-                        CONSUMED_ENERGY_PER_HEAT = "0";
-                    else
-                        CONSUMED_ENERGY_PER_HEAT = row["CONSUMED_ENERGY_PER_HEAT"].ToString();
-
-                    var eafPoint = new EECEAFPoint(FURNACE, GROUPNUM, STATUS_OF_FURNACE, CONSUMED_ENERGY_PER_HEAT);
-                    _dEAFsPriority.Add(FURNACE, eafPoint);
-                }
-            }
-            catch(Irisa.DataLayer.DataException ex)
-            {
-                _logger.WriteEntry(ex.ToString(), LogLevels.Error, ex);
-            }
-            catch( Exception ex)
-            {
-                _logger.WriteEntry(ex.Message, LogLevels.Error, ex);
-            }
-        }
+       
 
         private void GetInputScadaPoints()
         {
@@ -154,7 +115,7 @@ namespace EEC
                         if (id != Guid.Empty)
                         {
                             var scadaPoint = new EECScadaPoint(id, name, networkPath, (PointDirectionType)Enum.Parse(typeof(PointDirectionType), pointDirectionType));
-                           
+
                             if (!_scadaPoints.ContainsKey(id))
                             {
                                 _scadaPoints.Add(id, scadaPoint);
@@ -204,23 +165,17 @@ namespace EEC
                     }
                 }
             }
-            catch(Irisa.DataLayer.DataException ex)
+            catch (Irisa.DataLayer.DataException ex)
             {
                 _logger.WriteEntry(ex.ToString(), LogLevels.Error, ex);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 _logger.WriteEntry(ex.Message, LogLevels.Error, ex);
             }
         }
 
-        public EECEAFPoint GetEAFPoint(int furnace)
-        {
-            if (_dEAFsPriority.TryGetValue(furnace, out var eafPriority))
-                return eafPriority;
-            else
-                return null;
-        }
+       
 
         public EECScadaPoint GetScadaPoint(Guid guid)
         {
@@ -262,7 +217,7 @@ namespace EEC
             eec_telegram.MAXOVERLOAD2 = PSend2;
             eec_telegram.RESIDUALENERGYEND = m_EnergyResEnd;
 
-            
+
 
             try
             {
@@ -302,7 +257,7 @@ namespace EEC
             }
             return dataTable;
         }
-        
+
         public bool ModifyOnHistoricalDB(string sql)
         {
             try
@@ -313,7 +268,7 @@ namespace EEC
                 else
                     return false;
             }
-            catch(Irisa.DataLayer.DataException ex)
+            catch (Irisa.DataLayer.DataException ex)
             {
                 _logger.WriteEntry(ex.ToString(), LogLevels.Error);
             }
@@ -331,7 +286,7 @@ namespace EEC
             {
                 SFSC_EAFPOWER_Str sfsc_eafpower = new SFSC_EAFPOWER_Str();
                 sfsc_eafpower.TELDATETIME = DateTime.Now;
-                sfsc_eafpower.SUMATION = _BusbarPowers[0]+ _BusbarPowers[1];
+                sfsc_eafpower.SUMATION = _BusbarPowers[0] + _BusbarPowers[1];
                 sfsc_eafpower.POWERGRP1 = _BusbarPowers[0];
                 sfsc_eafpower.POWERGRP2 = _BusbarPowers[1];
                 sfsc_eafpower.FURNACE1 = _FurnacePowers[0];
@@ -400,6 +355,6 @@ namespace EEC
             }
         }
     }
-    
-   
+
+
 }
