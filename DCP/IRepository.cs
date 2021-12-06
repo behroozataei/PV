@@ -30,8 +30,7 @@ namespace DCP
         //DataTable GetFromHistoricalDB(string sql);
         SFSC_EAFSPOWER_Str GetFromHistoricalCache();
         public RedisUtils GetRedisUtiles();
-        
-
+       
 
     }
 }

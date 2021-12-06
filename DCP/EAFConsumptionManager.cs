@@ -102,9 +102,21 @@ namespace DCP
 				_logger.WriteEntry(ex.Message, LogLevels.Error, ex);
 			}
 		}
-		
+		public void CheckCPSStatus()
+		{
+
+			while (!GlobalData.CPSStatus)
+			{
+				System.Threading.Thread.Sleep(5000);
+				_logger.WriteEntry("Waiting for Connecting to CPS", LogLevels.Info);
+
+			}
+		}
+
 		private void Timer_1_Minute_Tick(Object eventSender, EventArgs eventArgs)
 		{
+			CheckCPSStatus();
+
 			// TODO : should be fixed, now it was commented!
 			try
 			{
@@ -246,6 +258,7 @@ namespace DCP
 
 		private void Timer_4_Seconds_Tick(Object eventSender, EventArgs eventArgs)
 		{
+			CheckCPSStatus();
 			// TODO : should be fixed, now it was commented!
 			try
 			{

@@ -31,15 +31,13 @@ namespace LSP
         private readonly Dictionary<string, LSPScadaPoint> _scadaPointsHelper;
         private readonly RedisUtils _RedisConnectorHelper;
 
-        private bool LoadfromCache = false;
-        IDatabase _cache;
-        public bool isBuild = false;
+        private bool isBuild = false;
 
         public Repository(ILogger logger, IConfiguration config, RedisUtils RedisConnectorHelper)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
-            
+
             _staticDataManager = new OracleDataManager(config["OracleServicename"], config["OracleDatabaseAddress"], config["OracleStaticUser"], config["OracleStaticPassword"]);
             _historicalDataManager = new OracleDataManager(config["OracleServicename"], config["OracleDatabaseAddress"], config["OracleHISUser"], config["OracleHISPassword"]);
 
@@ -53,207 +51,233 @@ namespace LSP
             _RedisConnectorHelper = RedisConnectorHelper ?? throw new ArgumentNullException(nameof(RedisConnectorHelper));
         }
 
-        private static string GetEndStringCommand()
-        {
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                //return "app.";
-                return "APP_";
-                //return string.Empty;
-
-            }
-
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-            {
-
-                return "APP_";
-
-            }
-
-            return string.Empty;
-        }
 
         public bool Build()
         {
-           
-            if (RedisUtils.IsConnected)
-            {
-                _logger.WriteEntry("Connected to Redis Cache", LogLevels.Info);
-                _cache = _RedisConnectorHelper.DataBase;
-                if (_RedisConnectorHelper.GetKeys(pattern: RedisKeyPattern.OCP_CheckPoints).Length != 0 &&
-                    _RedisConnectorHelper.GetKeys(pattern: RedisKeyPattern.LSP_PARAMS).Length != 0 &&
-                    _RedisConnectorHelper.GetKeys(pattern: RedisKeyPattern.LSP_DECTITEMS).Length != 0 &&
-                    _RedisConnectorHelper.GetKeys(pattern: RedisKeyPattern.LSP_PRIORITYITEMS).Length != 0 &&
-                    _RedisConnectorHelper.GetKeys(pattern: RedisKeyPattern.EEC_EAFSPriority).Length != 0)
-
-                {
-                    LoadfromCache = true;
-                }
-                else
-                {
-                    LoadfromCache = false;
-                }
-            }
-            else
-            {
-                _logger.WriteEntry("Redis Connaction Failed.", LogLevels.Error);
-            }
 
             try
             {
                 // Important note: Always CheckPoints should be loaded before ScadaPoints
-                FetchCheckPoints();
-                FetchScadaPoints();
-
-//                if(!LoadfromCache)
-                BuildCashe();
-
+                if(FetchCheckPoints())
+                {
+                    if (FetchScadaPoints())
+                    {
+                        if(BuildCashe())
+                        isBuild = true;
+                      
+                    }
+                }
+                else if (FetchCheckPointsfromRedis())
+                {
+                    if (FetchScadaPointsfromRedis())
+                    {
+                            isBuild = true;
+                    }
+                }
+                
                 _staticDataManager.Close();
                 _linkDBpcsDataManager.Close();
 
-                isBuild = true;
+               
             }
             catch (Irisa.DataLayer.DataException ex)
             {
                 _logger.WriteEntry(ex.ToString(), LogLevels.Error, ex);
+                isBuild = false;
             }
             catch (Exception excep)
             {
                 _logger.WriteEntry(excep.Message, LogLevels.Error, excep);
+                isBuild = false;
             }
 
             return isBuild;
         }
 
-        private void FetchCheckPoints()
+        private bool FetchCheckPoints()
         {
-            if (LoadfromCache)
-            {
-                _logger.WriteEntry("Loading OCP_Checkpoint Data from Cache", LogLevels.Info);
 
-                var keys = _RedisConnectorHelper.GetKeys(pattern: RedisKeyPattern.OCP_CheckPoints);
-                var dataTable_cache = _RedisConnectorHelper.StringGet<OCP_CHECKPOINTS_Str>(keys);
+            _logger.WriteEntry("Loading Data from Database", LogLevels.Info);
+            DataTable dataTable = new DataTable();
+
+            try
+            {
+                dataTable = _staticDataManager.GetRecord("SELECT OCPSHEDPOINT_ID, " +
+                                                                                       //  "GUID, " +
+                                                                                       "NAME, " +
+                                                                                       "NETWORKPATH, " +
+                                                                                       "DECISIONTABLE, " +
+                                                                                       "CHECKOVERLOAD," +
+                                                                                       " DESCRIPTION, " +
+                                                                                       "SHEDTYPE, " +
+                                                                                       "CATEGORY, " +
+                                                                                       "NOMINALVALUE, " +
+                                                                                       "LIMITPERCENT, " +
+                                                                                       "VOLTAGEENOM, " +
+                                                                                       "VOLTAGEDENOM, " +
+                                                                                       "POWERNUM, " +
+                                                                                       "POWERDENOM, " +
+                                                                                       //"IT_GUID, " +
+                                                                                       //"ALLOWEDACTIVEPOWER_GUID, " +
+                                                                                       //"SAMPLE_GUID, " +
+                                                                                       //"AVERAGE_GUID, " +
+                                                                                       "CHECKPOINT_NETWORKPATH " +
+                                                                               $"FROM  APP_OCP_CHECKPOINTS");
+            }
+            catch (Irisa.DataLayer.DataException ex)
+            {
+                _logger.WriteEntry(ex.ToString(), LogLevels.Error, ex);
+                return false;
+            }
+            catch (Exception ex)
+            {
+                _logger.WriteEntry("Error in loading Data from database ", LogLevels.Error, ex);
+                return false;
+            }
+
+            OCP_CHECKPOINTS_Str ocp_checkpoint_obj = new OCP_CHECKPOINTS_Str();
+
+            foreach (DataRow row in dataTable.Rows)
+            {
+                var checkPoint = new OCPCheckPoint();
+
+                checkPoint.CheckPointNumber = Convert.ToInt32(row["OCPSHEDPOINT_ID"]);
+                //checkPoint.MeasurementId = Guid.Parse(Convert.ToString(row["GUID"]));
+                checkPoint.Name = Convert.ToString(row["NAME"]);
+                checkPoint.NetworkPath = Convert.ToString(row["NetworkPath"]);
+                checkPoint.DecisionTable = Convert.ToInt32(row["DECISIONTABLE"]);
+                checkPoint.CheckOverload = Convert.ToChar(row["CHECKOVERLOAD"]);
+                checkPoint.ShedType = Convert.ToString(row["ShedType"]);
+                checkPoint.Category = Convert.ToString(row["CATEGORY"]);
+                checkPoint.NominalValue = Convert.ToSingle(row["NominalValue"]);
+                checkPoint.LimitPercent = Convert.ToSingle(row["LIMITPERCENT"]);
+
+                checkPoint.VoltageEnom = Convert.ToSingle(row["VoltageEnom"]);
+                checkPoint.VoltageDenom = Convert.ToSingle(row["VoltageDenom"]);
+
+                checkPoint.AverageQuality = CheckPointQuality.Invalid;
+                checkPoint.SubstitutionCounter = 0;
+                checkPoint.OverloadIT.Value = 0;
+                checkPoint.OverloadFlag = false;
+                checkPoint.ResetIT = false;
+                checkPoint.FourValueFlag = false;
+                checkPoint.Quality1 = CheckPointQuality.Invalid;
+                checkPoint.Quality2 = CheckPointQuality.Invalid;
+                checkPoint.Quality3 = CheckPointQuality.Invalid;
+                checkPoint.Quality4 = CheckPointQuality.Invalid;
+                checkPoint.Quality5 = CheckPointQuality.Invalid;
+                checkPoint.MeasurementId = GetGuid(checkPoint.NetworkPath);
+
+
+                var scadaPoint1 = new LSPScadaPoint(GetGuid(Convert.ToString(row["CHECKPOINT_NETWORKPATH"]) + "/IT"), "IT", checkPoint.NetworkPath + "/IT");
+                scadaPoint1.DirectionType = "INPUT";
+                scadaPoint1.SCADAType = "AnalogMeasurement";
+                checkPoint.OverloadIT = scadaPoint1;
+
+                var scadaPoint2 = new LSPScadaPoint(GetGuid(Convert.ToString(row["CHECKPOINT_NETWORKPATH"]) + "/AllowedActivePower"), "AAP", checkPoint.NetworkPath + "/AllowedActivePower");
+                scadaPoint2.DirectionType = "INPUT";
+                scadaPoint2.SCADAType = "AnalogMeasurement";
+                checkPoint.ActivePower = scadaPoint2;
+
+                var scadaPoint3 = new LSPScadaPoint(GetGuid(Convert.ToString(row["CHECKPOINT_NETWORKPATH"]) + "/Average"), "AVERAGE", checkPoint.NetworkPath + "/Average");
+                scadaPoint3.DirectionType = "INPUT";
+                scadaPoint3.SCADAType = "AnalogMeasurement";
+                checkPoint.Average = scadaPoint3;
+
+                var scadaPoint4 = new LSPScadaPoint(GetGuid(Convert.ToString(row["CHECKPOINT_NETWORKPATH"]) + "/Sample"), "Sample", checkPoint.NetworkPath + "/Sample");
+                scadaPoint4.DirectionType = "INPUT";
+                scadaPoint4.SCADAType = "AnalogMeasurement";
+                checkPoint.Sample = scadaPoint4;
+
+                var scadaPoint5 = new LSPScadaPoint(GetGuid(Convert.ToString(row["CHECKPOINT_NETWORKPATH"]) + "/QualityError"), "QualityError", checkPoint.NetworkPath + "/QualityError");
+                scadaPoint5.DirectionType = "INPUT";
+                scadaPoint5.SCADAType = "AnalogMeasurement";
+                checkPoint.QulityError = scadaPoint5;
+
+                ocp_checkpoint_obj.OCPSHEDPOINT_ID = Convert.ToInt32(row["OCPSHEDPOINT_ID"]);
+                ocp_checkpoint_obj.NAME = Convert.ToString(row["NAME"]);
+                ocp_checkpoint_obj.NETWORKPATH = Convert.ToString(row["NetworkPath"]);
+                ocp_checkpoint_obj.DECISIONTABLE = Convert.ToString(row["DECISIONTABLE"]);
+                ocp_checkpoint_obj.CHECKOVERLOAD = Convert.ToString(row["CHECKOVERLOAD"]);
+                ocp_checkpoint_obj.DESCRIPTION = Convert.ToString(row["DESCRIPTION"]);
+                ocp_checkpoint_obj.SHEDTYPE = Convert.ToString(row["ShedType"]);
+                ocp_checkpoint_obj.CATEGORY = Convert.ToString(row["CATEGORY"]);
+                ocp_checkpoint_obj.NOMINALVALUE = Convert.ToSingle(row["NominalValue"]);
+                ocp_checkpoint_obj.LIMITPERCENT = Convert.ToString(row["LIMITPERCENT"]);
+                ocp_checkpoint_obj.VOLTAGEENOM = Convert.ToString(row["VoltageEnom"]);
+                ocp_checkpoint_obj.VOLTAGEDENOM = Convert.ToString(row["VoltageDenom"]);
+                ocp_checkpoint_obj.POWERNUM = Convert.ToString(row["POWERNUM"]);
+                ocp_checkpoint_obj.POWERDENOM = Convert.ToString(row["POWERDENOM"]);
+                ocp_checkpoint_obj.CHECKPOINT_NETWORKPATH = Convert.ToString(row["CHECKPOINT_NETWORKPATH"]);
+                ocp_checkpoint_obj.Measurement_Id = checkPoint.MeasurementId.ToString();
+                ocp_checkpoint_obj.IT_Id = scadaPoint1.Id.ToString();
+                ocp_checkpoint_obj.AllowedActivePower_Id = scadaPoint2.Id.ToString();
+                ocp_checkpoint_obj.Average_Id = scadaPoint3.Id.ToString();
+                ocp_checkpoint_obj.Sample_Id = scadaPoint4.Id.ToString();
+                ocp_checkpoint_obj.QualityErr_Id = scadaPoint5.Id.ToString();
+
+
+                if (RedisUtils.IsConnected)
+                    _RedisConnectorHelper.DataBase.StringSet(RedisKeyPattern.OCP_CheckPoints + ocp_checkpoint_obj.OCPSHEDPOINT_ID, JsonConvert.SerializeObject(ocp_checkpoint_obj));
+                else
+                    _logger.WriteEntry("Redis Connection Error", LogLevels.Error);
 
                 try
                 {
-                    foreach (var row in dataTable_cache)
+                    if (checkPoint.MeasurementId != Guid.Empty)
                     {
-                        var checkPoint = new OCPCheckPoint();
-
-                        checkPoint.CheckPointNumber = Convert.ToInt32(row.OCPSHEDPOINT_ID);
-                        checkPoint.Name = Convert.ToString(row.NAME);
-                        checkPoint.NetworkPath = Convert.ToString(row.NETWORKPATH);
-                        checkPoint.DecisionTable = Convert.ToInt32(row.DECISIONTABLE);
-                        checkPoint.CheckOverload = Convert.ToChar(row.CHECKOVERLOAD);
-                        checkPoint.ShedType = Convert.ToString(row.SHEDTYPE);
-                        checkPoint.Category = Convert.ToString(row.CATEGORY);
-                        checkPoint.NominalValue = Convert.ToSingle(row.NOMINALVALUE);
-                        checkPoint.LimitPercent = Convert.ToSingle(row.LIMITPERCENT);
-
-                        checkPoint.VoltageEnom = Convert.ToSingle(row.VOLTAGEENOM);
-                        checkPoint.VoltageDenom = Convert.ToSingle(row.VOLTAGEDENOM);
-
-                        checkPoint.AverageQuality = CheckPointQuality.Invalid;
-                        checkPoint.SubstitutionCounter = 0;
-                        checkPoint.OverloadIT.Value = 0;
-                        checkPoint.OverloadFlag = false;
-                        checkPoint.ResetIT = false;
-                        checkPoint.FourValueFlag = false;
-                        checkPoint.Quality1 = CheckPointQuality.Invalid;
-                        checkPoint.Quality2 = CheckPointQuality.Invalid;
-                        checkPoint.Quality3 = CheckPointQuality.Invalid;
-                        checkPoint.Quality4 = CheckPointQuality.Invalid;
-                        checkPoint.Quality5 = CheckPointQuality.Invalid;
-                        checkPoint.MeasurementId = Guid.Parse(Convert.ToString(row.Measurement_Id));
-
-                        var scadaPoint1 = new LSPScadaPoint(Guid.Parse(Convert.ToString(row.IT_Id)), "IT", checkPoint.NetworkPath + "/IT");
-                        scadaPoint1.DirectionType = "INPUT";
-                        scadaPoint1.SCADAType = "AnalogMeasurement";
-                        checkPoint.OverloadIT = scadaPoint1;
-
-                        var scadaPoint2 = new LSPScadaPoint(Guid.Parse(Convert.ToString(row.AllowedActivePower_Id)), "AAP", checkPoint.NetworkPath + "/AllowedActivePower");
-                        scadaPoint2.DirectionType = "INPUT";
-                        scadaPoint2.SCADAType = "AnalogMeasurement";
-                        checkPoint.ActivePower = scadaPoint2;
-
-                        var scadaPoint3 = new LSPScadaPoint(Guid.Parse(Convert.ToString(row.Average_Id)), "AVERAGE", checkPoint.NetworkPath + "/Average");
-                        scadaPoint3.DirectionType = "INPUT";
-                        scadaPoint3.SCADAType = "AnalogMeasurement";
-                        checkPoint.Average = scadaPoint3;
-
-                        try
+                        if (!_checkPoints.ContainsKey(checkPoint.MeasurementId))
                         {
-                            if (checkPoint.MeasurementId != Guid.Empty)
-                            {
-                                if (!_checkPoints.ContainsKey(checkPoint.MeasurementId))
-                                {
-                                    _checkPoints.Add(checkPoint.MeasurementId, checkPoint);
-                                    _checkPointHelper.Add(checkPoint.Name, checkPoint);
-                                    _checkPointHelperNumber.Add(Convert.ToInt16(checkPoint.CheckPointNumber), checkPoint);
-                                }
-                                else
-                                {
-                                    _logger.WriteEntry("Error in loading CheckPoint, " + "GUID: " + checkPoint.MeasurementId + "  NetworkPath: " + checkPoint.NetworkPath, LogLevels.Error);
-                                }
-                            }
+                            _checkPoints.Add(checkPoint.MeasurementId, checkPoint);
+                            _checkPointHelper.Add(checkPoint.Name, checkPoint);
+                            _checkPointHelperNumber.Add(Convert.ToInt16(checkPoint.CheckPointNumber), checkPoint);
                         }
-                        catch (Irisa.DataLayer.DataException ex)
+                        else
                         {
-                            _logger.WriteEntry(ex.ToString(), LogLevels.Error, ex);
-                        }
-                        catch (Exception ex)
-                        {
-                            _logger.WriteEntry("Error in loading " + checkPoint.NetworkPath, LogLevels.Error, ex);
+                            _logger.WriteEntry("Error in loading CheckPoint, " + "GUID: " + checkPoint.MeasurementId + "  NetworkPath: " + checkPoint.NetworkPath, LogLevels.Error);
                         }
                     }
                 }
+                catch (Irisa.DataLayer.DataException ex)
+                {
+                    _logger.WriteEntry(ex.ToString(), LogLevels.Error, ex);
+                    return false;
+                }
                 catch (Exception ex)
                 {
-                    _logger.WriteEntry("Error load data from Cache database", LogLevels.Error, ex);
+                    _logger.WriteEntry("Error in loading " + checkPoint.NetworkPath, LogLevels.Error, ex);
+                    return false;
                 }
             }
-            else
-            {
-                var dataTable = _staticDataManager.GetRecord("SELECT OCPSHEDPOINT_ID, " +
-                                                                                        //  "GUID, " +
-                                                                                        "NAME, " +
-                                                                                        "NETWORKPATH, " +
-                                                                                        "DECISIONTABLE, " +
-                                                                                        "CHECKOVERLOAD," +
-                                                                                        " DESCRIPTION, " +
-                                                                                        "SHEDTYPE, " +
-                                                                                        "CATEGORY, " +
-                                                                                        "NOMINALVALUE, " +
-                                                                                        "LIMITPERCENT, " +
-                                                                                        "VOLTAGEENOM, " +
-                                                                                        "VOLTAGEDENOM, " +
-                                                                                        "POWERNUM, " +
-                                                                                        "POWERDENOM, " +
-                                                                                        //"IT_GUID, " +
-                                                                                        //"ALLOWEDACTIVEPOWER_GUID, " +
-                                                                                        //"SAMPLE_GUID, " +
-                                                                                        //"AVERAGE_GUID, " +
-                                                                                        "CHECKPOINT_NETWORKPATH " +
-                                                                                $"FROM  APP_OCP_CHECKPOINTS");
-                OCP_CHECKPOINTS_Str ocp_checkpoint_obj = new OCP_CHECKPOINTS_Str();
+            return true;
 
-                foreach (DataRow row in dataTable.Rows)
+        }
+
+        private bool FetchCheckPointsfromRedis()
+        {
+            _logger.WriteEntry("Loading OCP_Checkpoint Data from Cache", LogLevels.Info);
+
+            var keys = _RedisConnectorHelper.GetKeys(pattern: RedisKeyPattern.OCP_CheckPoints);
+            var dataTable_cache = _RedisConnectorHelper.StringGet<OCP_CHECKPOINTS_Str>(keys);
+
+            try
+            {
+                foreach (var row in dataTable_cache)
                 {
                     var checkPoint = new OCPCheckPoint();
 
-                    checkPoint.CheckPointNumber = Convert.ToInt32(row["OCPSHEDPOINT_ID"]);
-                    //checkPoint.MeasurementId = Guid.Parse(Convert.ToString(row["GUID"]));
-                    checkPoint.Name = Convert.ToString(row["NAME"]);
-                    checkPoint.NetworkPath = Convert.ToString(row["NetworkPath"]);
-                    checkPoint.DecisionTable = Convert.ToInt32(row["DECISIONTABLE"]);
-                    checkPoint.CheckOverload = Convert.ToChar(row["CHECKOVERLOAD"]);
-                    checkPoint.ShedType = Convert.ToString(row["ShedType"]);
-                    checkPoint.Category = Convert.ToString(row["CATEGORY"]);
-                    checkPoint.NominalValue = Convert.ToSingle(row["NominalValue"]);
-                    checkPoint.LimitPercent = Convert.ToSingle(row["LIMITPERCENT"]);
+                    checkPoint.CheckPointNumber = Convert.ToInt32(row.OCPSHEDPOINT_ID);
+                    checkPoint.Name = Convert.ToString(row.NAME);
+                    checkPoint.NetworkPath = Convert.ToString(row.NETWORKPATH);
+                    checkPoint.DecisionTable = Convert.ToInt32(row.DECISIONTABLE);
+                    checkPoint.CheckOverload = Convert.ToChar(row.CHECKOVERLOAD);
+                    checkPoint.ShedType = Convert.ToString(row.SHEDTYPE);
+                    checkPoint.Category = Convert.ToString(row.CATEGORY);
+                    checkPoint.NominalValue = Convert.ToSingle(row.NOMINALVALUE);
+                    checkPoint.LimitPercent = Convert.ToSingle(row.LIMITPERCENT);
 
-                    checkPoint.VoltageEnom = Convert.ToSingle(row["VoltageEnom"]);
-                    checkPoint.VoltageDenom = Convert.ToSingle(row["VoltageDenom"]);
+                    checkPoint.VoltageEnom = Convert.ToSingle(row.VOLTAGEENOM);
+                    checkPoint.VoltageDenom = Convert.ToSingle(row.VOLTAGEDENOM);
 
                     checkPoint.AverageQuality = CheckPointQuality.Invalid;
                     checkPoint.SubstitutionCounter = 0;
@@ -266,60 +290,22 @@ namespace LSP
                     checkPoint.Quality3 = CheckPointQuality.Invalid;
                     checkPoint.Quality4 = CheckPointQuality.Invalid;
                     checkPoint.Quality5 = CheckPointQuality.Invalid;
-                    checkPoint.MeasurementId = GetGuid(checkPoint.NetworkPath);
+                    checkPoint.MeasurementId = Guid.Parse(Convert.ToString(row.Measurement_Id));
 
-
-                    var scadaPoint1 = new LSPScadaPoint(GetGuid(Convert.ToString(row["CHECKPOINT_NETWORKPATH"]) + "/IT"), "IT", checkPoint.NetworkPath + "/IT");
+                    var scadaPoint1 = new LSPScadaPoint(Guid.Parse(Convert.ToString(row.IT_Id)), "IT", checkPoint.NetworkPath + "/IT");
                     scadaPoint1.DirectionType = "INPUT";
                     scadaPoint1.SCADAType = "AnalogMeasurement";
                     checkPoint.OverloadIT = scadaPoint1;
 
-                    var scadaPoint2 = new LSPScadaPoint(GetGuid(Convert.ToString(row["CHECKPOINT_NETWORKPATH"]) + "/AllowedActivePower"), "AAP", checkPoint.NetworkPath + "/AllowedActivePower");
+                    var scadaPoint2 = new LSPScadaPoint(Guid.Parse(Convert.ToString(row.AllowedActivePower_Id)), "AAP", checkPoint.NetworkPath + "/AllowedActivePower");
                     scadaPoint2.DirectionType = "INPUT";
                     scadaPoint2.SCADAType = "AnalogMeasurement";
                     checkPoint.ActivePower = scadaPoint2;
 
-                    var scadaPoint3 = new LSPScadaPoint(GetGuid(Convert.ToString(row["CHECKPOINT_NETWORKPATH"]) + "/Average"), "AVERAGE", checkPoint.NetworkPath + "/Average");
+                    var scadaPoint3 = new LSPScadaPoint(Guid.Parse(Convert.ToString(row.Average_Id)), "AVERAGE", checkPoint.NetworkPath + "/Average");
                     scadaPoint3.DirectionType = "INPUT";
                     scadaPoint3.SCADAType = "AnalogMeasurement";
                     checkPoint.Average = scadaPoint3;
-
-                    var scadaPoint4 = new LSPScadaPoint(GetGuid(Convert.ToString(row["CHECKPOINT_NETWORKPATH"]) + "/Sample"), "Sample", checkPoint.NetworkPath + "/Sample");
-                    scadaPoint4.DirectionType = "INPUT";
-                    scadaPoint4.SCADAType = "AnalogMeasurement";
-                    checkPoint.Sample = scadaPoint4;
-
-                    var scadaPoint5 = new LSPScadaPoint(GetGuid(Convert.ToString(row["CHECKPOINT_NETWORKPATH"]) + "/QualityError"), "QualityError", checkPoint.NetworkPath + "/QualityError");
-                    scadaPoint5.DirectionType = "INPUT";
-                    scadaPoint5.SCADAType = "AnalogMeasurement";
-                    checkPoint.QulityError = scadaPoint5;
-
-                    ocp_checkpoint_obj.OCPSHEDPOINT_ID = Convert.ToInt32(row["OCPSHEDPOINT_ID"]);
-                    ocp_checkpoint_obj.NAME = Convert.ToString(row["NAME"]);
-                    ocp_checkpoint_obj.NETWORKPATH = Convert.ToString(row["NetworkPath"]);
-                    ocp_checkpoint_obj.DECISIONTABLE = Convert.ToString(row["DECISIONTABLE"]);
-                    ocp_checkpoint_obj.CHECKOVERLOAD = Convert.ToString(row["CHECKOVERLOAD"]);
-                    ocp_checkpoint_obj.DESCRIPTION = Convert.ToString(row["DESCRIPTION"]);
-                    ocp_checkpoint_obj.SHEDTYPE = Convert.ToString(row["ShedType"]);
-                    ocp_checkpoint_obj.CATEGORY = Convert.ToString(row["CATEGORY"]);
-                    ocp_checkpoint_obj.NOMINALVALUE = Convert.ToSingle(row["NominalValue"]);
-                    ocp_checkpoint_obj.LIMITPERCENT = Convert.ToString(row["LIMITPERCENT"]);
-                    ocp_checkpoint_obj.VOLTAGEENOM = Convert.ToString(row["VoltageEnom"]);
-                    ocp_checkpoint_obj.VOLTAGEDENOM = Convert.ToString(row["VoltageDenom"]);
-                    ocp_checkpoint_obj.POWERNUM = Convert.ToString(row["POWERNUM"]);
-                    ocp_checkpoint_obj.POWERDENOM = Convert.ToString(row["POWERDENOM"]);
-                    ocp_checkpoint_obj.CHECKPOINT_NETWORKPATH = Convert.ToString(row["CHECKPOINT_NETWORKPATH"]);
-                    ocp_checkpoint_obj.Measurement_Id = checkPoint.MeasurementId.ToString();
-                    ocp_checkpoint_obj.IT_Id = scadaPoint1.Id.ToString();
-                    ocp_checkpoint_obj.AllowedActivePower_Id = scadaPoint2.Id.ToString();
-                    ocp_checkpoint_obj.Average_Id = scadaPoint3.Id.ToString();
-                    ocp_checkpoint_obj.Sample_Id = scadaPoint4.Id.ToString();
-                    ocp_checkpoint_obj.QualityErr_Id = scadaPoint5.Id.ToString();
-
-
-                    if (RedisUtils.IsConnected)
-                        _cache.StringSet(RedisKeyPattern.OCP_CheckPoints + ocp_checkpoint_obj.OCPSHEDPOINT_ID, JsonConvert.SerializeObject(ocp_checkpoint_obj));
-
 
                     try
                     {
@@ -340,15 +326,21 @@ namespace LSP
                     catch (Irisa.DataLayer.DataException ex)
                     {
                         _logger.WriteEntry(ex.ToString(), LogLevels.Error, ex);
+                        return false;
                     }
                     catch (Exception ex)
                     {
                         _logger.WriteEntry("Error in loading " + checkPoint.NetworkPath, LogLevels.Error, ex);
+                        return false;
                     }
-
-
                 }
             }
+            catch (Exception ex)
+            {
+                _logger.WriteEntry("Error load data from Cache database", LogLevels.Error, ex);
+                return false;
+            }
+            return true;
         }
 
         public OCPCheckPoint GetCheckPoint(Guid measurementId)
@@ -401,196 +393,194 @@ namespace LSP
             return _scadaPoints.Values;
         }
 
-        private void FetchScadaPoints()
+        private bool FetchScadaPoints()
         {
             var fetchedData = false;
 
             fetchedData = FetchLspParam();
-            if (fetchedData == false) return;
+            if (fetchedData == false) return false;
 
             fetchedData = FetchPriorityListItems();
-            if (fetchedData == false) return;
+            if (fetchedData == false) return false;
 
             fetchedData = FetchShedpointListItems();
-            if (fetchedData == false) return;
+            if (fetchedData == false) return false;
 
-            FetchEecEafsPriorityListItems();
+            fetchedData=FetchEecEafsPriorityListItems();
+            if (fetchedData == false) return false;
+            return true;
+        }
+
+        private bool FetchScadaPointsfromRedis()
+        {
+            var fetchedData = false;
+
+            fetchedData = FetchLspParamfromRedis();
+            if (fetchedData == false) return false;
+
+            fetchedData = FetchPriorityListItemsfromRedis();
+            if (fetchedData == false) return false;
+
+            fetchedData = FetchShedpointListItemsfromRedis();
+            if (fetchedData == false) return false;
+
+            fetchedData = FetchEecEafsPriorityListItemsfromRedis();
+            if (fetchedData == false) return false;
+            return true;
         }
 
         private bool FetchLspParam()
         {
             try
             {
-                if (LoadfromCache)
+                LSP_PARAMS_Str lsp_param = new LSP_PARAMS_Str();
+                var dataTable = _staticDataManager.GetRecord($"SELECT * FROM APP_LSP_PARAMS");
+                foreach (DataRow row in dataTable.Rows)
                 {
-                    _logger.WriteEntry("Loading LSP_PARAMS Data from Cache", LogLevels.Info);
+                    //var id = Guid.Parse(row["GUID"].ToString());
+                    var id = GetGuid(row["NetworkPath"].ToString());
+                    var name = row["NAME"].ToString();
+                    var networkPath = row["NetworkPath"].ToString();
 
-                    var keys = _RedisConnectorHelper.GetKeys(pattern: RedisKeyPattern.LSP_PARAMS);
-                    var dataTable_cache = _RedisConnectorHelper.StringGet<LSP_PARAMS_Str>(keys);
+                    lsp_param.FUNCTIONNAME = row["FUNCTIONNAME"].ToString();
+                    lsp_param.NAME = name;
+                    lsp_param.DESCRIPTION = row["DESCRIPTION"].ToString();
+                    lsp_param.DIRECTIONTYPE = row["DIRECTIONTYPE"].ToString();
+                    lsp_param.NETWORKPATH = networkPath;
+                    lsp_param.SCADATYPE = row["SCADATYPE"].ToString();
+                    lsp_param.ID = id.ToString();
+                    if (RedisUtils.IsConnected)
+                        _RedisConnectorHelper.DataBase.StringSet(RedisKeyPattern.LSP_PARAMS + networkPath, JsonConvert.SerializeObject(lsp_param));
 
-                    foreach (LSP_PARAMS_Str row in dataTable_cache)
+
+
+                    if (id != Guid.Empty)
                     {
-                        var id = Guid.Parse((row.ID).ToString());
-                        var name = row.NAME;
-                        var networkPath = row.NETWORKPATH;
+                        var scadaPoint = new LSPScadaPoint(id, name, networkPath);
+                        scadaPoint.DirectionType = Convert.ToString(row["DirectionType"]);
+                        scadaPoint.SCADAType = Convert.ToString(row["SCADAType"]);
 
-                        if (id != Guid.Empty)
+                        if (!_scadaPoints.ContainsKey(id))
                         {
-                            var scadaPoint = new LSPScadaPoint(id, name, networkPath);
-                            scadaPoint.DirectionType = row.DIRECTIONTYPE;
-                            scadaPoint.SCADAType = row.SCADATYPE;
-
-                            if (!_scadaPoints.ContainsKey(id))
-                            {
-                                _scadaPoints.Add(id, scadaPoint);
-                                _scadaPointsHelper.Add(name, scadaPoint);
-                            }
-                            else
-                            {
-                                _logger.WriteEntry(networkPath + " already exist in repository", LogLevels.Error);
-                            }
-
+                            _scadaPoints.Add(id, scadaPoint);
+                            _scadaPointsHelper.Add(name, scadaPoint);
+                        }
+                        else
+                        {
+                            _logger.WriteEntry(networkPath + " already exist in repository", LogLevels.Error);
                         }
 
                     }
 
-
-                }
-                else 
-                {
-                    LSP_PARAMS_Str lsp_param = new LSP_PARAMS_Str();
-                    var dataTable = _staticDataManager.GetRecord($"SELECT * FROM APP_LSP_PARAMS");
-                    foreach (DataRow row in dataTable.Rows)
-                    {
-                        //var id = Guid.Parse(row["GUID"].ToString());
-                        var id = GetGuid(row["NetworkPath"].ToString());
-                        var name = row["NAME"].ToString();
-                        var networkPath = row["NetworkPath"].ToString();
-
-                        lsp_param.FUNCTIONNAME = row["FUNCTIONNAME"].ToString();
-                        lsp_param.NAME = name;
-                        lsp_param.DESCRIPTION = row["DESCRIPTION"].ToString();
-                        lsp_param.DIRECTIONTYPE = row["DIRECTIONTYPE"].ToString();
-                        lsp_param.NETWORKPATH = networkPath;
-                        lsp_param.SCADATYPE = row["SCADATYPE"].ToString();
-                        lsp_param.ID = id.ToString();
-                        if (RedisUtils.IsConnected)
-                            _cache.StringSet(RedisKeyPattern.LSP_PARAMS + networkPath, JsonConvert.SerializeObject(lsp_param));
-
-
-
-                        if (id != Guid.Empty)
-                        {
-                            var scadaPoint = new LSPScadaPoint(id, name, networkPath);
-                            scadaPoint.DirectionType = Convert.ToString(row["DirectionType"]);
-                            scadaPoint.SCADAType = Convert.ToString(row["SCADAType"]);
-
-                            if (!_scadaPoints.ContainsKey(id))
-                            {
-                                _scadaPoints.Add(id, scadaPoint);
-                                _scadaPointsHelper.Add(name, scadaPoint);
-                            }
-                            else
-                            {
-                                _logger.WriteEntry(networkPath + " already exist in repository", LogLevels.Error);
-                            }
-
-                        }
-
-                    }
                 }
 
-
-                return true;
             }
             catch (Irisa.DataLayer.DataException ex)
             {
                 _logger.WriteEntry(ex.ToString(), LogLevels.Error, ex);
+                return false;
             }
             catch (Exception ex)
             {
                 _logger.WriteEntry(ex.Message, LogLevels.Error, ex);
+                return false;
             }
 
-            return false;
+            return true;
+        }
+
+        private bool FetchLspParamfromRedis()
+        {
+            _logger.WriteEntry("Loading LSP_PARAMS Data from Cache", LogLevels.Info);
+
+            var keys = _RedisConnectorHelper.GetKeys(pattern: RedisKeyPattern.LSP_PARAMS);
+            var dataTable_cache = _RedisConnectorHelper.StringGet<LSP_PARAMS_Str>(keys);
+
+            try
+            {
+                foreach (LSP_PARAMS_Str row in dataTable_cache)
+                {
+                    var id = Guid.Parse((row.ID).ToString());
+                    var name = row.NAME;
+                    var networkPath = row.NETWORKPATH;
+
+                    if (id != Guid.Empty)
+                    {
+                        var scadaPoint = new LSPScadaPoint(id, name, networkPath);
+                        scadaPoint.DirectionType = row.DIRECTIONTYPE;
+                        scadaPoint.SCADAType = row.SCADATYPE;
+
+                        if (!_scadaPoints.ContainsKey(id))
+                        {
+                            _scadaPoints.Add(id, scadaPoint);
+                            _scadaPointsHelper.Add(name, scadaPoint);
+                        }
+                        else
+                        {
+                            _logger.WriteEntry(networkPath + " already exist in repository", LogLevels.Error);
+                        }
+
+                    }
+
+                }
+            }
+            catch (Irisa.DataLayer.DataException ex)
+            {
+                _logger.WriteEntry(ex.ToString(), LogLevels.Error, ex);
+                return false;
+            }
+            catch (Exception ex)
+            {
+                _logger.WriteEntry(ex.Message, LogLevels.Error, ex);
+                return false;
+            }
+
+            return true;
+
         }
 
         private bool FetchPriorityListItems()
         {
             try
             {
-                if (LoadfromCache)
+
+                LSP_DECTITEMS_Str lsp_dectitems = new LSP_DECTITEMS_Str();
+                var dataTable = _staticDataManager.GetRecord($"SELECT * FROM APP_LSP_DECTITEMS");
+
+                foreach (DataRow row in dataTable.Rows)
                 {
-                    _logger.WriteEntry("Loading LSP_DECTITEMS Data from Cache", LogLevels.Info);
-
-                    var keys = _RedisConnectorHelper.GetKeys(pattern: RedisKeyPattern.LSP_DECTITEMS);
-                    var dataTable = _RedisConnectorHelper.StringGet<LSP_DECTITEMS_Str>(keys);
-                    foreach (LSP_DECTITEMS_Str row in dataTable)
+                    var id = GetGuid(row["NetworkPath"].ToString());
+                    //if (Guid.TryParse(row["GUID"].ToString(), out var id))
+                    if (id != Guid.Empty)
                     {
-                        var id = Guid.Parse((row.ID).ToString());
-                        //if (Guid.TryParse(row["GUID"].ToString(), out var id))
-                        if (id != Guid.Empty)
-                        {
-                            var name = row.NAME;
-                            var networkPath = row.NETWORKPATH;
-                            var pointDirectionType = "INPUT";
-                            var scadaPoint = new LSPScadaPoint(id, name, networkPath);
-                            scadaPoint.DirectionType = pointDirectionType;
-                            scadaPoint.SCADAType = "DigitalMeasurement";
+                        var name = row["Name"].ToString();
+                        var networkPath = row["NetworkPath"].ToString();
+                        var pointDirectionType = "INPUT";
+                        var scadaPoint = new LSPScadaPoint(id, name, networkPath);
+                        scadaPoint.DirectionType = pointDirectionType;
+                        scadaPoint.SCADAType = "DigitalMeasurement";
 
-                            if (!_scadaPoints.ContainsKey(id))
-                            {
-                                _scadaPoints.Add(id, scadaPoint);
-                                _scadaPointsHelper.Add(name, scadaPoint);
-                            }
-                            else
-                            {
-                                ;
-                                // _logger.WriteEntry(networkPath + " already exist in repository", LogLevels.Error);
-                            }
+                        lsp_dectitems.NAME = name;
+                        lsp_dectitems.NETWORKPATH = networkPath;
+                        lsp_dectitems.ID = id.ToString();
+                        lsp_dectitems.DECTNO = Convert.ToInt32(row["DECTNO"]);
+                        lsp_dectitems.DECTITEMNO = Convert.ToInt32(row["DECTITEMNO"]);
+                        if (RedisUtils.IsConnected)
+                            _RedisConnectorHelper.DataBase.StringSet(RedisKeyPattern.LSP_DECTITEMS + row["DECTNO"].ToString() + "-" + row["DECTITEMNO"].ToString(), JsonConvert.SerializeObject(lsp_dectitems));
+
+                        if (!_scadaPoints.ContainsKey(id))
+                        {
+                            _scadaPoints.Add(id, scadaPoint);
+                            _scadaPointsHelper.Add(name, scadaPoint);
                         }
-
-                    }
-                }
-                else
-                {
-                    LSP_DECTITEMS_Str lsp_dectitems = new LSP_DECTITEMS_Str();
-                    var dataTable = _staticDataManager.GetRecord($"SELECT * FROM APP_LSP_DECTITEMS");
-
-                    foreach (DataRow row in dataTable.Rows)
-                    {
-                        var id = GetGuid(row["NetworkPath"].ToString());
-                        //if (Guid.TryParse(row["GUID"].ToString(), out var id))
-                        if (id != Guid.Empty)
+                        else
                         {
-                            var name = row["Name"].ToString();
-                            var networkPath = row["NetworkPath"].ToString();
-                            var pointDirectionType = "INPUT";
-                            var scadaPoint = new LSPScadaPoint(id, name, networkPath);
-                            scadaPoint.DirectionType = pointDirectionType;
-                            scadaPoint.SCADAType = "DigitalMeasurement";
-
-                            lsp_dectitems.NAME = name;
-                            lsp_dectitems.NETWORKPATH = networkPath;
-                            lsp_dectitems.ID = id.ToString();
-                            lsp_dectitems.DECTNO = Convert.ToInt32(row["DECTNO"]);
-                            lsp_dectitems.DECTITEMNO = Convert.ToInt32(row["DECTITEMNO"]);
-                            if (RedisUtils.IsConnected)
-                                _cache.StringSet(RedisKeyPattern.LSP_DECTITEMS +row["DECTNO"].ToString()+"-"+row["DECTITEMNO"].ToString(), JsonConvert.SerializeObject(lsp_dectitems));
-
-                            if (!_scadaPoints.ContainsKey(id))
-                            {
-                                _scadaPoints.Add(id, scadaPoint);
-                                _scadaPointsHelper.Add(name, scadaPoint);
-                            }
-                            else
-                            {
-                                ;
-                                // _logger.WriteEntry(networkPath + " already exist in repository", LogLevels.Error);
-                            }
+                            ;
+                            // _logger.WriteEntry(networkPath + " already exist in repository", LogLevels.Error);
                         }
                     }
                 }
+
                 return true;
             }
             catch (Irisa.DataLayer.DataException ex)
@@ -605,65 +595,62 @@ namespace LSP
             return false;
         }
 
+        private bool FetchPriorityListItemsfromRedis()
+        {
+            _logger.WriteEntry("Loading LSP_DECTITEMS Data from Cache", LogLevels.Info);
+
+            var keys = _RedisConnectorHelper.GetKeys(pattern: RedisKeyPattern.LSP_DECTITEMS);
+            var dataTable = _RedisConnectorHelper.StringGet<LSP_DECTITEMS_Str>(keys);
+            try
+            {
+                foreach (LSP_DECTITEMS_Str row in dataTable)
+                {
+                    var id = Guid.Parse((row.ID).ToString());
+                    //if (Guid.TryParse(row["GUID"].ToString(), out var id))
+                    if (id != Guid.Empty)
+                    {
+                        var name = row.NAME;
+                        var networkPath = row.NETWORKPATH;
+                        var pointDirectionType = "INPUT";
+                        var scadaPoint = new LSPScadaPoint(id, name, networkPath);
+                        scadaPoint.DirectionType = pointDirectionType;
+                        scadaPoint.SCADAType = "DigitalMeasurement";
+
+                        if (!_scadaPoints.ContainsKey(id))
+                        {
+                            _scadaPoints.Add(id, scadaPoint);
+                            _scadaPointsHelper.Add(name, scadaPoint);
+                        }
+                        else
+                        {
+                            ;
+                            // _logger.WriteEntry(networkPath + " already exist in repository", LogLevels.Error);
+                        }
+                    }
+
+                }
+            }
+            catch (Irisa.DataLayer.DataException ex)
+            {
+                _logger.WriteEntry(ex.ToString(), LogLevels.Error, ex);
+                return false;
+            }
+            catch (Exception ex)
+            {
+                _logger.WriteEntry(ex.Message, LogLevels.Error, ex);
+                return false;
+            }
+            return true;
+
+
+        }
+
         private bool FetchShedpointListItems()
         {
             try
             {
-                if (LoadfromCache)
-                {
-                    _logger.WriteEntry("Loading LSP_DECTITEMS Data from Cache", LogLevels.Info);
-
-                    var keys = _RedisConnectorHelper.GetKeys(pattern: RedisKeyPattern.LSP_PRIORITYITEMS);
-                    var dataTable = _RedisConnectorHelper.StringGet<LSP_PRIORITYITEMS_Str>(keys);
-                    foreach (LSP_PRIORITYITEMS_Str row in dataTable)
-                    {
-                        var id_curr = Guid.Parse((row.ID_CURR).ToString());
-                        var id_cb = Guid.Parse((row.ID_CB).ToString()); 
-                        
-
-                        //if (Guid.TryParse(row["GUID_CURR"].ToString(), out var id))
-                        if (id_curr != Guid.Empty)
-                        {
-                            var name = row.NETWORKPATH_CURR;
-                            var networkPath = row.NETWORKPATH_CURR;
-                            var pointDirectionType = "INPUT";
-                            var scadaPoint = new LSPScadaPoint(id_curr, name, networkPath);
-                            scadaPoint.DirectionType = pointDirectionType;
-                            scadaPoint.SCADAType = "AnalogMeasurement";
-
-                            if (!_scadaPoints.ContainsKey(id_curr))
-                            {
-                                _scadaPoints.Add(id_curr, scadaPoint);
-                                _scadaPointsHelper.Add(name, scadaPoint);
-                            }
-                        }
-
-                        //if (Guid.TryParse(row["GUID_ITEM"].ToString(), out id_cb))
-                        if (id_cb != Guid.Empty)
-                        {
-                            var name = row.NETWORKPATH_ITEM;
-                            var networkPath = row.NETWORKPATH_ITEM;
-                            var pointDirectionType = "INPUT";
-                            var scadaPoint = new LSPScadaPoint(id_cb, name, networkPath);
-                            scadaPoint.DirectionType = pointDirectionType;
-                            scadaPoint.SCADAType = "DigitalMeasurement";
-
-                            if (!_scadaPoints.ContainsKey(id_cb))
-                            {
-                                _scadaPoints.Add(id_cb, scadaPoint);
-                                _scadaPointsHelper.Add(name, scadaPoint);
-                            }
-                            else
-                            {
-                                ;
-                                //_logger.WriteEntry(networkPath + " already exist in repository", LogLevels.Error);
-                            }
-                        }
-                    }
-                }
-
-                else
-                {
+                
+                
                     LSP_PRIORITYITEMS_Str lsp_priorityitems = new LSP_PRIORITYITEMS_Str();
                     var dataTable = _staticDataManager.GetRecord($"SELECT * FROM APP_LSP_PRIORITYITEMS ORDER BY PRIORITYLISTNO, ITEMNO");
 
@@ -671,9 +658,9 @@ namespace LSP
                     {
                         var id_curr = GetGuid(row["NETWORKPATH_CURR"].ToString());
                         var id_cb = GetGuid(row["NETWORKPATH_ITEM"].ToString());
-                        Guid id_cb_partner=Guid.Empty;
-                        if (row["ADDRESSPARTNER"].ToString()!="NULL")
-                             id_cb_partner = GetGuid(row["ADDRESSPARTNER"].ToString());
+                        Guid id_cb_partner = Guid.Empty;
+                        if (row["ADDRESSPARTNER"].ToString() != "NULL")
+                            id_cb_partner = GetGuid(row["ADDRESSPARTNER"].ToString());
 
                         lsp_priorityitems.ID_CURR = id_curr.ToString();
                         lsp_priorityitems.ID_CB = id_cb.ToString();
@@ -687,7 +674,7 @@ namespace LSP
                         lsp_priorityitems.ADDRESSPARTNER = row["ADDRESSPARTNER"].ToString();
 
                         if (RedisUtils.IsConnected)
-                            _cache.StringSet(RedisKeyPattern.LSP_PRIORITYITEMS + row["PRIORITYLISTNO"].ToString() + "-" + row["ITEMNO"].ToString(), JsonConvert.SerializeObject(lsp_priorityitems));
+                        _RedisConnectorHelper.DataBase.StringSet(RedisKeyPattern.LSP_PRIORITYITEMS + row["PRIORITYLISTNO"].ToString() + "-" + row["ITEMNO"].ToString(), JsonConvert.SerializeObject(lsp_priorityitems));
 
                         //if (Guid.TryParse(row["GUID_CURR"].ToString(), out var id))
                         if (id_curr != Guid.Empty)
@@ -728,7 +715,7 @@ namespace LSP
                             }
                         }
                     }
-                }
+                
 
                 return true;
             }
@@ -744,82 +731,80 @@ namespace LSP
             return false;
         }
 
+        private bool FetchShedpointListItemsfromRedis()
+        {
+            _logger.WriteEntry("Loading LSP_DECTITEMS Data from Cache", LogLevels.Info);
+
+            var keys = _RedisConnectorHelper.GetKeys(pattern: RedisKeyPattern.LSP_PRIORITYITEMS);
+            var dataTable = _RedisConnectorHelper.StringGet<LSP_PRIORITYITEMS_Str>(keys);
+            try
+            {
+                foreach (LSP_PRIORITYITEMS_Str row in dataTable)
+                {
+                    var id_curr = Guid.Parse((row.ID_CURR).ToString());
+                    var id_cb = Guid.Parse((row.ID_CB).ToString());
+
+
+                    //if (Guid.TryParse(row["GUID_CURR"].ToString(), out var id))
+                    if (id_curr != Guid.Empty)
+                    {
+                        var name = row.NETWORKPATH_CURR;
+                        var networkPath = row.NETWORKPATH_CURR;
+                        var pointDirectionType = "INPUT";
+                        var scadaPoint = new LSPScadaPoint(id_curr, name, networkPath);
+                        scadaPoint.DirectionType = pointDirectionType;
+                        scadaPoint.SCADAType = "AnalogMeasurement";
+
+                        if (!_scadaPoints.ContainsKey(id_curr))
+                        {
+                            _scadaPoints.Add(id_curr, scadaPoint);
+                            _scadaPointsHelper.Add(name, scadaPoint);
+                        }
+                    }
+
+                    //if (Guid.TryParse(row["GUID_ITEM"].ToString(), out id_cb))
+                    if (id_cb != Guid.Empty)
+                    {
+                        var name = row.NETWORKPATH_ITEM;
+                        var networkPath = row.NETWORKPATH_ITEM;
+                        var pointDirectionType = "INPUT";
+                        var scadaPoint = new LSPScadaPoint(id_cb, name, networkPath);
+                        scadaPoint.DirectionType = pointDirectionType;
+                        scadaPoint.SCADAType = "DigitalMeasurement";
+
+                        if (!_scadaPoints.ContainsKey(id_cb))
+                        {
+                            _scadaPoints.Add(id_cb, scadaPoint);
+                            _scadaPointsHelper.Add(name, scadaPoint);
+                        }
+                        else
+                        {
+                            ;
+                            //_logger.WriteEntry(networkPath + " already exist in repository", LogLevels.Error);
+                        }
+                    }
+                }
+            }
+            catch (Irisa.DataLayer.DataException ex)
+            {
+                _logger.WriteEntry(ex.ToString(), LogLevels.Error, ex);
+                return false;
+            }
+            catch (Exception ex)
+            {
+                _logger.WriteEntry(ex.Message, LogLevels.Error, ex);
+                return false;
+            }
+            return true; ;
+
+
+        }
+
         private bool FetchEecEafsPriorityListItems()
         {
             try
             {
-                if (LoadfromCache)
-                {
-                    _logger.WriteEntry("Loading EEC_EAFSPRIORITY Data from Cache", LogLevels.Info);
-
-                    var keys = _RedisConnectorHelper.GetKeys(pattern: RedisKeyPattern.EEC_EAFSPriority);
-                    var dataTable = _RedisConnectorHelper.StringGet<EEC_EAFSPRIORITY_Str>(keys);
-                    foreach (EEC_EAFSPRIORITY_Str row in dataTable)
-                    {
-                        var id_CB = Guid.Parse((row.ID_CB).ToString());
-                        var id_CT = Guid.Parse((row.ID_CT).ToString());
-                        var id_CB_Partner = Guid.Parse((row.ID_CB_PARTNER).ToString());
-
-                        if (id_CB != Guid.Empty)
-                        {
-                            var name = row.CB_NETWORKPATH;
-                            var networkPath = row.CB_NETWORKPATH;
-                            var pointDirectionType = "INPUT";
-                            var scadaPoint = new LSPScadaPoint(id_CB, name, networkPath);
-                            scadaPoint.DirectionType = pointDirectionType;
-                            scadaPoint.SCADAType = "DigitalMeasurement";
-
-                            if (!_scadaPoints.ContainsKey(id_CB))
-                            {
-                                _scadaPoints.Add(id_CB, scadaPoint);
-                                _scadaPointsHelper.Add(name, scadaPoint);
-                            }
-                        }
-                        if (id_CT != Guid.Empty)
-                        {
-                            var name = row.CT_NETWORKPATH;
-                            var networkPath = row.CT_NETWORKPATH;
-                            var pointDirectionType = "INPUT";
-                            var scadaPoint = new LSPScadaPoint(id_CT, name, networkPath);
-                            scadaPoint.DirectionType = pointDirectionType;
-                            scadaPoint.SCADAType = "AnalogMeasurement";
-
-                            if (!_scadaPoints.ContainsKey(id_CT))
-                            {
-                                _scadaPoints.Add(id_CT, scadaPoint);
-                                _scadaPointsHelper.Add(name, scadaPoint);
-                            }
-                            else
-                            {
-                                ;
-                                //_logger.WriteEntry(networkPath + " already exist in repository", LogLevels.Error);
-                            }
-                        }
-                        if (id_CB_Partner != Guid.Empty)
-                        {
-                            var name = row.PARTNERADDRESS;
-                            var networkPath = row.PARTNERADDRESS;
-                            var pointDirectionType = "INPUT";
-                            var scadaPoint = new LSPScadaPoint(id_CB_Partner, name, networkPath);
-                            scadaPoint.DirectionType = pointDirectionType;
-                            scadaPoint.SCADAType = "DigitalMeasurement";
-
-                            if (!_scadaPoints.ContainsKey(id_CB_Partner))
-                            {
-                                _scadaPoints.Add(id_CB_Partner, scadaPoint);
-                                _scadaPointsHelper.Add(name, scadaPoint);
-                            }
-                            else
-                            {
-                                ;
-                                //_logger.WriteEntry(networkPath + " already exist in repository", LogLevels.Error);
-                            }
-                        }
-
-                    }
-                }
-                else
-                {
+                
                     EEC_EAFSPRIORITY_Str eec_eafpriority = new EEC_EAFSPRIORITY_Str();
                     var dataTable = _staticDataManager.GetRecord($"SELECT * FROM APP_EEC_EAFSPRIORITY ORDER BY Furnace");
 
@@ -838,7 +823,7 @@ namespace LSP
                         eec_eafpriority.PARTNERADDRESS = row["PARTNERADDRESS"].ToString();
                         eec_eafpriority.FURNACE = row["FURNACE"].ToString();
                         if (RedisUtils.IsConnected)
-                            _cache.StringSet(RedisKeyPattern.EEC_EAFSPriority + row["CB_NETWORKPATH"].ToString() , JsonConvert.SerializeObject(eec_eafpriority));
+                        _RedisConnectorHelper.DataBase.StringSet(RedisKeyPattern.EEC_EAFSPriority + row["CB_NETWORKPATH"].ToString(), JsonConvert.SerializeObject(eec_eafpriority));
 
 
 
@@ -903,7 +888,7 @@ namespace LSP
                         }
 
                     }
-                }
+                
                 return true;
             }
             catch (Irisa.DataLayer.DataException ex)
@@ -919,6 +904,93 @@ namespace LSP
             return false;
         }
 
+        private bool FetchEecEafsPriorityListItemsfromRedis()
+        {
+            _logger.WriteEntry("Loading EEC_EAFSPRIORITY Data from Cache", LogLevels.Info);
+
+            var keys = _RedisConnectorHelper.GetKeys(pattern: RedisKeyPattern.EEC_EAFSPriority);
+            var dataTable = _RedisConnectorHelper.StringGet<EEC_EAFSPRIORITY_Str>(keys);
+            try
+            {
+                foreach (EEC_EAFSPRIORITY_Str row in dataTable)
+                {
+                    var id_CB = Guid.Parse((row.ID_CB).ToString());
+                    var id_CT = Guid.Parse((row.ID_CT).ToString());
+                    var id_CB_Partner = Guid.Parse((row.ID_CB_PARTNER).ToString());
+
+                    if (id_CB != Guid.Empty)
+                    {
+                        var name = row.CB_NETWORKPATH;
+                        var networkPath = row.CB_NETWORKPATH;
+                        var pointDirectionType = "INPUT";
+                        var scadaPoint = new LSPScadaPoint(id_CB, name, networkPath);
+                        scadaPoint.DirectionType = pointDirectionType;
+                        scadaPoint.SCADAType = "DigitalMeasurement";
+
+                        if (!_scadaPoints.ContainsKey(id_CB))
+                        {
+                            _scadaPoints.Add(id_CB, scadaPoint);
+                            _scadaPointsHelper.Add(name, scadaPoint);
+                        }
+                    }
+                    if (id_CT != Guid.Empty)
+                    {
+                        var name = row.CT_NETWORKPATH;
+                        var networkPath = row.CT_NETWORKPATH;
+                        var pointDirectionType = "INPUT";
+                        var scadaPoint = new LSPScadaPoint(id_CT, name, networkPath);
+                        scadaPoint.DirectionType = pointDirectionType;
+                        scadaPoint.SCADAType = "AnalogMeasurement";
+
+                        if (!_scadaPoints.ContainsKey(id_CT))
+                        {
+                            _scadaPoints.Add(id_CT, scadaPoint);
+                            _scadaPointsHelper.Add(name, scadaPoint);
+                        }
+                        else
+                        {
+                            ;
+                            //_logger.WriteEntry(networkPath + " already exist in repository", LogLevels.Error);
+                        }
+                    }
+                    if (id_CB_Partner != Guid.Empty)
+                    {
+                        var name = row.PARTNERADDRESS;
+                        var networkPath = row.PARTNERADDRESS;
+                        var pointDirectionType = "INPUT";
+                        var scadaPoint = new LSPScadaPoint(id_CB_Partner, name, networkPath);
+                        scadaPoint.DirectionType = pointDirectionType;
+                        scadaPoint.SCADAType = "DigitalMeasurement";
+
+                        if (!_scadaPoints.ContainsKey(id_CB_Partner))
+                        {
+                            _scadaPoints.Add(id_CB_Partner, scadaPoint);
+                            _scadaPointsHelper.Add(name, scadaPoint);
+                        }
+                        else
+                        {
+                            ;
+                            //_logger.WriteEntry(networkPath + " already exist in repository", LogLevels.Error);
+                        }
+                    }
+
+                }
+            }
+            catch (Irisa.DataLayer.DataException ex)
+            {
+                _logger.WriteEntry(ex.ToString(), LogLevels.Error, ex);
+                return false;
+            }
+            catch (Exception ex)
+            {
+                _logger.WriteEntry(ex.Message, LogLevels.Error, ex);
+                return false;
+
+            }
+
+            return true;
+        }
+
         public bool BuildCashe()
         {
             try
@@ -929,17 +1001,17 @@ namespace LSP
                     dataTable = _staticDataManager.GetRecord($"SELECT * from APP_LSP_DECTCOMB");
                     //var ff1 = JsonConvert.SerializeObject(dataTable);
                     //var ff2 = JsonConvert.DeserializeObject<DataTable>(ff1);
-                    _cache.StringSet(RedisKeyPattern.LSP_DECTCOMB, JsonConvert.SerializeObject(dataTable));
+                    _RedisConnectorHelper.DataBase.StringSet(RedisKeyPattern.LSP_DECTCOMB, JsonConvert.SerializeObject(dataTable));
 
 
                     dataTable = _staticDataManager.GetRecord($"SELECT * from APP_LSP_DECTLIST");
-                    _cache.StringSet(RedisKeyPattern.LSP_DECTLIST, JsonConvert.SerializeObject(dataTable));
+                    _RedisConnectorHelper.DataBase.StringSet(RedisKeyPattern.LSP_DECTLIST, JsonConvert.SerializeObject(dataTable));
 
                     dataTable = _staticDataManager.GetRecord($"SELECT * from APP_LSP_DECTPRIOLS");
-                   _cache.StringSet(RedisKeyPattern.LSP_DECTPRIOLS, JsonConvert.SerializeObject(dataTable));
+                    _RedisConnectorHelper.DataBase.StringSet(RedisKeyPattern.LSP_DECTPRIOLS, JsonConvert.SerializeObject(dataTable));
 
                     dataTable = _staticDataManager.GetRecord($"SELECT * from APP_LSP_PRIORITYLIST");
-                    _cache.StringSet(RedisKeyPattern.LSP_PRIORITYLIST, JsonConvert.SerializeObject(dataTable));
+                    _RedisConnectorHelper.DataBase.StringSet(RedisKeyPattern.LSP_PRIORITYLIST, JsonConvert.SerializeObject(dataTable));
 
                 }
 
@@ -973,9 +1045,9 @@ namespace LSP
 
                 return true;
             }
-           
 
-            catch(Exception ex)
+
+            catch (Exception ex)
             {
                 _logger.WriteEntry(ex.Message, LogLevels.Error, ex);
                 return false;
@@ -999,7 +1071,7 @@ namespace LSP
             try
             {
                 //if(LoadfromCache)
-                    dataTable= JsonConvert.DeserializeObject<DataTable>(_cache.StringGet(RedisKeyPattern.LSP_DECTLIST));
+                dataTable = JsonConvert.DeserializeObject<DataTable>(_RedisConnectorHelper.DataBase.StringGet(RedisKeyPattern.LSP_DECTLIST));
                 //else
                 //    dataTable = _staticDataManager.GetRecord($"SELECT * from {GetEndStringCommand()}LSP_DECTLIST ORDER BY DECTNO");
 
@@ -1019,14 +1091,14 @@ namespace LSP
         public IEnumerable<LSP_DECTITEMS_Str> FetchItems(byte decisionTableNo)
         {
             DataTable dataTable = null;
-            IEnumerable< LSP_DECTITEMS_Str> row = null;
+            IEnumerable<LSP_DECTITEMS_Str> row = null;
 
             try
             {
                 //if (LoadfromCache)
                 //{
-                      var keys = _RedisConnectorHelper.GetKeys(pattern: RedisKeyPattern.LSP_DECTITEMS);
-                      row = _RedisConnectorHelper.StringGet<LSP_DECTITEMS_Str>(keys).ToArray();
+                var keys = _RedisConnectorHelper.GetKeys(pattern: RedisKeyPattern.LSP_DECTITEMS);
+                row = _RedisConnectorHelper.StringGet<LSP_DECTITEMS_Str>(keys).ToArray();
                 //}
                 //else
                 //    dataTable = _staticDataManager.GetRecord($"SELECT * from {GetEndStringCommand()}LSP_DECTITEMS WHERE DECTNO = " + decisionTableNo.ToString() + " ORDER BY DECTITEMNO ");
@@ -1051,7 +1123,7 @@ namespace LSP
             try
             {
                 //if (LoadfromCache)
-                    dataTable = JsonConvert.DeserializeObject<DataTable>(_cache.StringGet(RedisKeyPattern.LSP_DECTCOMB));
+                dataTable = JsonConvert.DeserializeObject<DataTable>(_RedisConnectorHelper.DataBase.StringGet(RedisKeyPattern.LSP_DECTCOMB));
                 //else
                 //dataTable = _staticDataManager.GetRecord($"SELECT * from {GetEndStringCommand()}LSP_DECTCOMB WHERE DECTNO = " + decisionTableNo.ToString() + " ORDER BY COMBINATIONNO, DECTITEMNO");
 
@@ -1075,7 +1147,7 @@ namespace LSP
             try
             {
                 //if (LoadfromCache)
-                    dataTable = JsonConvert.DeserializeObject<DataTable>(_cache.StringGet(RedisKeyPattern.LSP_DECTPRIOLS));
+                dataTable = JsonConvert.DeserializeObject<DataTable>(_RedisConnectorHelper.DataBase.StringGet(RedisKeyPattern.LSP_DECTPRIOLS));
                 //else
                 //{
                 //    string strSQL = $"SELECT * FROM {GetEndStringCommand()}LSP_DECTPRIOLS WHERE DECTNO = " + decisionTableNo.ToString() + " ORDER BY COMBINATIONNO";
@@ -1104,8 +1176,8 @@ namespace LSP
             {
                 //if (LoadfromCache)
                 //{
-                    var keys = _RedisConnectorHelper.GetKeys(pattern: RedisKeyPattern.LSP_PRIORITYITEMS);
-                    row = _RedisConnectorHelper.StringGet<LSP_PRIORITYITEMS_Str>(keys).ToArray();
+                var keys = _RedisConnectorHelper.GetKeys(pattern: RedisKeyPattern.LSP_PRIORITYITEMS);
+                row = _RedisConnectorHelper.StringGet<LSP_PRIORITYITEMS_Str>(keys).ToArray();
                 //}
                 //else
                 //{
@@ -1251,7 +1323,7 @@ namespace LSP
             try
             {
                 //if (LoadfromCache)
-                    dataTable = JsonConvert.DeserializeObject<DataTable>(_cache.StringGet(RedisKeyPattern.LSP_PRIORITYLIST));
+                dataTable = JsonConvert.DeserializeObject<DataTable>(_RedisConnectorHelper.DataBase.StringGet(RedisKeyPattern.LSP_PRIORITYLIST));
                 //else
                 //    dataTable = _staticDataManager.GetRecord($"SELECT * FROM {GetEndStringCommand()}LSP_PRIORITYLIST ORDER BY PRIORITYLISTNO");
 
@@ -1270,15 +1342,15 @@ namespace LSP
 
         public FetchEAFSPriority_Str[] FetchEAFSPriority(string grpNumber, string FurnaceStatus, List<string> Exception)
         {
-            FetchEAFSPriority_Str[] dataTable =null;
+            FetchEAFSPriority_Str[] dataTable = null;
 
-            
+
 
             try
             {
                 //if (LoadfromCache)
                 //{
-                
+
                 if (GetRedisUtiles().GetKeys(pattern: RedisKeyPattern.EEC_SFSCEAFSPRIORITY).Length == 0)
                 {
                     _logger.WriteEntry("Error in running get furnce number from EEC_SFSCEAFSPRIORITY cache", LogLevels.Error);
@@ -1290,7 +1362,7 @@ namespace LSP
                 if (keys.Length == 0)
                 {
                     _logger.WriteEntry("Error in running get furnce number from EEC_EAFSPriority cache", LogLevels.Error);
-                    
+
                     return dataTable;
                 }
 
@@ -1298,34 +1370,34 @@ namespace LSP
                 EEC_EAFSPRIORITY_Str[] eec_eafprio_rows = new EEC_EAFSPRIORITY_Str[8];
                 EEC_SFSCEAFSPRIORITY_Str[] _eec_sfscprio_table = new EEC_SFSCEAFSPRIORITY_Str[8];
                 var _eec_eafprio_table = _RedisConnectorHelper.StringGet<EEC_EAFSPRIORITY_Str>(keys).ToArray();
-                    
+
                 for (int fur = 0; fur < 8; fur++)
                 {
-                    eec_eafprio_rows[fur] = _eec_eafprio_table.Where(n => n.FURNACE == (fur+1).ToString()).First();
-                    _eec_sfscprio_table[fur] = JsonConvert.DeserializeObject<EEC_SFSCEAFSPRIORITY_Str>(_cache.StringGet(RedisKeyPattern.EEC_SFSCEAFSPRIORITY + (fur + 1).ToString()));
+                    eec_eafprio_rows[fur] = _eec_eafprio_table.Where(n => n.FURNACE == (fur + 1).ToString()).First();
+                    _eec_sfscprio_table[fur] = JsonConvert.DeserializeObject<EEC_SFSCEAFSPRIORITY_Str>(_RedisConnectorHelper.DataBase.StringGet(RedisKeyPattern.EEC_SFSCEAFSPRIORITY + (fur + 1).ToString()));
                 }
 
                 var dataTable_1 = from ee in eec_eafprio_rows
                                   join es in _eec_sfscprio_table on ee.FURNACE.ToString() equals es.FURNACE.ToString()
-                                    select new FetchEAFSPriority_Str
-                                    {
-                                        CB_NETWORKPATH = ee.CB_NETWORKPATH.ToString(),
-                                        CT_NETWORKPATH = ee.CT_NETWORKPATH.ToString(),
-                                        HASPARTNER = ee.HASPARTNER.ToString(),
-                                        PARTNERADDRESS = ee.PARTNERADDRESS.ToString(),
-                                        FURNACE = ee.FURNACE.ToString(),
-                                        CONSUMED_ENERGY_PER_HEAT = es.CONSUMED_ENERGY_PER_HEAT.ToString(),
-                                        STATUS_OF_FURNACE = es.STATUS_OF_FURNACE.ToString(),
-                                        GROUPNUM = es.GROUPNUM.ToString(),
-                                        ID_CB = ee.ID_CB,
-                                        ID_CT=ee.ID_CT,
-                                        ID_CB_PARTNER=ee.ID_CB_PARTNER
-                            } ;
+                                  select new FetchEAFSPriority_Str
+                                  {
+                                      CB_NETWORKPATH = ee.CB_NETWORKPATH.ToString(),
+                                      CT_NETWORKPATH = ee.CT_NETWORKPATH.ToString(),
+                                      HASPARTNER = ee.HASPARTNER.ToString(),
+                                      PARTNERADDRESS = ee.PARTNERADDRESS.ToString(),
+                                      FURNACE = ee.FURNACE.ToString(),
+                                      CONSUMED_ENERGY_PER_HEAT = es.CONSUMED_ENERGY_PER_HEAT.ToString(),
+                                      STATUS_OF_FURNACE = es.STATUS_OF_FURNACE.ToString(),
+                                      GROUPNUM = es.GROUPNUM.ToString(),
+                                      ID_CB = ee.ID_CB,
+                                      ID_CT = ee.ID_CT,
+                                      ID_CB_PARTNER = ee.ID_CB_PARTNER
+                                  };
                 var dataTable_2 = dataTable_1;
                 if (grpNumber != "")
                     dataTable_2 = dataTable_1.Where(n => n.GROUPNUM == grpNumber).ToArray();
                 var dataTable_3 = dataTable_2.Where(n => n.STATUS_OF_FURNACE == FurnaceStatus).OrderBy(n => (Convert.ToDecimal(n.CONSUMED_ENERGY_PER_HEAT))).ToArray();
-                dataTable = dataTable_3.Where (n => !Exception.Contains(n.CB_NETWORKPATH)).ToArray();
+                dataTable = dataTable_3.Where(n => !Exception.Contains(n.CB_NETWORKPATH)).ToArray();
                 //}
                 //else
                 //{
@@ -1501,7 +1573,7 @@ namespace LSP
                 else
                     _logger.WriteEntry("The GUID could not read from Repository for Network   " + networkpath, LogLevels.Error);
             }
-            
+
             string sql = "SELECT * FROM NodesFullPath where TO_CHAR(FullPath) = '" + networkpath + "'";
 
             try
@@ -1574,10 +1646,10 @@ namespace LSP
         //    return dt;
         //}
 
-        
+
 
     }
-   
-   
+
+
 
 }

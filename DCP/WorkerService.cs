@@ -64,15 +64,18 @@ namespace DCP
             _storeLogs.Start();
 
             _logger.WriteEntry("Start of running DCP.", LogLevels.Info);
-            _logger.WriteEntry("Loading data from database is started.", LogLevels.Info);
+            _logger.WriteEntry("Loading data from database/redis is started.", LogLevels.Info);
 
             if (_repository.Build() == false)
                 return Task.FromException<Exception>(new Exception("Create repository is failed"));
             else
-                _logger.WriteEntry("Loading data from database is completed", LogLevels.Info);
+                _logger.WriteEntry("Loading data from database/redis is completed", LogLevels.Info);
+           
             _rpcService.StateChanged += RpcStateChanged;
 
             _runtimeDataReceiver.Start();
+            _dcpManager.CheckCPSStatus();
+            _dcpManager.DCManager_start();
 
             return base.StartAsync(cancellationToken);
         }

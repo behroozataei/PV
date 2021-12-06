@@ -26,6 +26,7 @@ namespace DCP
 		// In second
 		private int TIMER_CYCLE_LoadPowerForEAFS = 4000;
 		private Timer _timer_LoadPowerForEAFS;
+		private ICpsCommandService _cpsCommandService;
 
 		// TODO : StartupForm.frm -> reset_DCP_Function_Status
 
@@ -43,18 +44,12 @@ namespace DCP
 			_logger = logger ?? throw new ArgumentNullException(nameof(logger));
 			_repository = repository ?? throw new ArgumentNullException(nameof(repository));
 			_updateScadaPointOnServer = new UpdateScadaPointOnServer(_logger, cpsCommandService);
+			_cpsCommandService = cpsCommandService;
 
-			//--------------------------------------------------------
-			// Step 1: For DC-EAFS Consumption:
-			_eafConsumptonManager = new EAFConsumptionManager(_logger, _repository, cpsCommandService);
-
-			//--------------------------------------------------------
-			// Step 2: For DC-PCS:
-			_pcsManager = new PCSManager(_logger, _repository, _updateScadaPointOnServer);
 
 			//--------------------------------------------------------
 			// Step 3: For LoadPowerForEAFS:
-			DCManager_start();
+			//DCManager_start();
 
 			//--------------------------------------------------------
 			_logger.WriteEntry($"=================================================================", LogLevels.Info);
@@ -63,11 +58,21 @@ namespace DCP
 
 		public void SCADAEventRaised(DCPScadaPoint scadaPoint)
 		{
-			_pcsManager.SCADAEventReceived(scadaPoint);
+			if (_pcsManager!=null)
+				_pcsManager.SCADAEventReceived(scadaPoint);
 		}
 
 		public void DCManager_start()
 		{
+			//--------------------------------------------------------
+			// Step 1: For DC-EAFS Consumption:
+			_eafConsumptonManager = new EAFConsumptionManager(_logger, _repository, _cpsCommandService);
+
+			//--------------------------------------------------------
+			// Step 2: For DC-PCS:
+			_pcsManager = new PCSManager(_logger, _repository, _updateScadaPointOnServer);
+
+
 			try
 			{
 				_timer_LoadPowerForEAFS = new Timer();

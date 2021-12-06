@@ -25,8 +25,7 @@ namespace EEC
         private readonly Dictionary<string, EECScadaPoint> _scadaPointsHelper;
         private readonly RedisUtils _RedisConnectorHelper;
 
-        private bool LoadfromCache = false;
-        IDatabase _cache;
+       
         private bool isBuild = false;
 
         public Repository(ILogger logger, IConfiguration configuration, RedisUtils RedisConnectorHelper)
@@ -45,43 +44,20 @@ namespace EEC
 
         public bool Build()
         {
-            if (RedisUtils.IsConnected)
-            {
-                _logger.WriteEntry("Connected to Redis Cache", LogLevels.Info);
-                _cache = _RedisConnectorHelper.DataBase;
-                if (_RedisConnectorHelper.GetKeys(pattern: RedisKeyPattern.EEC_PARAMS).Length != 0 &&
-                    _RedisConnectorHelper.GetKeys(pattern: RedisKeyPattern.EEC_SFSCEAFSPRIORITY).Length != 0)
-                {
-                    LoadfromCache = true;
-                }
-                else
-                {
-                    LoadfromCache = false;
-                    EEC_SFSCEAFSPRIORITY_Str[] eec_sfsceafsproi = new EEC_SFSCEAFSPRIORITY_Str[8];
-                    for (int furnace = 0; furnace < 8; furnace++)
-                    {
-                        eec_sfsceafsproi[furnace] = new EEC_SFSCEAFSPRIORITY_Str();
-                        eec_sfsceafsproi[furnace].FURNACE = (furnace + 1).ToString();
-                        eec_sfsceafsproi[furnace].GROUPNUM = "1";
-                        eec_sfsceafsproi[furnace].CONSUMED_ENERGY_PER_HEAT = "0";
-                        eec_sfsceafsproi[furnace].REASON = "";
-                        eec_sfsceafsproi[furnace].STATUS_OF_FURNACE = "OFF";
-
-                        _cache.StringSet(RedisKeyPattern.EEC_SFSCEAFSPRIORITY + $"{ furnace + 1}", JsonConvert.SerializeObject(eec_sfsceafsproi[furnace]));
-                    }
-
-                }
-            }
-            else
-            {
-                _logger.WriteEntry("Redis Connaction Failed.", LogLevels.Error);
-            }
-
+            
             try
             {
-                GetInputScadaPoints();
-               
-                isBuild = true;
+                if (GetInputScadaPoints())
+                {
+                    isBuild = true;
+                    BuildCashe();
+                }
+                else if(GetInputScadaPointsfromRedis())
+                {
+                    isBuild = true;
+                    BuildCashe();
+                }
+
             }
             catch (Exception ex)
             {
@@ -92,69 +68,111 @@ namespace EEC
             return isBuild;
         }
 
-       
-
-        private void GetInputScadaPoints()
+         private bool BuildCashe()
         {
             try
             {
-                if (LoadfromCache)
+                EEC_SFSCEAFSPRIORITY_Str[] eec_sfsceafsproi = new EEC_SFSCEAFSPRIORITY_Str[8];
+                for (int furnace = 0; furnace < 8; furnace++)
                 {
-                    _logger.WriteEntry("Loading EEC_PARAMS Data from Cache", LogLevels.Info);
+                    eec_sfsceafsproi[furnace] = new EEC_SFSCEAFSPRIORITY_Str();
+                    eec_sfsceafsproi[furnace].FURNACE = (furnace + 1).ToString();
+                    eec_sfsceafsproi[furnace].GROUPNUM = "1";
+                    eec_sfsceafsproi[furnace].CONSUMED_ENERGY_PER_HEAT = "0";
+                    eec_sfsceafsproi[furnace].REASON = "";
+                    eec_sfsceafsproi[furnace].STATUS_OF_FURNACE = "OFF";
 
-                    var keys = _RedisConnectorHelper.GetKeys(pattern: RedisKeyPattern.EEC_PARAMS);
-                    var dataTable_cache = _RedisConnectorHelper.StringGet<EEC_PARAMS_Str>(keys);
-
-                    foreach (EEC_PARAMS_Str row in dataTable_cache)
-                    {
-                        var id = Guid.Parse((row.ID).ToString());
-                        var name = row.NAME;
-                        var networkPath = row.NETWORKPATH;
-                        var pointDirectionType = "Input";
-
-                        if (id != Guid.Empty)
-                        {
-                            var scadaPoint = new EECScadaPoint(id, name, networkPath, (PointDirectionType)Enum.Parse(typeof(PointDirectionType), pointDirectionType));
-
-                            if (!_scadaPoints.ContainsKey(id))
-                            {
-                                _scadaPoints.Add(id, scadaPoint);
-                                _scadaPointsHelper.Add(name, scadaPoint);
-                            }
-
-                        }
-
-                    }
-
+                    _RedisConnectorHelper.DataBase.StringSet(RedisKeyPattern.EEC_SFSCEAFSPRIORITY + $"{ furnace + 1}", JsonConvert.SerializeObject(eec_sfsceafsproi[furnace]));
                 }
-                else
+            }
+            catch (Irisa.DataLayer.DataException ex)
+            {
+                _logger.WriteEntry(ex.ToString(), LogLevels.Error, ex);
+                return false;
+            }
+            catch (Exception ex)
+            {
+                _logger.WriteEntry(ex.Message, LogLevels.Error, ex);
+                return false;
+            }
+            return true;
+
+
+        }
+
+        private bool GetInputScadaPoints()
+        {
+            try
+            {
+
+                EEC_PARAMS_Str eec_param = new EEC_PARAMS_Str();
+                var dataTable = sqlDataMnager.GetRecord($"SELECT * FROM APP_EEC_PARAMS");
+
+                foreach (DataRow row in dataTable.Rows)
                 {
-                    EEC_PARAMS_Str eec_param = new EEC_PARAMS_Str();
-                    var dataTable = sqlDataMnager.GetRecord($"SELECT * FROM APP_EEC_PARAMS");
+                    //var id = Guid.Parse(row["GUID"].ToString());
+                    var name = row["Name"].ToString();
+                    var networkPath = row["NetworkPath"].ToString();
+                    var pointDirectionType = "Input";
+                    //if (name == "PMAX1")
+                    //    System.Diagnostics.Debug.Print("PAMX1");
+                    var id = GetGuid(networkPath);
 
-                    foreach (DataRow row in dataTable.Rows)
+                    eec_param.FUNCTIONNAME = row["FUNCTIONNAME"].ToString();
+                    eec_param.NAME = name;
+                    eec_param.DESCRIPTION = row["DESCRIPTION"].ToString();
+                    eec_param.DIRECTIONTYPE = row["DIRECTIONTYPE"].ToString();
+                    eec_param.NETWORKPATH = networkPath;
+                    eec_param.SCADATYPE = row["SCADATYPE"].ToString();
+                    eec_param.TYPE = row["TYPE"].ToString();
+
+                    eec_param.ID = id.ToString();
+                    if (RedisUtils.IsConnected)
+                        _RedisConnectorHelper.DataBase.StringSet(RedisKeyPattern.EEC_PARAMS + networkPath, JsonConvert.SerializeObject(eec_param));
+                    else
+                        _logger.WriteEntry("Redis Connection Error", LogLevels.Error);
+
+                    var scadaPoint = new EECScadaPoint(id, name, networkPath, (PointDirectionType)Enum.Parse(typeof(PointDirectionType), pointDirectionType));
+
+                    if (!_scadaPoints.ContainsKey(id))
                     {
-                        //var id = Guid.Parse(row["GUID"].ToString());
-                        var name = row["Name"].ToString();
-                        var networkPath = row["NetworkPath"].ToString();
-                        var pointDirectionType = "Input";
-                        //if (name == "PMAX1")
-                        //    System.Diagnostics.Debug.Print("PAMX1");
-                        var id = GetGuid(networkPath);
+                        _scadaPoints.Add(id, scadaPoint);
+                        _scadaPointsHelper.Add(name, scadaPoint);
+                    }
+                }
 
-                        eec_param.FUNCTIONNAME = row["FUNCTIONNAME"].ToString();
-                        eec_param.NAME = name;
-                        eec_param.DESCRIPTION = row["DESCRIPTION"].ToString();
-                        eec_param.DIRECTIONTYPE = row["DIRECTIONTYPE"].ToString();
-                        eec_param.NETWORKPATH = networkPath;
-                        eec_param.SCADATYPE = row["SCADATYPE"].ToString();
-                        eec_param.TYPE = row["TYPE"].ToString();
+            }
+            catch (Irisa.DataLayer.DataException ex)
+            {
+                _logger.WriteEntry(ex.ToString(), LogLevels.Error, ex);
+                return false;
+            }
+            catch (Exception ex)
+            {
+                _logger.WriteEntry(ex.Message, LogLevels.Error, ex);
+                return false;
+            }
+            return true;
+        }
 
-                        eec_param.ID = id.ToString();
-                        if (RedisUtils.IsConnected)
-                            _cache.StringSet(RedisKeyPattern.EEC_PARAMS + networkPath, JsonConvert.SerializeObject(eec_param));
+        private bool GetInputScadaPointsfromRedis()
+        {
+            _logger.WriteEntry("Loading EEC_PARAMS Data from Cache", LogLevels.Info);
 
+            var keys = _RedisConnectorHelper.GetKeys(pattern: RedisKeyPattern.EEC_PARAMS);
+            var dataTable_cache = _RedisConnectorHelper.StringGet<EEC_PARAMS_Str>(keys);
 
+            try
+            {
+                foreach (EEC_PARAMS_Str row in dataTable_cache)
+                {
+                    var id = Guid.Parse((row.ID).ToString());
+                    var name = row.NAME;
+                    var networkPath = row.NETWORKPATH;
+                    var pointDirectionType = "Input";
+
+                    if (id != Guid.Empty)
+                    {
                         var scadaPoint = new EECScadaPoint(id, name, networkPath, (PointDirectionType)Enum.Parse(typeof(PointDirectionType), pointDirectionType));
 
                         if (!_scadaPoints.ContainsKey(id))
@@ -162,20 +180,25 @@ namespace EEC
                             _scadaPoints.Add(id, scadaPoint);
                             _scadaPointsHelper.Add(name, scadaPoint);
                         }
+
                     }
+
                 }
             }
             catch (Irisa.DataLayer.DataException ex)
             {
                 _logger.WriteEntry(ex.ToString(), LogLevels.Error, ex);
+                return false;
             }
             catch (Exception ex)
             {
                 _logger.WriteEntry(ex.Message, LogLevels.Error, ex);
+                return false;
             }
+            return true;
+
         }
 
-       
 
         public EECScadaPoint GetScadaPoint(Guid guid)
         {
@@ -222,7 +245,7 @@ namespace EEC
             try
             {
                 if (RedisUtils.IsConnected)
-                    _cache.StringSet(RedisKeyPattern.EEC_TELEGRAM, JsonConvert.SerializeObject(eec_telegram));
+                    _RedisConnectorHelper.DataBase.StringSet(RedisKeyPattern.EEC_TELEGRAM, JsonConvert.SerializeObject(eec_telegram));
                 //var RowAffected = _historicalDataManager.ExecuteNonQuery(strSQL);
 
                 //if (RowAffected > 0)
@@ -298,7 +321,7 @@ namespace EEC
                 sfsc_eafpower.FURNACE7 = _FurnacePowers[6];
                 sfsc_eafpower.FURNACE8 = _FurnacePowers[7];
                 if (RedisUtils.IsConnected)
-                    _cache.StringSet(RedisKeyPattern.SFSC_EAFSPOWER, JsonConvert.SerializeObject(sfsc_eafpower));
+                    _RedisConnectorHelper.DataBase.StringSet(RedisKeyPattern.SFSC_EAFSPOWER, JsonConvert.SerializeObject(sfsc_eafpower));
             }
             catch (Exception ex)
             {

@@ -89,6 +89,16 @@ namespace DCP
 			}
 
 		}
+		public void CheckCPSStatus()
+		{
+
+			while (!GlobalData.CPSStatus)
+			{
+				System.Threading.Thread.Sleep(5000);
+				_logger.WriteEntry("Waiting for Connecting to CPS", LogLevels.Info);
+
+			}
+		}
 
 		public void DCManager_start()
 		{
@@ -127,6 +137,7 @@ namespace DCP
 		// Each minute onetime this callback sub is called.
 		public void runCyclicOperationPCS1Min(object sender, ElapsedEventArgs e)
 		{
+			CheckCPSStatus();
 			try
 			{
 				//--------------------------------------------------------------------------
@@ -172,6 +183,7 @@ namespace DCP
 
 		public void runCyclicOperationPCSRequest(object sender, ElapsedEventArgs e)
 		{
+			CheckCPSStatus();
 			try
 			{
                 // Debug only

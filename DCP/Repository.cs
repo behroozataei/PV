@@ -23,8 +23,6 @@ namespace DCP
         private readonly Dictionary<string, DCPScadaPoint> _scadaPointsHelper;
         private readonly RedisUtils _RedisConnectorHelper;
 
-        private bool LoadfromCache = false;
-        IDatabase _cache;
         private bool isBuild = false;
 
         public Repository(ILogger logger, DataManager staticDataManager, DataManager historicalDataManager, SqlServerDataManager linkDBpcsDataManager, RedisUtils RedisConnectorHelper)
@@ -38,30 +36,18 @@ namespace DCP
             _scadaPoints = new Dictionary<Guid, DCPScadaPoint>();
             _scadaPointsHelper = new Dictionary<string, DCPScadaPoint>();
         }
+       
 
         public bool Build()
         {
-            if (RedisUtils.IsConnected)
-            {
-                _logger.WriteEntry("Connected to Redis Cache", LogLevels.Info);
-                _cache = _RedisConnectorHelper.DataBase;
-                if (_RedisConnectorHelper.GetKeys(pattern: RedisKeyPattern.DCP_PARAMS).Length != 0)
-                {
-                    LoadfromCache = true;
-                }
-                else
-                {
-                    LoadfromCache = false;
-                }
-            }
-            else
-            {
-                _logger.WriteEntry("Redis Connaction Failed.", LogLevels.Error);
-            }
+
             try
             {
-                GetInputScadaPoints();
-                isBuild = true;
+                if (GetInputScadaPoints())
+                    isBuild = true;
+                else if (GetInputScadaPointsfromredis())
+                    isBuild = true;
+
             }
             catch (Exception ex)
             {
@@ -70,66 +56,77 @@ namespace DCP
 
             return isBuild;
         }
-        
-        private void GetInputScadaPoints()
+
+        private bool GetInputScadaPoints()
         {
             try
             {
-                if (LoadfromCache)
+
+                DCP_PARAMS_Str dcp_param = new DCP_PARAMS_Str();
+                var dataTable = _staticDataManager.GetRecord($"SELECT * from APP_DCP_PARAMS");
+
+                foreach (DataRow row in dataTable.Rows)
                 {
-                    _logger.WriteEntry("Loading DCP_PARAMS Data from Cache", LogLevels.Info);
+                    //var id = Guid.Parse(row["GUID"].ToString());
+                    var name = row["Name"].ToString();
+                    var networkPath = row["NetworkPath"].ToString();
+                    var pointDirectionType = row["DirectionType"].ToString();
+                    //if (name == "MAC_DS")
+                    //    System.Diagnostics.Debugger.Break();
+                    var id = GetGuid(networkPath);
+                    dcp_param.FUNCTIONNAME = row["FUNCTIONNAME"].ToString();
+                    dcp_param.NAME = name;
+                    dcp_param.DESCRIPTION = row["DESCRIPTION"].ToString();
+                    dcp_param.DIRECTIONTYPE = row["DIRECTIONTYPE"].ToString();
+                    dcp_param.NETWORKPATH = networkPath;
+                    dcp_param.SCADATYPE = row["SCADATYPE"].ToString();
 
-                    var keys = _RedisConnectorHelper.GetKeys(pattern: RedisKeyPattern.DCP_PARAMS);
-                    var dataTable_cache = _RedisConnectorHelper.StringGet<DCP_PARAMS_Str>(keys);
 
-                    foreach (DCP_PARAMS_Str row in dataTable_cache)
+                    dcp_param.ID = id.ToString();
+                    if (RedisUtils.IsConnected)
+                        _RedisConnectorHelper.DataBase.StringSet(RedisKeyPattern.DCP_PARAMS + networkPath, JsonConvert.SerializeObject(dcp_param));
+
+                    var scadaPoint = new DCPScadaPoint(id, name, networkPath, (PointDirectionType)Enum.Parse(typeof(PointDirectionType), pointDirectionType));
+
+                    if (!_scadaPoints.ContainsKey(id))
                     {
-                        var id = Guid.Parse((row.ID).ToString());
-                        var name = row.NAME;
-                        var networkPath = row.NETWORKPATH;
-                        var pointDirectionType = row.DIRECTIONTYPE;
-
-                        if (id != Guid.Empty)
-                        {
-                            var scadaPoint = new DCPScadaPoint(id, name, networkPath, (PointDirectionType)Enum.Parse(typeof(PointDirectionType), pointDirectionType));
-
-                            if (!_scadaPoints.ContainsKey(id))
-                            {
-                                _scadaPoints.Add(id, scadaPoint);
-                                _scadaPointsHelper.Add(name, scadaPoint);
-                            }
-
-                        }
-
+                        _scadaPoints.Add(id, scadaPoint);
+                        _scadaPointsHelper.Add(name, scadaPoint);
                     }
-
                 }
-                else
+
+            }
+            catch (Irisa.DataLayer.DataException ex)
+            {
+                _logger.WriteEntry(ex.ToString(), LogLevels.Error);
+                return false;
+            }
+            catch (Exception ex)
+            {
+                _logger.WriteEntry("Error in loading  scada point.", LogLevels.Error, ex);
+                return false;
+            }
+            return true;
+        }
+
+        private bool GetInputScadaPointsfromredis()
+        {
+            _logger.WriteEntry("Loading DCP_PARAMS Data from Cache", LogLevels.Info);
+
+            var keys = _RedisConnectorHelper.GetKeys(pattern: RedisKeyPattern.DCP_PARAMS);
+            var dataTable_cache = _RedisConnectorHelper.StringGet<DCP_PARAMS_Str>(keys);
+            try
+            {
+
+                foreach (DCP_PARAMS_Str row in dataTable_cache)
                 {
-                    DCP_PARAMS_Str dcp_param = new DCP_PARAMS_Str();
-                    var dataTable = _staticDataManager.GetRecord($"SELECT * from APP_DCP_PARAMS");
+                    var id = Guid.Parse((row.ID).ToString());
+                    var name = row.NAME;
+                    var networkPath = row.NETWORKPATH;
+                    var pointDirectionType = row.DIRECTIONTYPE;
 
-                    foreach (DataRow row in dataTable.Rows)
+                    if (id != Guid.Empty)
                     {
-                        //var id = Guid.Parse(row["GUID"].ToString());
-                        var name = row["Name"].ToString();
-                        var networkPath = row["NetworkPath"].ToString();
-                        var pointDirectionType = row["DirectionType"].ToString();
-                        //if (name == "MAC_DS")
-                        //    System.Diagnostics.Debugger.Break();
-                        var id = GetGuid(networkPath);
-                        dcp_param.FUNCTIONNAME = row["FUNCTIONNAME"].ToString();
-                        dcp_param.NAME = name;
-                        dcp_param.DESCRIPTION = row["DESCRIPTION"].ToString();
-                        dcp_param.DIRECTIONTYPE = row["DIRECTIONTYPE"].ToString();
-                        dcp_param.NETWORKPATH = networkPath;
-                        dcp_param.SCADATYPE = row["SCADATYPE"].ToString();
-                       
-
-                        dcp_param.ID = id.ToString();
-                        if (RedisUtils.IsConnected)
-                            _cache.StringSet(RedisKeyPattern.DCP_PARAMS + networkPath, JsonConvert.SerializeObject(dcp_param));
-
                         var scadaPoint = new DCPScadaPoint(id, name, networkPath, (PointDirectionType)Enum.Parse(typeof(PointDirectionType), pointDirectionType));
 
                         if (!_scadaPoints.ContainsKey(id))
@@ -137,17 +134,22 @@ namespace DCP
                             _scadaPoints.Add(id, scadaPoint);
                             _scadaPointsHelper.Add(name, scadaPoint);
                         }
+
                     }
+
                 }
             }
             catch (Irisa.DataLayer.DataException ex)
             {
                 _logger.WriteEntry(ex.ToString(), LogLevels.Error);
+                return false;
             }
             catch (Exception ex)
             {
                 _logger.WriteEntry("Error in loading  scada point.", LogLevels.Error, ex);
+                return false;
             }
+            return true;
         }
 
         //public DataTable GetFromMasterDB(string sql)
@@ -197,8 +199,8 @@ namespace DCP
                 if (_RedisConnectorHelper.GetKeys(pattern: RedisKeyPattern.SFSC_EAFSPOWER).Length == 0)
                     return dataTable;
 
-                dataTable = JsonConvert.DeserializeObject<SFSC_EAFSPOWER_Str>(_cache.StringGet(RedisKeyPattern.SFSC_EAFSPOWER));
-               
+                dataTable = JsonConvert.DeserializeObject<SFSC_EAFSPOWER_Str>(_RedisConnectorHelper.DataBase.StringGet(RedisKeyPattern.SFSC_EAFSPOWER));
+
             }
             catch (Irisa.DataLayer.DataException ex)
             {
@@ -596,16 +598,16 @@ namespace DCP
             return false;
         }
 
-       
-        public RedisUtils GetRedisUtiles ()
+
+        public RedisUtils GetRedisUtiles()
         {
             return _RedisConnectorHelper;
-            
+
         }
 
         public Guid GetGuid(String networkpath)
         {
-            string sql =  "SELECT * FROM NodesFullPath where TO_CHAR(FullPath) = '" + networkpath + "'";
+            string sql = "SELECT * FROM NodesFullPath where TO_CHAR(FullPath) = '" + networkpath + "'";
             try
             {
                 var dataTable = _staticDataManager.GetRecord(sql);
@@ -635,8 +637,8 @@ namespace DCP
                 return Guid.Empty;
             }
         }
-       
+
     }
-    
-   
+
+
 }
