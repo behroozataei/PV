@@ -180,7 +180,7 @@ namespace EEC
                 // Step 4. Load PMax1 and PMax2 from EEC!
                 if (!ReadEECPMaxFromTableOrSCADA())
                 {
-                    _logger.WriteEntry("Error in reading PMax for Busbars! ", LogLevels.Error);
+                    _logger.WriteEntry("Error in reading PMax for Busbars! ", LogLevels.Warn);
                     isWorking = false;
                     return;
                 }
@@ -276,7 +276,7 @@ namespace EEC
                     var deltatime = DateTime.Now.Subtract(dTime).TotalSeconds;
                     if (deltatime > 65)
                     {
-                        _logger.WriteEntry("Error: Date and Time  of MAXOVERLOAD1, MAXOVERLOAD2 is not correct! "+ "EEC TELDATEtime = "+ dTime +"  Delta Second = "+ deltatime, LogLevels.Error);
+                        _logger.WriteEntry("Error: Date and Time  of MAXOVERLOAD1, MAXOVERLOAD2 is not correct! "+ "EEC TELDATEtime = "+ dTime +"  Delta Second = "+ deltatime, LogLevels.Warn);
                         return false;
                     }
                 }
@@ -294,7 +294,7 @@ namespace EEC
                 if ((_MaxBusbarPowers[0] < ZERO_POWER_ON_BUSBAR) &&
                     (_MaxBusbarPowers[1] < ZERO_POWER_ON_BUSBAR))
                 {
-                    _logger.WriteEntry("Error: both MAXOVERLOAD1, MAXOVERLOAD2 are zero! ", LogLevels.Error);
+                    _logger.WriteEntry("Error: both MAXOVERLOAD1, MAXOVERLOAD2 are zero! ", LogLevels.Warn);
                     return false;
                 }
 
@@ -310,7 +310,7 @@ namespace EEC
                      (_MaxBusbarPowers[1] == 0.0  && _PMAX2.Value > 0.0)) &&
                     (_MAB.Value == (float)DigitalDoubleStatus.Open))
                 {
-                    _logger.WriteEntry("Error: MAB opened and MAXOVERLOAD1 or MAXOVERLOAD2 is zero! ", LogLevels.Error);
+                    _logger.WriteEntry("Error: MAB opened and MAXOVERLOAD1 or MAXOVERLOAD2 is zero! ", LogLevels.Warn);
                     return false;
                 }
                 
@@ -319,7 +319,7 @@ namespace EEC
                     float Busbarspowers = _MaxBusbarPowers[0] + _MaxBusbarPowers[1];
                     _MaxBusbarPowers[0] = Busbarspowers;
                     _MaxBusbarPowers[1] = Busbarspowers;
-                    _logger.WriteEntry("Error: MAB closed and both MAXOVERLOAD1 and MAXOVERLOAD2 > zero! ", LogLevels.Error);
+                    _logger.WriteEntry("Error: MAB closed and both MAXOVERLOAD1 and MAXOVERLOAD2 > zero! ", LogLevels.Warn);
                 }
 
                 return true;
