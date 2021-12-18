@@ -51,7 +51,12 @@ namespace LSP
             _repository = new Repository(_logger, config, _RedisConnectorHelper);
             _lspManager = new LSPManager(_logger, _repository, _rpcService.CommandService);
             _runtimeDataReceiver = new RuntimeDataReceiver(_logger, _repository, _lspManager, _rpcService, _cpsRuntimeDataBuffer);
-            
+            while (!Connection.PingHost(config["CpsIpAddress"], 10000))
+            {
+                Console.WriteLine(">>>>> Waiting for CPS Connection");
+                Thread.Sleep(5000);
+            }
+
 
 
         }

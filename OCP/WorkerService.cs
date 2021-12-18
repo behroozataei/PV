@@ -52,6 +52,11 @@ namespace OCP
             _repository = new Repository(_logger, _dataManager, _RedisConnectorHelper);
             _ocpManager = new OCPManager(_logger, _repository, _rpcService.CommandService);
             _runtimeDataReceiver = new RuntimeDataReceiver(_logger, _repository, (IProcessing)_ocpManager, _rpcService, _cpsRuntimeDataBuffer);
+            while (!Connection.PingHost(config["CpsIpAddress"], 10000))
+            {
+                Console.WriteLine(">>>>> Waiting for CPS Connection");
+                Thread.Sleep(5000);
+            }
         }
 
         public override Task StartAsync(CancellationToken cancellationToken)

@@ -183,11 +183,21 @@ namespace LSP
 		//Private Sub Timer1_Timer()
 		//'    Call m_CLSPManager.Update_m_arrPriol_IdxPriolsEAF
 		//End Sub
+		public void CheckCPSStatus()
+		{
 
+			while (!GlobalData.CPSStatus)
+			{
+				System.Threading.Thread.Sleep(5000);
+				_logger.WriteEntry("Waiting for Connecting to CPS", LogLevels.Info);
+
+			}
+		}
 		private void CheckLSPActivationFromSFSC(object sender, ElapsedEventArgs e)
 		{
 			try
 			{
+				CheckCPSStatus();
 				if (isWorking_CheckLSPActivationFromSFSC)
 					return;
 				else

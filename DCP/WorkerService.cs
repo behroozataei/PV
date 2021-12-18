@@ -55,6 +55,11 @@ namespace DCP
             _repository = new Repository(_logger, _staticDataManager, _historicalDataManager, _linkDBpcsDataManager, _RedisConnectorHelper);
             _dcpManager = new DCPManager(_logger, _repository, _rpcService.CommandService);
             _runtimeDataReceiver = new RuntimeDataReceiver(_logger, _repository, (IProcessing)_dcpManager, _rpcService, _cpsRuntimeDataBuffer);
+            while (!Connection.PingHost(config["CpsIpAddress"], 10000))
+            {
+                Console.WriteLine(">>>>> Waiting for CPS Connection");
+                Thread.Sleep(5000);
+            }
         }
 
         public override Task StartAsync(CancellationToken cancellationToken)

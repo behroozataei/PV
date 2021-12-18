@@ -57,6 +57,11 @@ namespace EEC
             _repository = new Repository(_logger, config, _RedisConnectorHelper);
             _eecManager = new EECManager(_logger, _repository, _rpcService.CommandService);
             _runtimeDataReceiver = new RuntimeDataReceiver(_logger, _repository, (IProcessing)_eecManager.RuntimeDataProcessing, _rpcService, _cpsRuntimeDataBuffer);
+            while (!Connection.PingHost(config["CpsIpAddress"], 10000))
+            {
+                Console.WriteLine(">>>>> Waiting for CPS Connection");
+                Thread.Sleep(5000);
+            }
         }
 
         public override Task StartAsync(CancellationToken cancellationToken)

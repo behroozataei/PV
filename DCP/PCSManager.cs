@@ -1,5 +1,6 @@
 using System;
 using System.Timers;
+using System.Threading.Tasks;
 using System.Data;
 using Newtonsoft.Json;
 using StackExchange.Redis;
@@ -42,6 +43,8 @@ namespace DCP
 		// This timer is for m_Timer_PCSRequest
 		private int TIMER_CYCLE_EAFGroupReq = 10000;
 		private Timer _timer_EAFGroupReq_10_Seconds;
+
+		private const int TIMER_START_FROM_MILISECOND = 40000;
 
 		private int TIMER_CYCLE_EECTelegramReq = 60000;
 		private Timer _timer_EECTelegramReq_1_Minute;
@@ -122,7 +125,7 @@ namespace DCP
 				//----------------------------------------------------------------------------------
 				// TODO: commented for test 
 				_timer_EAFGroupReq_10_Seconds.Start();
-				_timer_EECTelegramReq_1_Minute.Start();
+				Start();
 
 				//--------------------------------------------------------------------------
 				// Create a theCTraceLogger for any Logging, and Send dbConnection to TraceLogger
@@ -132,6 +135,17 @@ namespace DCP
 			{
 				_logger.WriteEntry(excep.Message, LogLevels.Error, excep);
 			}
+		}
+		internal void Start()
+		{
+			var currentTime = DateTime.UtcNow;
+			var delay = (60 - currentTime.Second) * 1000 + (1000-currentTime.Millisecond)+ TIMER_START_FROM_MILISECOND; // TIMER_START_FROM_MILISECOND => Waiting time for receiving energy in one minute
+			var delayTask = Task.Delay(delay);
+			delayTask.ContinueWith((t) =>
+			{
+				_timer_EECTelegramReq_1_Minute.Start();
+
+			}, TaskContinuationOptions.OnlyOnRanToCompletion);
 		}
 
 		// Each minute onetime this callback sub is called.
