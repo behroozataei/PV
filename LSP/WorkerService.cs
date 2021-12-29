@@ -1,18 +1,15 @@
-﻿using System;
-using System.Runtime.InteropServices;
-using System.Threading.Tasks;
-using System.Threading;
-using System.Collections.Concurrent;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Configuration;
-
-using COM;
+﻿using COM;
+using Irisa.Common.Utils;
+using Irisa.DataLayer;
 using Irisa.Logger;
 using Irisa.Message;
 using Irisa.Message.CPS;
-using Irisa.DataLayer;
-using Irisa.DataLayer.SqlServer;
-using Irisa.Common.Utils;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Hosting;
+using System;
+using System.Collections.Concurrent;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace LSP
 {
@@ -34,7 +31,7 @@ namespace LSP
 
             _logger = serviceProvider.GetService<ILogger>();
             _RedisConnectorHelper = new RedisUtils(0);
-            
+
             _staticDataManager = new Irisa.DataLayer.Oracle.OracleDataManager(config["OracleServicename"], config["OracleDatabaseAddress"], config["OracleStaticUser"], config["OracleStaticPassword"]);
             _storeLogs = new StoreLogs(_staticDataManager, _logger, "SCADA.\"HIS_HisLogs_Insert\"");
 
@@ -74,7 +71,7 @@ namespace LSP
             else
                 _logger.WriteEntry("Loading data from database/redis is completed", LogLevels.Info);
 
-           
+
             _rpcService.StateChanged += OnRpcStateChanged;
             _runtimeDataReceiver.Start();
             _lspManager.CheckCPSStatus();  //waiting for connection

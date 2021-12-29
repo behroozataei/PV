@@ -1,15 +1,11 @@
-﻿using System;
-using System.Runtime.InteropServices;
-using System.Collections.Generic;
-using System.Data;
-using Newtonsoft.Json;
-using StackExchange.Redis;
-using System.Linq;
-
-using COM;
-using Irisa.Logger;
+﻿using COM;
 using Irisa.DataLayer;
 using Irisa.DataLayer.SqlServer;
+using Irisa.Logger;
+using Newtonsoft.Json;
+using System;
+using System.Collections.Generic;
+using System.Data;
 
 namespace DCP
 {
@@ -36,7 +32,7 @@ namespace DCP
             _scadaPoints = new Dictionary<Guid, DCPScadaPoint>();
             _scadaPointsHelper = new Dictionary<string, DCPScadaPoint>();
         }
-       
+
 
         public bool Build()
         {

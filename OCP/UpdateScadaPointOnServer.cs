@@ -1,8 +1,7 @@
-﻿using System;
-
-using Irisa.Logger;
+﻿using Irisa.Logger;
 using Irisa.Message;
 using Irisa.Message.CPS;
+using System;
 
 namespace OCP
 {
@@ -52,7 +51,7 @@ namespace OCP
             applyCalculatedValue.Items.Add(
                 new CalculatedValueItem() { Console = "OCP", ElementId = checkPoint.SAMPLE_GUID.ToString(), Value = value });
 
-           // _logger.WriteEntry($"Write data for Sample Value of {checkPoint.Name} = {value}", LogLevels.Info);
+            // _logger.WriteEntry($"Write data for Sample Value of {checkPoint.Name} = {value}", LogLevels.Info);
 
             try
             {
@@ -146,7 +145,7 @@ namespace OCP
                 else
                 {
                     executed = true;
-              //      _logger.WriteEntry("Send Alarm for " + ascadaPoint.NetworkPath + " ; '" + alarmText + "'", LogLevels.Info);
+                    //      _logger.WriteEntry("Send Alarm for " + ascadaPoint.NetworkPath + " ; '" + alarmText + "'", LogLevels.Info);
                 }
             }
             catch (Exception ex)
@@ -160,10 +159,10 @@ namespace OCP
         public bool SendAlarm(Guid id, SinglePointStatus ev, string alarmText)
         {
             bool executed = false;
-           
+
             try
             {
-                if (id==Guid.Empty)
+                if (id == Guid.Empty)
                 {
                     _logger.WriteEntry("ScadaPoint is NULL", LogLevels.Warn);
                     return executed;
@@ -171,7 +170,7 @@ namespace OCP
 
                 var applyCalculatedValue = new ApplyCalculatedValueRequest();
                 applyCalculatedValue.Items.Add(
-                    new CalculatedValueItem() { Console = "OCP", ElementId=id.ToString(), Value = (float)ev, CauseOfStatusChange = alarmText });
+                    new CalculatedValueItem() { Console = "OCP", ElementId = id.ToString(), Value = (float)ev, CauseOfStatusChange = alarmText });
 
                 var reply = _scadaCommand.ApplyCalculatedValue(applyCalculatedValue);
 

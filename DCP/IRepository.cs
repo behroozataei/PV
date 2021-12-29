@@ -1,7 +1,6 @@
-﻿using System;
+﻿using COM;
+using System;
 using System.Data;
-
-using COM;
 
 namespace DCP
 {
@@ -30,7 +29,7 @@ namespace DCP
         //DataTable GetFromHistoricalDB(string sql);
         SFSC_EAFSPOWER_Str GetFromHistoricalCache();
         public RedisUtils GetRedisUtiles();
-       
+
 
     }
 }

@@ -1,19 +1,14 @@
-﻿using System;
-using System.Data;
-using System.Runtime.InteropServices;
-using System.Collections.Generic;
+﻿using COM;
+using Irisa.DataLayer;
+using Irisa.DataLayer.Oracle;
+using Irisa.DataLayer.SqlServer;
+using Irisa.Logger;
 using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
-using StackExchange.Redis;
+using System;
+using System.Collections.Generic;
+using System.Data;
 using System.Linq;
-using Newtonsoft.Json.Linq;
-
-using COM;
-using Irisa.Logger;
-using Irisa.DataLayer;
-using Irisa.DataLayer.SqlServer;
-using Irisa.DataLayer.Oracle;
-using System.Reflection;
 
 namespace LSP
 {
@@ -58,27 +53,27 @@ namespace LSP
             try
             {
                 // Important note: Always CheckPoints should be loaded before ScadaPoints
-                if(FetchCheckPoints())
+                if (FetchCheckPoints())
                 {
                     if (FetchScadaPoints())
                     {
-                        if(BuildCashe())
-                        isBuild = true;
-                      
+                        if (BuildCashe())
+                            isBuild = true;
+
                     }
                 }
                 else if (FetchCheckPointsfromRedis())
                 {
                     if (FetchScadaPointsfromRedis())
                     {
-                            isBuild = true;
+                        isBuild = true;
                     }
                 }
-                
+
                 _staticDataManager.Close();
                 _linkDBpcsDataManager.Close();
 
-               
+
             }
             catch (Irisa.DataLayer.DataException ex)
             {
@@ -406,7 +401,7 @@ namespace LSP
             fetchedData = FetchShedpointListItems();
             if (fetchedData == false) return false;
 
-            fetchedData=FetchEecEafsPriorityListItems();
+            fetchedData = FetchEecEafsPriorityListItems();
             if (fetchedData == false) return false;
             return true;
         }
@@ -649,73 +644,73 @@ namespace LSP
         {
             try
             {
-                
-                
-                    LSP_PRIORITYITEMS_Str lsp_priorityitems = new LSP_PRIORITYITEMS_Str();
-                    var dataTable = _staticDataManager.GetRecord($"SELECT * FROM APP_LSP_PRIORITYITEMS ORDER BY PRIORITYLISTNO, ITEMNO");
 
-                    foreach (DataRow row in dataTable.Rows)
-                    {
-                        var id_curr = GetGuid(row["NETWORKPATH_CURR"].ToString());
-                        var id_cb = GetGuid(row["NETWORKPATH_ITEM"].ToString());
-                        Guid id_cb_partner = Guid.Empty;
-                        if (row["ADDRESSPARTNER"].ToString() != "NULL")
-                            id_cb_partner = GetGuid(row["ADDRESSPARTNER"].ToString());
 
-                        lsp_priorityitems.ID_CURR = id_curr.ToString();
-                        lsp_priorityitems.ID_CB = id_cb.ToString();
-                        lsp_priorityitems.ID_CB_PARTNER = id_cb_partner.ToString();
-                        lsp_priorityitems.PRIORITYLISTNO = Convert.ToInt32(row["PRIORITYLISTNO"].ToString());
-                        lsp_priorityitems.ITEMNO = Convert.ToInt32(row["ITEMNO"].ToString());
-                        lsp_priorityitems.NETWORKPATH_CURR = row["NETWORKPATH_CURR"].ToString();
-                        lsp_priorityitems.NETWORKPATH_ITEM = row["NETWORKPATH_ITEM"].ToString();
-                        lsp_priorityitems.DESCRIPTION = row["DESCRIPTION"].ToString();
-                        lsp_priorityitems.HASPARTNER = row["HASPARTNER"].ToString();
-                        lsp_priorityitems.ADDRESSPARTNER = row["ADDRESSPARTNER"].ToString();
+                LSP_PRIORITYITEMS_Str lsp_priorityitems = new LSP_PRIORITYITEMS_Str();
+                var dataTable = _staticDataManager.GetRecord($"SELECT * FROM APP_LSP_PRIORITYITEMS ORDER BY PRIORITYLISTNO, ITEMNO");
 
-                        if (RedisUtils.IsConnected)
+                foreach (DataRow row in dataTable.Rows)
+                {
+                    var id_curr = GetGuid(row["NETWORKPATH_CURR"].ToString());
+                    var id_cb = GetGuid(row["NETWORKPATH_ITEM"].ToString());
+                    Guid id_cb_partner = Guid.Empty;
+                    if (row["ADDRESSPARTNER"].ToString() != "NULL")
+                        id_cb_partner = GetGuid(row["ADDRESSPARTNER"].ToString());
+
+                    lsp_priorityitems.ID_CURR = id_curr.ToString();
+                    lsp_priorityitems.ID_CB = id_cb.ToString();
+                    lsp_priorityitems.ID_CB_PARTNER = id_cb_partner.ToString();
+                    lsp_priorityitems.PRIORITYLISTNO = Convert.ToInt32(row["PRIORITYLISTNO"].ToString());
+                    lsp_priorityitems.ITEMNO = Convert.ToInt32(row["ITEMNO"].ToString());
+                    lsp_priorityitems.NETWORKPATH_CURR = row["NETWORKPATH_CURR"].ToString();
+                    lsp_priorityitems.NETWORKPATH_ITEM = row["NETWORKPATH_ITEM"].ToString();
+                    lsp_priorityitems.DESCRIPTION = row["DESCRIPTION"].ToString();
+                    lsp_priorityitems.HASPARTNER = row["HASPARTNER"].ToString();
+                    lsp_priorityitems.ADDRESSPARTNER = row["ADDRESSPARTNER"].ToString();
+
+                    if (RedisUtils.IsConnected)
                         _RedisConnectorHelper.DataBase.StringSet(RedisKeyPattern.LSP_PRIORITYITEMS + row["PRIORITYLISTNO"].ToString() + "-" + row["ITEMNO"].ToString(), JsonConvert.SerializeObject(lsp_priorityitems));
 
-                        //if (Guid.TryParse(row["GUID_CURR"].ToString(), out var id))
-                        if (id_curr != Guid.Empty)
+                    //if (Guid.TryParse(row["GUID_CURR"].ToString(), out var id))
+                    if (id_curr != Guid.Empty)
+                    {
+                        var name = row["NETWORKPATH_CURR"].ToString();
+                        var networkPath = row["NETWORKPATH_CURR"].ToString();
+                        var pointDirectionType = "INPUT";
+                        var scadaPoint = new LSPScadaPoint(id_curr, name, networkPath);
+                        scadaPoint.DirectionType = pointDirectionType;
+                        scadaPoint.SCADAType = "AnalogMeasurement";
+
+                        if (!_scadaPoints.ContainsKey(id_curr))
                         {
-                            var name = row["NETWORKPATH_CURR"].ToString();
-                            var networkPath = row["NETWORKPATH_CURR"].ToString();
-                            var pointDirectionType = "INPUT";
-                            var scadaPoint = new LSPScadaPoint(id_curr, name, networkPath);
-                            scadaPoint.DirectionType = pointDirectionType;
-                            scadaPoint.SCADAType = "AnalogMeasurement";
-
-                            if (!_scadaPoints.ContainsKey(id_curr))
-                            {
-                                _scadaPoints.Add(id_curr, scadaPoint);
-                                _scadaPointsHelper.Add(name, scadaPoint);
-                            }
-                        }
-
-                        //if (Guid.TryParse(row["GUID_ITEM"].ToString(), out id_cb))
-                        if (id_cb != Guid.Empty)
-                        {
-                            var name = row["NETWORKPATH_ITEM"].ToString();
-                            var networkPath = row["NETWORKPATH_ITEM"].ToString();
-                            var pointDirectionType = "INPUT";
-                            var scadaPoint = new LSPScadaPoint(id_cb, name, networkPath);
-                            scadaPoint.DirectionType = pointDirectionType;
-                            scadaPoint.SCADAType = "DigitalMeasurement";
-
-                            if (!_scadaPoints.ContainsKey(id_cb))
-                            {
-                                _scadaPoints.Add(id_cb, scadaPoint);
-                                _scadaPointsHelper.Add(name, scadaPoint);
-                            }
-                            else
-                            {
-                                ;
-                                //_logger.WriteEntry(networkPath + " already exist in repository", LogLevels.Error);
-                            }
+                            _scadaPoints.Add(id_curr, scadaPoint);
+                            _scadaPointsHelper.Add(name, scadaPoint);
                         }
                     }
-                
+
+                    //if (Guid.TryParse(row["GUID_ITEM"].ToString(), out id_cb))
+                    if (id_cb != Guid.Empty)
+                    {
+                        var name = row["NETWORKPATH_ITEM"].ToString();
+                        var networkPath = row["NETWORKPATH_ITEM"].ToString();
+                        var pointDirectionType = "INPUT";
+                        var scadaPoint = new LSPScadaPoint(id_cb, name, networkPath);
+                        scadaPoint.DirectionType = pointDirectionType;
+                        scadaPoint.SCADAType = "DigitalMeasurement";
+
+                        if (!_scadaPoints.ContainsKey(id_cb))
+                        {
+                            _scadaPoints.Add(id_cb, scadaPoint);
+                            _scadaPointsHelper.Add(name, scadaPoint);
+                        }
+                        else
+                        {
+                            ;
+                            //_logger.WriteEntry(networkPath + " already exist in repository", LogLevels.Error);
+                        }
+                    }
+                }
+
 
                 return true;
             }
@@ -804,91 +799,91 @@ namespace LSP
         {
             try
             {
-                
-                    EEC_EAFSPRIORITY_Str eec_eafpriority = new EEC_EAFSPRIORITY_Str();
-                    var dataTable = _staticDataManager.GetRecord($"SELECT * FROM APP_EEC_EAFSPRIORITY ORDER BY Furnace");
 
-                    foreach (DataRow row in dataTable.Rows)
-                    {
-                        var id_CB = GetGuid(row["CB_NETWORKPATH"].ToString());
-                        var id_CT = GetGuid(row["CT_NETWORKPATH"].ToString());
-                        var id_CB_Partner = GetGuid(row["PARTNERADDRESS"].ToString());
+                EEC_EAFSPRIORITY_Str eec_eafpriority = new EEC_EAFSPRIORITY_Str();
+                var dataTable = _staticDataManager.GetRecord($"SELECT * FROM APP_EEC_EAFSPRIORITY ORDER BY Furnace");
 
-                        eec_eafpriority.ID_CB = id_CB.ToString();
-                        eec_eafpriority.ID_CT = id_CT.ToString();
-                        eec_eafpriority.ID_CB_PARTNER = id_CB_Partner.ToString();
-                        eec_eafpriority.CB_NETWORKPATH = row["CB_NETWORKPATH"].ToString();
-                        eec_eafpriority.CT_NETWORKPATH = row["CT_NETWORKPATH"].ToString();
-                        eec_eafpriority.HASPARTNER = row["HASPARTNER"].ToString();
-                        eec_eafpriority.PARTNERADDRESS = row["PARTNERADDRESS"].ToString();
-                        eec_eafpriority.FURNACE = row["FURNACE"].ToString();
-                        if (RedisUtils.IsConnected)
+                foreach (DataRow row in dataTable.Rows)
+                {
+                    var id_CB = GetGuid(row["CB_NETWORKPATH"].ToString());
+                    var id_CT = GetGuid(row["CT_NETWORKPATH"].ToString());
+                    var id_CB_Partner = GetGuid(row["PARTNERADDRESS"].ToString());
+
+                    eec_eafpriority.ID_CB = id_CB.ToString();
+                    eec_eafpriority.ID_CT = id_CT.ToString();
+                    eec_eafpriority.ID_CB_PARTNER = id_CB_Partner.ToString();
+                    eec_eafpriority.CB_NETWORKPATH = row["CB_NETWORKPATH"].ToString();
+                    eec_eafpriority.CT_NETWORKPATH = row["CT_NETWORKPATH"].ToString();
+                    eec_eafpriority.HASPARTNER = row["HASPARTNER"].ToString();
+                    eec_eafpriority.PARTNERADDRESS = row["PARTNERADDRESS"].ToString();
+                    eec_eafpriority.FURNACE = row["FURNACE"].ToString();
+                    if (RedisUtils.IsConnected)
                         _RedisConnectorHelper.DataBase.StringSet(RedisKeyPattern.EEC_EAFSPriority + row["CB_NETWORKPATH"].ToString(), JsonConvert.SerializeObject(eec_eafpriority));
 
 
 
 
-                        //if (Guid.TryParse(row["CB_GUID"].ToString(), out var id))
-                        if (id_CB != Guid.Empty)
+                    //if (Guid.TryParse(row["CB_GUID"].ToString(), out var id))
+                    if (id_CB != Guid.Empty)
+                    {
+                        var name = row["CB_NETWORKPATH"].ToString();
+                        var networkPath = row["CB_NETWORKPATH"].ToString();
+                        var pointDirectionType = "INPUT";
+                        var scadaPoint = new LSPScadaPoint(id_CB, name, networkPath);
+                        scadaPoint.DirectionType = pointDirectionType;
+                        scadaPoint.SCADAType = "DigitalMeasurement";
+
+                        if (!_scadaPoints.ContainsKey(id_CB))
                         {
-                            var name = row["CB_NETWORKPATH"].ToString();
-                            var networkPath = row["CB_NETWORKPATH"].ToString();
-                            var pointDirectionType = "INPUT";
-                            var scadaPoint = new LSPScadaPoint(id_CB, name, networkPath);
-                            scadaPoint.DirectionType = pointDirectionType;
-                            scadaPoint.SCADAType = "DigitalMeasurement";
-
-                            if (!_scadaPoints.ContainsKey(id_CB))
-                            {
-                                _scadaPoints.Add(id_CB, scadaPoint);
-                                _scadaPointsHelper.Add(name, scadaPoint);
-                            }
+                            _scadaPoints.Add(id_CB, scadaPoint);
+                            _scadaPointsHelper.Add(name, scadaPoint);
                         }
-                        //if (Guid.TryParse(row["CT_GUID"].ToString(), out id))
-                        if (id_CT != Guid.Empty)
-                        {
-                            var name = row["CT_NETWORKPATH"].ToString();
-                            var networkPath = row["CT_NETWORKPATH"].ToString();
-                            var pointDirectionType = "INPUT";
-                            var scadaPoint = new LSPScadaPoint(id_CT, name, networkPath);
-                            scadaPoint.DirectionType = pointDirectionType;
-                            scadaPoint.SCADAType = "AnalogMeasurement";
-
-                            if (!_scadaPoints.ContainsKey(id_CT))
-                            {
-                                _scadaPoints.Add(id_CT, scadaPoint);
-                                _scadaPointsHelper.Add(name, scadaPoint);
-                            }
-                            else
-                            {
-                                ;
-                                //_logger.WriteEntry(networkPath + " already exist in repository", LogLevels.Error);
-                            }
-                        }
-                        //if (Guid.TryParse(row["PARTNER_GUID"].ToString(), out id))
-                        if (id_CB_Partner != Guid.Empty)
-                        {
-                            var name = row["PARTNERADDRESS"].ToString();
-                            var networkPath = row["PARTNERADDRESS"].ToString();
-                            var pointDirectionType = "INPUT";
-                            var scadaPoint = new LSPScadaPoint(id_CB_Partner, name, networkPath);
-                            scadaPoint.DirectionType = pointDirectionType;
-                            scadaPoint.SCADAType = "DigitalMeasurement";
-
-                            if (!_scadaPoints.ContainsKey(id_CB_Partner))
-                            {
-                                _scadaPoints.Add(id_CB_Partner, scadaPoint);
-                                _scadaPointsHelper.Add(name, scadaPoint);
-                            }
-                            else
-                            {
-                                ;
-                                //_logger.WriteEntry(networkPath + " already exist in repository", LogLevels.Error);
-                            }
-                        }
-
                     }
-                
+                    //if (Guid.TryParse(row["CT_GUID"].ToString(), out id))
+                    if (id_CT != Guid.Empty)
+                    {
+                        var name = row["CT_NETWORKPATH"].ToString();
+                        var networkPath = row["CT_NETWORKPATH"].ToString();
+                        var pointDirectionType = "INPUT";
+                        var scadaPoint = new LSPScadaPoint(id_CT, name, networkPath);
+                        scadaPoint.DirectionType = pointDirectionType;
+                        scadaPoint.SCADAType = "AnalogMeasurement";
+
+                        if (!_scadaPoints.ContainsKey(id_CT))
+                        {
+                            _scadaPoints.Add(id_CT, scadaPoint);
+                            _scadaPointsHelper.Add(name, scadaPoint);
+                        }
+                        else
+                        {
+                            ;
+                            //_logger.WriteEntry(networkPath + " already exist in repository", LogLevels.Error);
+                        }
+                    }
+                    //if (Guid.TryParse(row["PARTNER_GUID"].ToString(), out id))
+                    if (id_CB_Partner != Guid.Empty)
+                    {
+                        var name = row["PARTNERADDRESS"].ToString();
+                        var networkPath = row["PARTNERADDRESS"].ToString();
+                        var pointDirectionType = "INPUT";
+                        var scadaPoint = new LSPScadaPoint(id_CB_Partner, name, networkPath);
+                        scadaPoint.DirectionType = pointDirectionType;
+                        scadaPoint.SCADAType = "DigitalMeasurement";
+
+                        if (!_scadaPoints.ContainsKey(id_CB_Partner))
+                        {
+                            _scadaPoints.Add(id_CB_Partner, scadaPoint);
+                            _scadaPointsHelper.Add(name, scadaPoint);
+                        }
+                        else
+                        {
+                            ;
+                            //_logger.WriteEntry(networkPath + " already exist in repository", LogLevels.Error);
+                        }
+                    }
+
+                }
+
                 return true;
             }
             catch (Irisa.DataLayer.DataException ex)

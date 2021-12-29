@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
 
 namespace OPC
 {
@@ -28,13 +27,13 @@ namespace OPC
         Digital = 0,
         Analog = 1
     }
-    
+
     public class Connection
     {
-        #nullable enable
+#nullable enable
         public string? Name { get; set; }
-        #nullable restore
-        public string  IP { get; set; }
+#nullable restore
+        public string IP { get; set; }
         public string Port { get; set; }
 
     }

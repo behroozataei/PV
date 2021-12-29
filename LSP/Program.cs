@@ -1,8 +1,7 @@
-﻿using System;
-using Microsoft.Extensions.Hosting;
+﻿using Irisa.Logger;
 using Microsoft.Extensions.DependencyInjection;
-
-using Irisa.Logger;
+using Microsoft.Extensions.Hosting;
+using System;
 
 namespace LSP
 {

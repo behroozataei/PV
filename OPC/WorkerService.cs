@@ -1,18 +1,15 @@
-﻿using System;
-using System.Threading.Tasks;
-using System.Runtime.InteropServices;
-using System.Threading;
-using System.Collections.Concurrent;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Configuration;
-
-using COM;
+﻿using COM;
+using Irisa.Common.Utils;
+using Irisa.DataLayer;
 using Irisa.Logger;
 using Irisa.Message;
 using Irisa.Message.CPS;
-using Irisa.DataLayer;
-using Irisa.DataLayer.SqlServer;
-using Irisa.Common.Utils;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Hosting;
+using System;
+using System.Collections.Concurrent;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace OPC
 {
@@ -31,7 +28,7 @@ namespace OPC
         public WorkerService(IServiceProvider serviceProvider)
         {
 
-            
+
             var config = serviceProvider.GetService<IConfiguration>();
 
             _logger = serviceProvider.GetService<ILogger>();
@@ -40,7 +37,7 @@ namespace OPC
             _staticDataManager = new Irisa.DataLayer.Oracle.OracleDataManager(config["OracleServicename"], config["OracleDatabaseAddress"], config["OracleStaticUser"], config["OracleStaticPassword"]);
             _storeLogs = new StoreLogs(_staticDataManager, _logger, "SCADA.\"HIS_HisLogs_Insert\"");
 
-            
+
             var historyDataRequest = new HistoryDataRequest
             {
                 RequireMeasurements = true,
@@ -80,8 +77,8 @@ namespace OPC
             {
                 _opcManager.RunClient();
             }, TaskCreationOptions.LongRunning);
-           
-           
+
+
             return base.StartAsync(cancellationToken);
         }
 

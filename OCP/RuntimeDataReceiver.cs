@@ -1,12 +1,11 @@
-﻿using System;
-using System.Threading.Tasks;
-using System.Collections.Concurrent;
-using Google.Protobuf.Collections;
-
-using Irisa.Logger;
+﻿using Google.Protobuf.Collections;
 using Irisa.Common;
+using Irisa.Logger;
 using Irisa.Message;
 using Irisa.Message.CPS;
+using System;
+using System.Collections.Concurrent;
+using System.Threading.Tasks;
 
 namespace OCP
 {
@@ -32,7 +31,7 @@ namespace OCP
 
         public void Start()
         {
-            
+
 
             _isWorking = true;
             _rpcService.ConnectAsync();
@@ -69,19 +68,19 @@ namespace OCP
 
         private void ProcessRuntimeData(RepeatedField<ScadaEventData> events)
         {
-            foreach(var eventItem in events)
+            foreach (var eventItem in events)
             {
                 string strguid = "059d74d9-9d2a-4059-b3ab-a559992b9e03"; //MIS2-63-FCB-TRIP
-                
+
                 if (eventItem.ElementId == strguid || eventItem.ElementId == strguid.ToUpper())
 
-                if (eventItem.EventStatus ==  3) //3 = Acknowledge Event
-                {
+                    if (eventItem.EventStatus == 3) //3 = Acknowledge Event
+                    {
                         ;
-                 
-                    //System.Diagnostics.Debugger.Break();
 
-                }
+                        //System.Diagnostics.Debugger.Break();
+
+                    }
             }
 
         }
@@ -119,18 +118,18 @@ namespace OCP
                     checkPoint.QualityCodes_Old = checkPoint.QualityCodes;
 
                     //#if DEBUG                                        
-                        //if(( checkPoint.Name == "CP23_MIS_T3AN_MV3") || (checkPoint.Name == "CP36_MIS_T5AN"))
-                        //    _logger.WriteEntry(checkPoint.Name + " " + checkPoint.Value.ToString(), LogLevels.Info);
+                    //if(( checkPoint.Name == "CP23_MIS_T3AN_MV3") || (checkPoint.Name == "CP36_MIS_T5AN"))
+                    //    _logger.WriteEntry(checkPoint.Name + " " + checkPoint.Value.ToString(), LogLevels.Info);
                     //#endif
                 }
 
                 var ocpScadaPoint = _repository.GetOCPScadaPoint(Guid.Parse(measurement.MeasurementId));
                 if (ocpScadaPoint != null)
                 {
-                    
+
                     ocpScadaPoint.Value = measurement.Value;
                     // 2021.04.24 A.K and B.A, added these lines:
-                    if ((QualityCodes)measurement.QualityCodes != QualityCodes.None) 
+                    if ((QualityCodes)measurement.QualityCodes != QualityCodes.None)
                     {
                         _logger.WriteEntry("Quality warning : " + "QualityCode = " + (QualityCodes)measurement.QualityCodes + " ; Value = " + measurement.Value.ToString() + " ; Network Path = " + ocpScadaPoint.NetworkPath.ToString(), LogLevels.Warn);
                     }

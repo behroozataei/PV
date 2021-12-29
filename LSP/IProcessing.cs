@@ -1,5 +1,4 @@
 ﻿using Irisa.Message.CPS;
-using System;
 
 
 namespace LSP

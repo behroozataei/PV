@@ -1,8 +1,7 @@
-﻿using System;
+﻿using COM;
+using System;
 using System.Collections.Generic;
 using System.Data;
-
-using COM;
 
 namespace LSP
 {

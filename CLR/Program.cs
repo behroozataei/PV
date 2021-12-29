@@ -1,27 +1,26 @@
-﻿using System;
+﻿using COM;
 using StackExchange.Redis;
-
-using COM;
+using System;
 
 namespace CLR
 {
     class Program
     {
-        private  RedisUtils _RedisConnectorHelper;
+        private RedisUtils _RedisConnectorHelper;
         static void Main(string[] args)
         {
-           
+
             Program p1 = new Program();
-           
+
             p1.menu();
             while (!p1.run())
             {
                 Console.WriteLine("Error");
                 p1.menu();
             }
-               
-           
-            
+
+
+
         }
         void menu()
         {
@@ -42,10 +41,10 @@ namespace CLR
         {
             _RedisConnectorHelper = new RedisUtils(0);
             char sel;
-            RedisKey[] appkeys =null;
+            RedisKey[] appkeys = null;
             bool ret = false;
             bool exit = false;
-            bool notselected=false;
+            bool notselected = false;
             sel = Console.ReadKey(true).KeyChar;
             switch (sel)
             {
@@ -84,11 +83,11 @@ namespace CLR
                 default:
                     notselected = true;
                     ret = false;
-                   break;
+                    break;
             }
-            if(!(exit ==true || notselected==true))
-            foreach (RedisKey key in appkeys)
-                ret = _RedisConnectorHelper.DataBase.KeyDelete(key);
+            if (!(exit == true || notselected == true))
+                foreach (RedisKey key in appkeys)
+                    ret = _RedisConnectorHelper.DataBase.KeyDelete(key);
             return ret;
 
 

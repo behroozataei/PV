@@ -1,8 +1,7 @@
-using System;
-
+using Irisa.Common;
 using Irisa.Logger;
 using Irisa.Message;
-using Irisa.Common;
+using System;
 
 namespace MAB
 {
@@ -11,7 +10,7 @@ namespace MAB
         private const int EAFs = 8;
         private const float VOLTAGLE_LIMIT_FOR_LINE_SOURCE_CHECK = 5.0f;
         private const float VOLTAGLE_LIMIT_FOR_GEN_SOURCE_CHECK = 3.0f;
-        
+
         private MABScadaPoint MAB;
         private MABScadaPoint MAB1;
         private MABScadaPoint MAB2;
@@ -139,13 +138,13 @@ namespace MAB
         // TODO : StartupForm.frm -> reset_MAB_Function_Status
         public void ClearEAFGroupsLocal()
         {
-            EAF1_Group .Value = 0 ;
-            EAF2_Group.Value = 0 ;
-            EAF3_Group.Value = 0 ;
-            EAF4_Group.Value = 0 ;
-            EAF5_Group.Value = 0 ;
-            EAF6_Group.Value = 0 ;
-            EAF7_Group.Value = 0 ;
+            EAF1_Group.Value = 0;
+            EAF2_Group.Value = 0;
+            EAF3_Group.Value = 0;
+            EAF4_Group.Value = 0;
+            EAF5_Group.Value = 0;
+            EAF6_Group.Value = 0;
+            EAF7_Group.Value = 0;
             EAF8_Group.Value = 0;
         }
 
@@ -181,7 +180,7 @@ namespace MAB
                 {
                     _logger.WriteEntry("Clearing EafGroupChanged for DCP-PCS was failed!", LogLevels.Error);
                 }
-                if ( !_updateScadaPointOnServer.WriteDigital(eafGroupChanged, 1, "EafGroupChanged is triggered to inform DCP-PCS."))
+                if (!_updateScadaPointOnServer.WriteDigital(eafGroupChanged, 1, "EafGroupChanged is triggered to inform DCP-PCS."))
                 {
                     _logger.WriteEntry("Informing EafGroupChanged to DCP-PCS was failed!", LogLevels.Error);
                 }
@@ -230,7 +229,7 @@ namespace MAB
                     MAB.Value = (float)DigitalStatus.Close;
                 }
 
-                _logger.WriteEntry($"MAB: {MAB.Value} ; OLD MAB was: {(DigitalStatus) _oldMAB}", LogLevels.Info);
+                _logger.WriteEntry($"MAB: {MAB.Value} ; OLD MAB was: {(DigitalStatus)_oldMAB}", LogLevels.Info);
                 _oldMAB = (DigitalStatus)MAB.Value;
 
                 _updateScadaPointOnServer.SendMAB(MAB, MAB1, MAB2, MAB3, MAB4, MAB5, MAB6, MAB7);
@@ -1475,7 +1474,7 @@ namespace MAB
                 var CB_914 = _repository.GetScadaPoint("CB_914");
                 var CB_914_Status = _repository.GetDigitalStatusByScadaName("CB_914");
                 var NIS1VT = _repository.GetScadaPoint("NIS1VT").Value;
-                if ((NIS1VT > VOLTAGLE_LIMIT_FOR_LINE_SOURCE_CHECK) && ((CB_914.Value == (float)DigitalStatus.Open)||CB_914.Qulity== (int)QualityCodes.LocalNotRenewed))
+                if ((NIS1VT > VOLTAGLE_LIMIT_FOR_LINE_SOURCE_CHECK) && ((CB_914.Value == (float)DigitalStatus.Open) || CB_914.Qulity == (int)QualityCodes.LocalNotRenewed))
                 {
                     _logger.WriteEntry($"Line_914 is connected, {CB_914.NetworkPath}", LogLevels.Info);
                     if (!_updateScadaPointOnServer.WriteDigital(CB_914, (int)DigitalStatus.Close, "Line_914 is connected"))

@@ -1,7 +1,6 @@
+using Irisa.Logger;
 using System;
 using System.Collections.Generic;
-
-using Irisa.Logger;
 
 namespace EEC
 {

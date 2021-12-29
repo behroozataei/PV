@@ -1,7 +1,6 @@
-﻿using System;
+﻿using Irisa.Logger;
+using System;
 using System.Collections.Generic;
-
-using Irisa.Logger;
 
 namespace OCP
 {
@@ -11,7 +10,7 @@ namespace OCP
         private readonly IEnumerable<OCPCheckPoint> _checkPoints;
         private readonly UpdateScadaPointOnServer _updateScadaPointOnServer;
         private readonly IRepository _repository;
-        
+
         internal OCPOverloadCheck(IRepository repository, UpdateScadaPointOnServer updateScadaPointOnServer, ILogger logger)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -83,7 +82,7 @@ namespace OCP
                 if (!_updateScadaPointOnServer.SendAlarm(Four_Value_OverloadWarning, SinglePointStatus.Disappear, ""))
                     _logger.WriteEntry("Sending warning disappear failed for four value OverloadWarning", LogLevels.Error);
 
-            if( !overloadAlarmFourValueAllCPs &&  (Four_Value_Overloaded.Value == (float)SinglePointStatus.Appear))
+            if (!overloadAlarmFourValueAllCPs && (Four_Value_Overloaded.Value == (float)SinglePointStatus.Appear))
                 if (!_updateScadaPointOnServer.SendAlarm(Four_Value_Overloaded, SinglePointStatus.Disappear, ""))
                     _logger.WriteEntry("Sending alarm disappear failed for four value OverloadAlarm", LogLevels.Error);
 
@@ -99,7 +98,7 @@ namespace OCP
                 if (!_updateScadaPointOnServer.SendAlarm(Five_Value_Overloaded, SinglePointStatus.Disappear, ""))
                     _logger.WriteEntry("Sending alarm disappear failed for five value OverloadAlarm", LogLevels.Error);
 
-            if(!overloadAlarmFiveValueAllCPs && !overloadAlarmFourValueAllCPs && !overloadWarningFiveValueAllCPs && (alarmPointOverloadAppear.Value == (float)SinglePointStatus.Appear))
+            if (!overloadAlarmFiveValueAllCPs && !overloadAlarmFourValueAllCPs && !overloadWarningFiveValueAllCPs && (alarmPointOverloadAppear.Value == (float)SinglePointStatus.Appear))
                 if (!_updateScadaPointOnServer.SendAlarm(alarmPointOverloadAppear, SinglePointStatus.Disappear, ""))
                     _logger.WriteEntry("Sending alarm failed for OverloadAppear", LogLevels.Error);
 
@@ -150,8 +149,8 @@ namespace OCP
                                 checkPoint.OverloadWarningFiveCycle = true;
                                 checkPoint.Overload.Value = checkPoint.Value1 - checkPoint.NominalValue;
                                 _logger.WriteEntry("* Overload Appeared By One-Value-Trigger( 3 Seconds on LINES 400KV) * -> " + checkPoint.NetworkPath, LogLevels.Info);
-                                _logger.WriteEntry("* Overload Occured in Cycle (1)" , LogLevels.Info);
-                                if (!_updateScadaPointOnServer.SendAlarm( alarmPointOverloadWarning, SinglePointStatus.Appear, checkPoint.NetworkPath + " ; DeltaOverLoadValue = " + checkPoint.Overload.Value))
+                                _logger.WriteEntry("* Overload Occured in Cycle (1)", LogLevels.Info);
+                                if (!_updateScadaPointOnServer.SendAlarm(alarmPointOverloadWarning, SinglePointStatus.Appear, checkPoint.NetworkPath + " ; DeltaOverLoadValue = " + checkPoint.Overload.Value))
                                     _logger.WriteEntry("Sending alarm failed for OverloadWarning", LogLevels.Error);
                             }
                             break;
@@ -303,7 +302,7 @@ namespace OCP
                             {
                                 if (!_updateScadaPointOnServer.SendAlarm(Five_Value_Overloaded, SinglePointStatus.Appear, checkPoint.NetworkPath + " ; DeltaOverLoadValue = " + (checkPoint.Value5 - limitOncheckPoint)))
                                     _logger.WriteEntry("Sending alarm Appear failed for five vaue Overloaded Alarm", LogLevels.Error);
-                                    checkPoint.OverloadAlarmFiveCycle = true;
+                                checkPoint.OverloadAlarmFiveCycle = true;
                             }
 
                             // Checking condition for OverloadWarningFiveCycle
@@ -319,8 +318,8 @@ namespace OCP
                         case 1:
                             if (checkPoint.FourValueFlag)
                             {
-                                if ((checkPoint.Value1 <= limitOncheckPoint || checkPoint.Quality1 == OCPCheckPointQuality.Invalid) || (checkPoint.Quality1 == OCPCheckPointQuality.Previous && 
-                                    (checkPoint.Quality4 == OCPCheckPointQuality.Previous || 
+                                if ((checkPoint.Value1 <= limitOncheckPoint || checkPoint.Quality1 == OCPCheckPointQuality.Invalid) || (checkPoint.Quality1 == OCPCheckPointQuality.Previous &&
+                                    (checkPoint.Quality4 == OCPCheckPointQuality.Previous ||
                                     checkPoint.Quality5 == OCPCheckPointQuality.Previous)))
                                 {
                                     // It is not allowed to have two Previous qualities in a four value set.
@@ -399,7 +398,7 @@ namespace OCP
                                 checkPoint.OverloadAlarmFourCycle = false;
 
                             // Checking condition for OverloadWarningFiveCycle
-                            if (((checkPoint.Value1 + checkPoint.Value2)/2) > limitOncheckPoint)
+                            if (((checkPoint.Value1 + checkPoint.Value2) / 2) > limitOncheckPoint)
                             {
                                 if (!_updateScadaPointOnServer.SendAlarm(Five_Value_OverloadWarning, SinglePointStatus.Appear, checkPoint.NetworkPath + " ; DeltaOverLoadValue = " + (checkPoint.Value2 - limitOncheckPoint)))
                                     _logger.WriteEntry("Sending warning Appear failed for five value Overloaded Warning for " + checkPoint.NetworkPath, LogLevels.Error);
@@ -506,7 +505,7 @@ namespace OCP
                 var FStatus = _repository.GetOCPScadaPoint("OCPStatus");
                 if (FStatus.Value == 1.0)
                     return true;
-                else 
+                else
                     return false;
             }
             catch (System.Exception ex)
@@ -515,7 +514,7 @@ namespace OCP
                 return false;
             }
 
-            
+
         }
     }
 }

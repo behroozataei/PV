@@ -36,6 +36,6 @@ namespace OCP
         public string SCADAType { get; set; }       // values from eSCADAType
         public float Value { get; set; }
         public OCPCheckPointQuality Quality { get; set; }
-       
+
     }
 }

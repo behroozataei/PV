@@ -1,7 +1,6 @@
-﻿using System;
+﻿using Irisa.Logger;
+using System;
 using System.Collections.Generic;
-
-using Irisa.Logger;
 
 namespace OCP
 {
@@ -74,8 +73,8 @@ namespace OCP
 
                             // TOCHECK : Send Alarm
                             //if (!m_theCSCADADataInterface.SendAlarm("Network/Model Functions/OCP/MESSAGE/", overloadCheck.NetworkPath, overloadCheck.Overload))
-                           
-                            if (!_updateScadaPointOnServer.SendAlarm(_repository.GetOCPScadaPoint("OverloadAppear"), SinglePointStatus.Appear, checkPoint.NetworkPath + " ; " + checkPoint.Overload.Value ))
+
+                            if (!_updateScadaPointOnServer.SendAlarm(_repository.GetOCPScadaPoint("OverloadAppear"), SinglePointStatus.Appear, checkPoint.NetworkPath + " ; " + checkPoint.Overload.Value))
                                 _logger.WriteEntry("Sending alarm failed for OverloadAppear", LogLevels.Error);
 
                             //' 1396.10.24 IMANIAN ; ADD LOGGS OF VALUES OF EACH CYCLES
@@ -116,11 +115,11 @@ namespace OCP
                                 if (checkPoint.Category == "PRIMARY" || checkPoint.Category == "SECONDARY")
                                 {
                                     // TODO: check: in C#, skip for MZ3
-                                    if(checkPoint.Name != "CP40_MIS_T3AN-MZ3")
-                                    if (!PrepareTransOverloadData(checkPoint))
-                                    {
-                                        _logger.WriteEntry($"Transformer " + checkPoint.Name + " in overload, but checking not successful!", LogLevels.Error);
-                                    }
+                                    if (checkPoint.Name != "CP40_MIS_T3AN-MZ3")
+                                        if (!PrepareTransOverloadData(checkPoint))
+                                        {
+                                            _logger.WriteEntry($"Transformer " + checkPoint.Name + " in overload, but checking not successful!", LogLevels.Error);
+                                        }
                                 }
 
                                 // Send to LSP (Write to SCADA)
@@ -143,7 +142,7 @@ namespace OCP
                                 //' 1394.04.10;   Ali.A.Kaji;  New lines, END
 
                                 // Send Alarm
-                               
+
                                 if (!_updateScadaPointOnServer.SendAlarm(_repository.GetOCPScadaPoint("OverloadAppear"), SinglePointStatus.Appear, checkPoint.NetworkPath + " ; " + checkPoint.Overload.Value))
                                     _logger.WriteEntry("Sending alarm failed for OverloadAppear", LogLevels.Error);
 
@@ -261,7 +260,7 @@ namespace OCP
                     if (!_updateScadaPointOnServer.SendAlarm(_repository.GetOCPScadaPoint("OVERLCOND"), SinglePointStatus.Appear,
                             "OCP is in OVERLOAD, trying to trigger the LSP ... "))
                     {
-                            LSPTrigger = false;
+                        LSPTrigger = false;
 
                         // Send Alarm
                         if (!_updateScadaPointOnServer.SendAlarm(_repository.GetOCPScadaPoint("Functionality"), SinglePointStatus.Disappear,
@@ -325,7 +324,7 @@ namespace OCP
                                 case "CP56_NIS_T8AN":  // T8AN 
                                     strNameSide = "CP57_MIS_T8AN";
                                     break;
-                                 //'' KAJI END of T8AN
+                                    //'' KAJI END of T8AN
                             }
 
                             aCheckpoint.primeSideBigTans = aCheckpoint;
@@ -360,7 +359,7 @@ namespace OCP
                                 case "CP57_MIS_T8AN":  // T8AN 
                                     strNameSide = "CP56_NIS_T8AN";
                                     break;
-                                //'' KAJI END of T8AN
+                                    //'' KAJI END of T8AN
                             }
                             aCheckpoint.primeSideBigTans = _repository.GetCheckPoint(strNameSide);
                             aCheckpoint.SecondSideBigTans = aCheckpoint;
@@ -470,13 +469,13 @@ namespace OCP
                             voltageSide1 = "T8AN_PRIMEVOLT";
                             voltageSide2 = "T8AN_SECVOLT";
                             break;
-                        //' KAJI END of T8AN 
+                            //' KAJI END of T8AN 
                     }
                 }
 
                 // TODO: Check this part, I added it in C# version.
-                if( String.IsNullOrEmpty( voltageSide1 ) || 
-                    String.IsNullOrEmpty( voltageSide2) )
+                if (String.IsNullOrEmpty(voltageSide1) ||
+                    String.IsNullOrEmpty(voltageSide2))
                 {
                     _logger.WriteEntry("Error in name of Big-Trans, the name is not in defined list, Name: " + a_checkPoint.Name, LogLevels.Error);
                     return false;
@@ -491,7 +490,7 @@ namespace OCP
                 // TODO:
                 var actualVoltagePointPrimSideAllBigTransesA = _repository.GetOCPScadaPoint("TAN_PRIMVOLT_A");
                 var actualVoltagePointPrimSideAllBigTransesC = _repository.GetOCPScadaPoint("TAN_PRIMVOLT_C");
-              
+
 
                 // Check if overload is on both side of the transformer or only on one side
                 if (a_checkPoint.primeSideBigTans.OverloadFlag)

@@ -1,11 +1,10 @@
-﻿using System;
-using System.Threading.Tasks;
-using System.Collections.Concurrent;
-using Google.Protobuf.Collections;
-
+﻿using Google.Protobuf.Collections;
 using Irisa.Logger;
 using Irisa.Message;
 using Irisa.Message.CPS;
+using System;
+using System.Collections.Concurrent;
+using System.Threading.Tasks;
 
 namespace OPC
 {
@@ -30,7 +29,7 @@ namespace OPC
 
         public void Start()
         {
-            
+
 
             _isWorking = true;
             _rpcService.ConnectAsync();

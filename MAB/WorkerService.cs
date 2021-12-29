@@ -1,18 +1,15 @@
-﻿using System;
-using System.Runtime.InteropServices;
-using System.Threading.Tasks;
-using System.Threading;
-using System.Collections.Concurrent;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Configuration;
-
-using COM;
+﻿using COM;
+using Irisa.Common.Utils;
+using Irisa.DataLayer;
 using Irisa.Logger;
 using Irisa.Message;
 using Irisa.Message.CPS;
-using Irisa.DataLayer;
-using Irisa.DataLayer.SqlServer;
-using Irisa.Common.Utils;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Hosting;
+using System;
+using System.Collections.Concurrent;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace MAB
 {
@@ -35,7 +32,7 @@ namespace MAB
             _logger = serviceProvider.GetService<ILogger>();
             _RedisConnectorHelper = new RedisUtils(0);
 
-            
+
             _dataManager = new Irisa.DataLayer.Oracle.OracleDataManager(config["OracleServicename"], config["OracleDatabaseAddress"], config["OracleStaticUser"], config["OracleStaticPassword"]);
             _storeLogs = new StoreLogs(_dataManager, _logger, "SCADA.\"HIS_HisLogs_Insert\"");
 
@@ -56,7 +53,7 @@ namespace MAB
             while (!Connection.PingHost(config["CpsIpAddress"], 10000))
             {
                 Console.WriteLine(">>>>> Waiting for CPS Connection");
-                Thread.Sleep(5000);                
+                Thread.Sleep(5000);
             }
         }
 
@@ -66,7 +63,7 @@ namespace MAB
             _storeLogs.Start();
 
             _logger.WriteEntry("Start of running MAB.", LogLevels.Info);
-            
+
 
             _logger.WriteEntry("Loading data from database/redis is started.", LogLevels.Info);
 

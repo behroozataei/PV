@@ -1,13 +1,12 @@
-﻿using System;
-using System.Timers;
-
-using Irisa.Common;
+﻿using Irisa.Common;
 using Irisa.Logger;
 using Irisa.Message;
+using System;
+using System.Timers;
 
 namespace OCP
 {
-    internal class OCPManager :IProcessing
+    internal class OCPManager : IProcessing
     {
         private const int OCP_TIMER_TICKS = 3000;
         private readonly ILogger _logger;
@@ -160,9 +159,9 @@ namespace OCP
             Startwork();
         }
 
-        public void QualityError(OCPCheckPoint checkpoint,QualityCodes Quality, SinglePointStatus Status)
+        public void QualityError(OCPCheckPoint checkpoint, QualityCodes Quality, SinglePointStatus Status)
         {
-            _currentEvaluation.QualityErrorAlarm( checkpoint, Quality, Status);                     
+            _currentEvaluation.QualityErrorAlarm(checkpoint, Quality, Status);
         }
     }
 }

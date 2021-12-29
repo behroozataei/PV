@@ -1,18 +1,16 @@
-﻿using System;
-using System.Threading.Tasks;
-using System.Runtime.InteropServices;
-using System.Threading;
-using System.Collections.Concurrent;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Configuration;
-
-using COM;
+﻿using COM;
+using Irisa.Common.Utils;
+using Irisa.DataLayer;
+using Irisa.DataLayer.SqlServer;
 using Irisa.Logger;
 using Irisa.Message;
 using Irisa.Message.CPS;
-using Irisa.DataLayer;
-using Irisa.DataLayer.SqlServer;
-using Irisa.Common.Utils;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Hosting;
+using System;
+using System.Collections.Concurrent;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace DCP
 {
@@ -64,7 +62,7 @@ namespace DCP
 
         public override Task StartAsync(CancellationToken cancellationToken)
         {
-           
+
             _logger.LogReceived += OnLogReceived;
             _storeLogs.Start();
 
@@ -75,7 +73,7 @@ namespace DCP
                 return Task.FromException<Exception>(new Exception("Create repository is failed"));
             else
                 _logger.WriteEntry("Loading data from database/redis is completed", LogLevels.Info);
-           
+
             _rpcService.StateChanged += RpcStateChanged;
 
             _runtimeDataReceiver.Start();

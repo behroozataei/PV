@@ -1,17 +1,13 @@
-﻿using System;
-using System.Data;
-using System.Runtime.InteropServices;
-using System.Collections.Generic;
+﻿using COM;
+using Irisa.DataLayer;
+using Irisa.DataLayer.Oracle;
+using Irisa.Logger;
 using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
-using StackExchange.Redis;
+using System;
+using System.Collections.Generic;
+using System.Data;
 using System.Linq;
-
-using COM;
-using Irisa.Logger;
-using Irisa.DataLayer;
-using Irisa.DataLayer.SqlServer;
-using Irisa.DataLayer.Oracle;
 
 namespace EEC
 {
@@ -25,7 +21,7 @@ namespace EEC
         private readonly Dictionary<string, EECScadaPoint> _scadaPointsHelper;
         private readonly RedisUtils _RedisConnectorHelper;
 
-       
+
         private bool isBuild = false;
 
         public Repository(ILogger logger, IConfiguration configuration, RedisUtils RedisConnectorHelper)
@@ -44,7 +40,7 @@ namespace EEC
 
         public bool Build()
         {
-            
+
             try
             {
                 if (GetInputScadaPoints())
@@ -52,7 +48,7 @@ namespace EEC
                     isBuild = true;
                     BuildCashe();
                 }
-                else if(GetInputScadaPointsfromRedis())
+                else if (GetInputScadaPointsfromRedis())
                 {
                     isBuild = true;
                     BuildCashe();
@@ -68,7 +64,7 @@ namespace EEC
             return isBuild;
         }
 
-         private bool BuildCashe()
+        private bool BuildCashe()
         {
             try
             {

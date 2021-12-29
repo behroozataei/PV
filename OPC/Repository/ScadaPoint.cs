@@ -21,7 +21,7 @@ namespace OPC
         public Guid Id { get; }
         public int Quality { get; set; }
         public float Value { get; set; }
-        
+
     }
 
     public enum DigitalStatus

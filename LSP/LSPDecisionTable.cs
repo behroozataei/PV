@@ -1,10 +1,9 @@
+using Irisa.Logger;
 using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
 using System.Linq;
-
-using Irisa.Logger;
 
 namespace LSP
 {
@@ -148,7 +147,7 @@ namespace LSP
             try
             {
                 var dtbMeasurements = _repository.FetchCombinations(m_DectNo);
-                var rows = dtbMeasurements.Rows.OfType<DataRow>().Where(n => n["DECTNO"].ToString()== m_DectNo.ToString())
+                var rows = dtbMeasurements.Rows.OfType<DataRow>().Where(n => n["DECTNO"].ToString() == m_DectNo.ToString())
                                                                  .OrderBy(n => n["COMBINATIONNO"])
                                                                  .ThenBy(n => n["DECTITEMNO"]).ToArray();
 
@@ -167,7 +166,7 @@ namespace LSP
                         byte K = Convert.ToByte(dr["DECTITEMNO"].ToString());
                         m_arrCombinations[I].SetArrItemValues(K, Convert.ToByte(dr["Value"].ToString()));
 
-                        _logger.WriteEntry("Combination = " + I.ToString() + " ; Item = " + K.ToString() + " , Value = " + CombinationSwitchStatusbyName( m_arrCombinations[I].GetArrItemValues(K)), LogLevels.Info);
+                        _logger.WriteEntry("Combination = " + I.ToString() + " ; Item = " + K.ToString() + " , Value = " + CombinationSwitchStatusbyName(m_arrCombinations[I].GetArrItemValues(K)), LogLevels.Info);
                     }
 
                     // -------------------------------------------------------------------------
@@ -233,20 +232,20 @@ namespace LSP
                 for (byte I = 1; I <= tempForEndVar; I = (byte)(I + 1))
                 {
                     var guid = m_arrItems[I]._GUID;
-                                            
+
                     var scadapoint = _repository.GetLSPScadaPoint(guid);
-                    if( !(scadapoint == null))
+                    if (!(scadapoint == null))
                         strValue = scadapoint.Value.ToString();
                     else
                     {
-                        _logger.WriteEntry("Error in finding " + m_arrItems[I].NetworkPath , LogLevels.Error);
+                        _logger.WriteEntry("Error in finding " + m_arrItems[I].NetworkPath, LogLevels.Error);
                         strValue = " ";
                     }
 
                     m_arrItems[I].Status = Convert.ToByte(Double.Parse(strValue));
                     _logger.WriteEntry("" + m_arrItems[I].NetworkPath + " = " + SwitchStatusbyName((int)m_arrItems[I].Status), LogLevels.Info);
 
-                   
+
                     // Only for MDF
                     if (m_arrItems[I].NetworkPath.IndexOf("MDF") >= 0)
                     {
@@ -318,15 +317,15 @@ namespace LSP
                         CombItemVal = m_arrCombinations[idxComb].GetArrItemValues(idxCB);
                         var item = _repository.GetLSPScadaPoint(m_arrItems[idxCB]._GUID);
 
-                        _logger.WriteEntry("Item = " 
-                            + idxCB.ToString() + " ; Value of Item in Comb= " 
-                            + CombinationSwitchStatusbyName(CombItemVal) + " ; CB_Status= " 
+                        _logger.WriteEntry("Item = "
+                            + idxCB.ToString() + " ; Value of Item in Comb= "
+                            + CombinationSwitchStatusbyName(CombItemVal) + " ; CB_Status= "
                             + SwitchStatusbyName((int)item.Value), LogLevels.Info);
 
                         if (CombItemVal != ((byte)eCombItem_Status.SDo_Not_Care))
                         {
                             // Check equality of values
-                            if ((CombItemVal == ((byte)eCombItem_Status.SOff) && (DigitalDoubleStatus)item.Value == DigitalDoubleStatus.Close) || 
+                            if ((CombItemVal == ((byte)eCombItem_Status.SOff) && (DigitalDoubleStatus)item.Value == DigitalDoubleStatus.Close) ||
                                 (CombItemVal == ((byte)eCombItem_Status.SOn) && (DigitalDoubleStatus)item.Value == DigitalDoubleStatus.Open))
                             {
                                 bFindComb = false;
@@ -348,7 +347,7 @@ namespace LSP
                         break;
                     }
                     else
-                    _logger.WriteEntry("idxComb = " + idxComb.ToString() + " Not Matched ", LogLevels.Info);
+                        _logger.WriteEntry("idxComb = " + idxComb.ToString() + " Not Matched ", LogLevels.Info);
 
 
                 }

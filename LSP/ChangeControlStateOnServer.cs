@@ -1,8 +1,7 @@
-﻿using System;
-
-using Irisa.Logger;
+﻿using Irisa.Logger;
 using Irisa.Message;
 using Irisa.Message.CPS;
+using System;
 
 namespace LSP
 {
@@ -27,7 +26,7 @@ namespace LSP
                 Console = "LSP",
                 User = "LSP",
                 Value = value,
-                Force = true                
+                Force = true
             };
 
             try
@@ -39,7 +38,7 @@ namespace LSP
                 else
                     executed = true;
             }
-            catch(Exception excep)
+            catch (Exception excep)
             {
                 _logger.WriteEntry("Change command state is not executed.", LogLevels.Error);
             }

@@ -1,9 +1,8 @@
-﻿using System;
+﻿using Irisa.Logger;
+using Irisa.Message;
+using System;
 using System.Threading.Tasks;
 using System.Timers;
-
-using Irisa.Logger;
-using Irisa.Message;
 
 
 namespace EEC
@@ -18,7 +17,7 @@ namespace EEC
         private readonly Timer _timer_1_Minute;
         private UpdateScadaPointOnServer _updateScadaPointOnServer;
         private EECSFSCManager _SFSCManager = null;
-       
+
         internal EECManager(ILogger logger, IRepository repository, ICpsCommandService commandService)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -41,7 +40,7 @@ namespace EEC
 
             try
             {
-                
+
                 //-------------------------------------------------------------------------
                 // Update setting for writing logs
 
@@ -61,7 +60,7 @@ namespace EEC
                 {
                     if (!_updateScadaPointOnServer.SendAlarm(_repository.GetScadaPoint("SCADAError"), (DigitalSingleStatus)DigitalSingleStatusOnOff.Off, "Warning: EEC Function is Off"))
                         _logger.WriteEntry("Error: Can not send Alarm for 'EEC Function is Disabled'.", LogLevels.Error);
-                    if ( !_updateScadaPointOnServer.SendAlarm( _repository.GetScadaPoint("SCADAError"), (DigitalSingleStatus)DigitalSingleStatusOnOff.On, "Warning: EEC Function is Off"))
+                    if (!_updateScadaPointOnServer.SendAlarm(_repository.GetScadaPoint("SCADAError"), (DigitalSingleStatus)DigitalSingleStatusOnOff.On, "Warning: EEC Function is Off"))
                         _logger.WriteEntry("Error: Can not send Alarm for 'EEC Function is Disabled'.", LogLevels.Error);
 
                     _logger.WriteEntry("EEC Function is Disabled", LogLevels.Warn);
@@ -69,9 +68,9 @@ namespace EEC
                     return;
                 }
 
-                if(!GlobalData.CPSStatus)
+                if (!GlobalData.CPSStatus)
                 {
-                    
+
                     if (!_updateScadaPointOnServer.SendAlarm(_repository.GetScadaPoint("SCADAError"), (DigitalSingleStatus)DigitalSingleStatusOnOff.On, "CPS communication could not established"))
                         _logger.WriteEntry("Error: Can not send Alarm for 'CPS is gone!'.", LogLevels.Error);
 
@@ -170,7 +169,7 @@ namespace EEC
             _energyCalculator.InitialValues();
             _energyCalculator.printInitialValues();
 
-            if (!_energyCalculator.UpdateCurrentValuesFromLastNewValues() )
+            if (!_energyCalculator.UpdateCurrentValuesFromLastNewValues())
             {
                 _logger.WriteEntry("Error in UpdateCurrentValuesFromLastNewValues!", LogLevels.Error);
             };

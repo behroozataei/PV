@@ -2,8 +2,8 @@
 using Newtonsoft.Json.Linq;
 using StackExchange.Redis;
 using System;
-using System.IO;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -16,11 +16,11 @@ namespace COM
         [Obsolete]
         static RedisUtils()
         {
-            
+
             JObject _settings = JObject.Parse(File.ReadAllText(@"appsettings.json"));
             RedisConnections = new Lazy<ConnectionMultiplexer>(() =>
                {
-               
+
                    return ConnectionMultiplexer.Connect(
                        new ConfigurationOptions
                        {
@@ -46,7 +46,7 @@ namespace COM
                        });
                }
             , LazyThreadSafetyMode.ExecutionAndPublication);
-            
+
 
             //RedisConnection.ConnectionFailed += (sender, e) => { ConnectionFailed.Invoke(sender, e); };
             //RedisConnection.ConnectionRestored += (sender, e) => { ConnectionRestored.Invoke(sender, e); };
@@ -60,14 +60,14 @@ namespace COM
         public static event EventHandler<ConnectionFailedEventArgs> ConnectionRestored;
         public static event EventHandler<RedisErrorEventArgs> ErrorMessage;
         public static event EventHandler<EndPointEventArgs> ConfigurationChanged;
-        
+
 
 
 
 
         private static void RedisConnection_ConnectionFailed(object sender, ConnectionFailedEventArgs e)
         {
-            
+
         }
 
         private static void RedisConnection_ErrorMessage(object sender, RedisErrorEventArgs e)
@@ -83,7 +83,7 @@ namespace COM
         private int _database = 0;
         public RedisUtils(int database)
         {
-            _database = database;          
+            _database = database;
             Server = RedisConnection.GetServer(RedisConnection.GetEndPoints()[0]);
             DataBase = RedisConnection.GetDatabase(_database);
         }
@@ -142,7 +142,7 @@ namespace COM
         public IEnumerable<T> HashGet<T>(RedisKey[] redisKeys)
         {
 
-            var rr= redisKeys.Select(async n => await HashGet<T>(n));
+            var rr = redisKeys.Select(async n => await HashGet<T>(n));
             return rr.Select(n => n.Result);
 
             //return redisKeys.Select(n => HashGet<T>(n).Result);
@@ -170,7 +170,7 @@ namespace COM
             //await redisValues;
 
             //return  redisValues.Select(n => JsonConvert.DeserializeObject<T>(n));
-            
+
 
             //return redisKeys.Select(n => HashGet<T>(n).Result);
         }

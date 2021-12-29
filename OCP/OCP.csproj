@@ -18,6 +18,8 @@
 
   <ItemGroup>
     <None Remove="appsettings.json" />
+    <None Remove="Dockerfile" />
+    <None Remove="ocp-entrypoint.sh" />
   </ItemGroup>
 
   <ItemGroup>

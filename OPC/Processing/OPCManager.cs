@@ -1,11 +1,6 @@
-using Irisa.Common;
-using System;
-using System.Timers;
-using System.Linq;
-using System.Collections.Generic;
-using System.Diagnostics;
 using Irisa.Logger;
 using Irisa.Message;
+using System;
 using System.Threading;
 
 namespace OPC
@@ -46,10 +41,10 @@ namespace OPC
                 OpcClient _opcClient = new OpcClient(endpointURL, autoAccept, stopTimeout);
                 _opcClient.OPCDataChange += OnOPCDataChange;
                 _opcClient.Run(_repository.GetTags());
-             
+
                 _logger.WriteEntry("OPC Client is Stoped", LogLevels.Debug);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 _logger.WriteEntry("OPC Client Stop with Exception", LogLevels.Debug);
 
@@ -87,15 +82,15 @@ namespace OPC
         void WriteScadaPoint(Guid id, object value)
         {
             var scadaPoint = new ScadaPoint(id, Convert.ToSingle(value));
-           // Console.WriteLine($"{scadaPoint.Id}\t {scadaPoint.Value}");
-            
+            // Console.WriteLine($"{scadaPoint.Id}\t {scadaPoint.Value}");
+
             if (!_updateScadaPointOnServer.WriteSCADAPoint(scadaPoint))
             {
                 _logger.WriteEntry("Error in write a value to scada!", LogLevels.Error);
             }
-           // _logger.WriteEntry(scadaPoint.Id.ToString() + "  " + scadaPoint.Value.ToString(), LogLevels.Info);
+            // _logger.WriteEntry(scadaPoint.Id.ToString() + "  " + scadaPoint.Value.ToString(), LogLevels.Info);
 
         }
-             
+
     }
 }

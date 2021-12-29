@@ -1,9 +1,8 @@
+using Irisa.Common;
+using Irisa.Logger;
 using System;
 using System.Data;
 using System.Linq;
-
-using Irisa.Common;
-using Irisa.Logger;
 
 namespace LSP
 {
@@ -39,7 +38,7 @@ namespace LSP
         //==============================================================================
         //MEMBER FUNCTIONS
         //==============================================================================
-        
+
         private readonly ILogger _logger;
         private readonly UpdateScadaPointOnServer _updateScadaPointOnServer;
         private bool isCompleted = true;
@@ -117,12 +116,12 @@ namespace LSP
                         _breakersToShed[I].NetworkPath_Item = dr.NETWORKPATH_ITEM;
                         _breakersToShed[I].HasPartner = dr.HASPARTNER;
                         _breakersToShed[I].AddressPartner = dr.ADDRESSPARTNER;
-                        _breakersToShed[I].guid_curr = Guid.Parse( dr.ID_CURR.ToString());
+                        _breakersToShed[I].guid_curr = Guid.Parse(dr.ID_CURR.ToString());
                         _breakersToShed[I].guid_item = Guid.Parse(dr.ID_CB.ToString());
                         // TODO: Check 
                         _breakersToShed[I].FurnaceIndex = "";  // dr["Furnace"].ToString();
-                        
-                        if(_breakersToShed[I].AddressPartner!="NULL")
+
+                        if (_breakersToShed[I].AddressPartner != "NULL")
                             _breakersToShed[I].addressPartner_guid = Guid.Parse(dr.ID_CB_PARTNER.ToString());
 
                         _logger.WriteEntry("  BreakerNo = " + _breakersToShed[I].BreakerNo.ToString() +
@@ -178,7 +177,7 @@ namespace LSP
 
                         // TODO :
                         var cb_point = _repository.GetLSPScadaPoint(guid_cb);
-                        if( !(cb_point is null))
+                        if (!(cb_point is null))
                         {
                             //_breakersToShed[idxBreaker].Status = (Breaker_Status)cb_point.Value;
                             if (cb_point.Quality == QualityCodes.None)
@@ -191,7 +190,7 @@ namespace LSP
                             var guid_curr = _breakersToShed[idxBreaker].guid_curr;
 
                             var curr_point = _repository.GetLSPScadaPoint(guid_curr);
-                            if(!(curr_point is null))
+                            if (!(curr_point is null))
                             {
                                 // TODO :
                                 //_breakersToShed[idxBreaker].Current = curr_point.Value;

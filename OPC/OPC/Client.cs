@@ -48,7 +48,7 @@ namespace OPC
         {
             try
             {
-               
+
                 ConsoleSampleClient(tags).Wait();
             }
             catch (Exception ex)
@@ -98,7 +98,7 @@ namespace OPC
                 ConfigSectionName = Utils.IsRunningOnMono() ? "Opc.Ua.MonoSampleClient" : "Opc.Ua.SampleClient"
             };
 
-          
+
 
             // load the application configuration.
             ApplicationConfiguration config = await application.LoadApplicationConfiguration(false);
@@ -145,7 +145,7 @@ namespace OPC
             Byte[] continuationPoint;
 
             references = session.FetchReferences(ObjectIds.ObjectsFolder);
-            
+
             #region BROWSING
 
             session.Browse(
@@ -159,8 +159,8 @@ namespace OPC
                 (uint)NodeClass.Variable | (uint)NodeClass.Object | (uint)NodeClass.Method,
                 out continuationPoint,
                 out references);
-            
-     
+
+
 
             Console.WriteLine(" DisplayName, BrowseName, NodeClass");
             foreach (var rd in references)
@@ -225,7 +225,7 @@ namespace OPC
 
             #endregion
 
-         
+
 
 
 
@@ -251,7 +251,7 @@ namespace OPC
                     });
             }
 
-           
+
             _monitoredList.ForEach(item => item.Notification += OnNotification);
             subscription.AddItems(_monitoredList);
 
@@ -315,7 +315,7 @@ namespace OPC
                                             new OPCDataEventArgs()
                                             {
                                                 OPCTagName = item.DisplayName,
-                                                ShortName = Regex.Match(item.DisplayName, _namePattern).Success 
+                                                ShortName = Regex.Match(item.DisplayName, _namePattern).Success
                                                              ? Regex.Match(item.DisplayName, _namePattern).Value
                                                              : item.DisplayName,
 

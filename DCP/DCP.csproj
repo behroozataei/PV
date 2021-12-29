@@ -17,6 +17,8 @@
 
   <ItemGroup>
     <None Remove="appsettings.json" />
+    <None Remove="dcp-entrypoint.sh" />
+    <None Remove="Dockerfile" />
   </ItemGroup>
 
   <ItemGroup>
@@ -65,6 +67,10 @@
     <Reference Include="Irisa.Message">
       <HintPath>..\Requirement\Irisa.Message.dll</HintPath>
     </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="..\.dockerignore" />
   </ItemGroup>
 
 </Project>

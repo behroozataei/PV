@@ -1,13 +1,11 @@
-﻿using System;
-using System.Runtime.InteropServices;
-using System.Timers;
-using System.Data;
-using Newtonsoft.Json;
-using System.Linq;
-
-using COM;
+﻿using COM;
 using Irisa.Logger;
 using Irisa.Message;
+using Newtonsoft.Json;
+using System;
+using System.Data;
+using System.Linq;
+using System.Timers;
 
 namespace EEC
 {
@@ -79,7 +77,7 @@ namespace EEC
             //    //return;
             //}
 
-            
+
 
             _logger.WriteEntry("Maximum Power 1 = " + _BusbarPowers[0] + " ; Maximum Power 2 = " + _BusbarPowers[1], LogLevels.Info);
         }
@@ -88,7 +86,7 @@ namespace EEC
         {
             _timer_4_Seconds.Start();
         }
-        
+
 
         private bool ClearOverloadAppear()
         {
@@ -267,8 +265,8 @@ namespace EEC
 
                 _eec_tel = JsonConvert.DeserializeObject<EEC_TELEGRAM_Str>(_repository.GetRedisUtiles().DataBase.StringGet(RedisKeyPattern.EEC_TELEGRAM));
 
-               // DataTable datatable_EEC = _repository.GetFromHistoricalDB(sql);
-                if (!(_eec_tel is null) )
+                // DataTable datatable_EEC = _repository.GetFromHistoricalDB(sql);
+                if (!(_eec_tel is null))
                 {
                     _MaxBusbarPowers[0] = _eec_tel.MAXOVERLOAD1;
                     _MaxBusbarPowers[1] = _eec_tel.MAXOVERLOAD2;
@@ -276,7 +274,7 @@ namespace EEC
                     var deltatime = DateTime.Now.Subtract(dTime).TotalSeconds;
                     if (deltatime > 65)
                     {
-                        _logger.WriteEntry("Error: Date and Time  of MAXOVERLOAD1, MAXOVERLOAD2 is not correct! "+ "EEC TELDATEtime = "+ dTime +"  Delta Second = "+ deltatime, LogLevels.Warn);
+                        _logger.WriteEntry("Error: Date and Time  of MAXOVERLOAD1, MAXOVERLOAD2 is not correct! " + "EEC TELDATEtime = " + dTime + "  Delta Second = " + deltatime, LogLevels.Warn);
                         return false;
                     }
                 }
@@ -306,14 +304,14 @@ namespace EEC
                 _PMAX1 = _repository.GetScadaPoint("PMAX1");
                 _PMAX2 = _repository.GetScadaPoint("PMAX2");
                 // Check MAB Status for _MaxBusbarPowers
-                if (((_MaxBusbarPowers[0] == 0.0  && _PMAX1.Value > 0.0) ||
-                     (_MaxBusbarPowers[1] == 0.0  && _PMAX2.Value > 0.0)) &&
+                if (((_MaxBusbarPowers[0] == 0.0 && _PMAX1.Value > 0.0) ||
+                     (_MaxBusbarPowers[1] == 0.0 && _PMAX2.Value > 0.0)) &&
                     (_MAB.Value == (float)DigitalDoubleStatus.Open))
                 {
                     _logger.WriteEntry("Error: MAB opened and MAXOVERLOAD1 or MAXOVERLOAD2 is zero! ", LogLevels.Warn);
                     return false;
                 }
-                
+
                 if (_MAB.Value == (float)DigitalDoubleStatus.Close && _MaxBusbarPowers[0] > 0.0 && _MaxBusbarPowers[1] > 0.0)
                 {
                     float Busbarspowers = _MaxBusbarPowers[0] + _MaxBusbarPowers[1];
@@ -371,8 +369,8 @@ namespace EEC
         {
             try
             {
-                
-                
+
+
                 //String Datatime = DateTime.Now.ToString(("yyyy-MMMM-dd HH:mm:ss"));
                 //String sql = $"Insert Into APP_SFSC_EAFSPower( TelDateTime, SUMATION, PowerGrp1, PowerGrp2, " +
                 //    "Furnace1, Furnace2, Furnace3, Furnace4, Furnace5, Furnace6, Furnace7, Furnace8) " +
@@ -389,7 +387,7 @@ namespace EEC
                 //    _FurnacePowers[5] + "', '" +
                 //    _FurnacePowers[6] + "', '" +
                 //    _FurnacePowers[7] + "')";
-                
+
                 //if (!_repository.ModifyOnHistoricalDB(sql))
                 //{
                 //    _logger.WriteEntry($" Error in 'Insert Into APP_SFSCEAFSPOWER'", LogLevels.Error);
@@ -465,7 +463,7 @@ namespace EEC
 
                     // Check and clearance of irrelated overload flags
                     var timeDiff = (DateTime.Now - _cycles[busbar, cycle]).TotalMilliseconds;
-                    if ((timeDiff >= (NUMBER_OF_CYCLES_OVERLAD_CHECK -1 ) * TIMER_TICKS_SFSC) && _IsOverloadAppear[busbar, cycle])
+                    if ((timeDiff >= (NUMBER_OF_CYCLES_OVERLAD_CHECK - 1) * TIMER_TICKS_SFSC) && _IsOverloadAppear[busbar, cycle])
                         _IsOverloadAppear[busbar, cycle] = false;
                 }
 
@@ -507,8 +505,8 @@ namespace EEC
                             //    " AND STATUS_OF_FURNACE='ON' ORDER BY CAST( CONSUMED_ENERGY_PER_HEAT AS FLOAT) ASC";
                             EEC_SFSCEAFSPRIORITY_Str[] eec_sfsceafprio = new EEC_SFSCEAFSPRIORITY_Str[8];
 
-                                 
-                            for (int fur = 0; fur <8; fur++)
+
+                            for (int fur = 0; fur < 8; fur++)
                             {
                                 if (_repository.GetRedisUtiles().GetKeys(pattern: RedisKeyPattern.EEC_SFSCEAFSPRIORITY + (fur + 1).ToString()).Length != 0)
                                     eec_sfsceafprio[fur] = JsonConvert.DeserializeObject<EEC_SFSCEAFSPRIORITY_Str>(_repository.GetRedisUtiles().DataBase.StringGet(RedisKeyPattern.EEC_SFSCEAFSPRIORITY + (fur + 1).ToString()));
@@ -519,13 +517,13 @@ namespace EEC
                                 }
 
                             }
-                                
-                            
 
-                            var datatable = eec_sfsceafprio.Where(n => n.GROUPNUM== (busbar + 1).ToString())
-                                                        .OrderBy(n =>Convert.ToDecimal(n.CONSUMED_ENERGY_PER_HEAT)).ToArray();
 
-                           // DataTable datatable = _repository.GetFromHistoricalDB(sql);
+
+                            var datatable = eec_sfsceafprio.Where(n => n.GROUPNUM == (busbar + 1).ToString())
+                                                        .OrderBy(n => Convert.ToDecimal(n.CONSUMED_ENERGY_PER_HEAT)).ToArray();
+
+                            // DataTable datatable = _repository.GetFromHistoricalDB(sql);
                             if ((datatable is null))
                             {
                                 _logger.WriteEntry($"Error in 'SELECT FURNACE FROM APP_EEC_SFSCEAFSPRIORITY'", LogLevels.Error);
@@ -568,11 +566,11 @@ namespace EEC
                                 sfsc_furnace_to_shed.TELDATETIME = DateTime.Now;
                                 sfsc_furnace_to_shed.FURNACE = furnace.ToString();
                                 sfsc_furnace_to_shed.GROUPPOWER = _BusbarPowers[busbar].ToString();
-                                sfsc_furnace_to_shed.SHEADTIME=DateTime.Parse("1900-01-01 00:00:00");
+                                sfsc_furnace_to_shed.SHEADTIME = DateTime.Parse("1900-01-01 00:00:00");
                                 sfsc_furnace_to_shed.SHEADCOMMAND = true;
 
-                                _repository.GetRedisUtiles().DataBase.StringSet(RedisKeyPattern.SFSC_FURNACE_TO_SHED , JsonConvert.SerializeObject(sfsc_furnace_to_shed));
-                               // RedisKeyPattern.EEC_PARAMS + networkPath, JsonConvert.SerializeObject(_eec_param);
+                                _repository.GetRedisUtiles().DataBase.StringSet(RedisKeyPattern.SFSC_FURNACE_TO_SHED, JsonConvert.SerializeObject(sfsc_furnace_to_shed));
+                                // RedisKeyPattern.EEC_PARAMS + networkPath, JsonConvert.SerializeObject(_eec_param);
 
                                 //String Datatime = DateTime.Now.ToString(("yyyy-MMMM-dd HH:mm:ss"));
                                 //    sql = $"INSERT INTO APP_SFSC_FURNACE_TO_SHED(TELDATETIME, FURNACE, GROUPPOWER) VALUES(" +
@@ -696,7 +694,7 @@ namespace EEC
                         {
                             //var sql =$"UPDATE APP_EEC_SFSCEAFSPRIORITY SET Reason = 'EEC.SFSCManager => GROUPNUM is updated', GROUPNUM = '" + scadapointEAFGroup.Value.ToString() + "' " +
                             //    "Where FURNACE = '" + furnace.ToString() + "'";
-                            
+
 
                             //if (!_repository.ModifyOnHistoricalDB(sql))
                             //{

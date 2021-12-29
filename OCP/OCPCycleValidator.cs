@@ -1,7 +1,6 @@
-﻿using System;
+﻿using Irisa.Logger;
+using System;
 using System.Collections.Generic;
-
-using Irisa.Logger;
 
 namespace OCP
 {
@@ -295,7 +294,7 @@ namespace OCP
         //' 1396.10.24 IMANIAN ; ADD LOGGS OF VALUES OF EACH CYCLES
         public object LogCycleVal(OCPCheckPoint ocpCheckPoint)
         {
-            var dict = new SortedDictionary<DateTime , Tuple<int, float>>();
+            var dict = new SortedDictionary<DateTime, Tuple<int, float>>();
             dict.Add(_cycles[1], new Tuple<int, float>(1, ocpCheckPoint.Value1));
             dict.Add(_cycles[2], new Tuple<int, float>(2, ocpCheckPoint.Value2));
             dict.Add(_cycles[3], new Tuple<int, float>(3, ocpCheckPoint.Value3));

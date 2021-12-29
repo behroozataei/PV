@@ -1,15 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Runtime.InteropServices;
-using System.Data;
-using StackExchange.Redis;
-using System.Linq;
-using Newtonsoft.Json;
-
-using COM;
-using Irisa.Logger;
+﻿using COM;
 using Irisa.DataLayer;
-using Irisa.DataLayer.SqlServer;
+using Irisa.Logger;
+using Newtonsoft.Json;
+using System;
+using System.Collections.Generic;
+using System.Data;
+using System.Linq;
 
 namespace OPC
 {
@@ -134,7 +130,7 @@ namespace OPC
                     tag.Type = (OPC.Type)row.TagType;
 
                     _OPCRepository.OPCTags.Add(tag);
-                      
+
                     //_entityMapper.Add(row["KeepServerTagName"].ToString(), Guid.Parse(row["GUID"].ToString()));
                     _entityMapper.Add(row.KeepServerTagName.ToString(), tag.MeasurementId);
                 }

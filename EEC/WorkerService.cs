@@ -1,18 +1,15 @@
-﻿using System;
-using System.Runtime.InteropServices;
-using System.Threading.Tasks;
-using System.Threading;
-using System.Collections.Concurrent;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Configuration;
-
-using COM;
+﻿using COM;
+using Irisa.Common.Utils;
+using Irisa.DataLayer;
 using Irisa.Logger;
 using Irisa.Message;
 using Irisa.Message.CPS;
-using Irisa.DataLayer;
-using Irisa.DataLayer.SqlServer;
-using Irisa.Common.Utils;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Hosting;
+using System;
+using System.Collections.Concurrent;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace EEC
 {
@@ -37,7 +34,7 @@ namespace EEC
             _dataManager = new Irisa.DataLayer.Oracle.OracleDataManager(config["OracleServicename"], config["OracleDatabaseAddress"], config["OracleStaticUser"], config["OracleStaticPassword"]);
             _storeLogs = new StoreLogs(_dataManager, _logger, "SCADA.\"HIS_HisLogs_Insert\"");
 
-            
+
 
 
             var historyDataRequest = new HistoryDataRequest
@@ -51,8 +48,8 @@ namespace EEC
             _cpsRuntimeDataBuffer = new BlockingCollection<CpsRuntimeData>();
 
             _rpcService = new CpsRpcService(config["CpsIpAddress"], 10000, historyDataRequest, _cpsRuntimeDataBuffer);
-            
-            
+
+
 
             _repository = new Repository(_logger, config, _RedisConnectorHelper);
             _eecManager = new EECManager(_logger, _repository, _rpcService.CommandService);
@@ -83,7 +80,7 @@ namespace EEC
             _eecManager.CheckCPSStatus();
 
             _eecManager.StartCyclicOperation();
-          
+
             return base.StartAsync(cancellationToken);
         }
 

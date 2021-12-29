@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace COM
 {
@@ -201,7 +199,7 @@ namespace COM
         public string SCADATYPE;
 
     }
-   
+
     public class SFSC_EAFSPOWER_Str
     {
         public DateTime TELDATETIME;

@@ -1,8 +1,7 @@
-﻿using System;
-
-using Irisa.Logger;
+﻿using Irisa.Logger;
 using Irisa.Message;
 using Irisa.Message.CPS;
+using System;
 
 namespace OPC
 {

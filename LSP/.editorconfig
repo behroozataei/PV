@@ -1,4 +1,0 @@
-﻿[*.cs]
-
-# DV2002: Unmapped types
-dotnet_diagnostic.DV2002.severity = suggestion

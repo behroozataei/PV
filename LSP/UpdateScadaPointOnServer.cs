@@ -1,11 +1,10 @@
-﻿using System;
-using System.Threading.Tasks;
-using Google.Protobuf.WellKnownTypes;
-
+﻿using Google.Protobuf.WellKnownTypes;
+using Irisa.Common.Utils;
 using Irisa.Logger;
 using Irisa.Message;
 using Irisa.Message.CPS;
-using Irisa.Common.Utils;
+using System;
+using System.Threading.Tasks;
 
 namespace LSP
 {
@@ -26,7 +25,7 @@ namespace LSP
 
             try
             {
-                if( scadaPoint == null )
+                if (scadaPoint == null)
                 {
                     _logger.WriteEntry("Error: Input scadaPoint is null", LogLevels.Error);
                     return executed;
@@ -113,7 +112,7 @@ namespace LSP
                         Value = (int)Breaker_Status.bClose
                     };
 
-                    for( int cntr = 0 ; cntr < 3 ; cntr++)
+                    for (int cntr = 0; cntr < 3; cntr++)
                     {
                         _logger.WriteEntry($"SendCommand for Item: { commandItem.Item2}  ; cntr = {cntr} ; {DateTime.UtcNow.ToLocalFullDateAndTimeString()}", LogLevels.Info);
 
@@ -186,7 +185,7 @@ namespace LSP
                 _logger.WriteEntry($"Send Command for {controlRequest.MeasurementId} is received with {controlRequest.Value}", LogLevels.Info);
 
                 var reply = await _scadaCommand.ChangeStateCommandAsync(controlRequest, 5);
-              
+
                 if (reply.Executed == false)
                 {
                     _logger.WriteEntry("LSPTEST " + reply.Log, LogLevels.Warn);
@@ -211,7 +210,7 @@ namespace LSP
             {
                 //_logger.WriteEntry($"Send Command for {scadaPoint} is received with {controlRequest.Value}", LogLevels.Info);
 
-                
+
                 //var reply = _scadaCommand.ChangeStateCommandAsync(controlRequest, 12);
 
                 //if (reply.Result.Executed == false)
@@ -390,7 +389,7 @@ namespace LSP
                 markerModifierRequset.Markers.Add(newmarker);
 
                 var response = _scadaCommand.MarkerModifierCommand(markerModifierRequset);
-                if(!response.Executed )
+                if (!response.Executed)
                 {
                     _logger.WriteEntry($"Error in appling 'Remove Blocked Makrer' for {ascadaPoint.NetworkPath}", LogLevels.Error);
                     return false;

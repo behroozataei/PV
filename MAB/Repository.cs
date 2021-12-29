@@ -1,14 +1,11 @@
-﻿using System;
-using System.Data;
-using Newtonsoft.Json;
-using System.Collections.Generic;
-using System.Runtime.InteropServices;
-using StackExchange.Redis;
-using System.Linq;
-
-using COM;
-using Irisa.Logger;
+﻿using COM;
 using Irisa.DataLayer;
+using Irisa.Logger;
+using Newtonsoft.Json;
+using System;
+using System.Collections.Generic;
+using System.Data;
+using System.Linq;
 
 namespace MAB
 {
@@ -76,7 +73,7 @@ namespace MAB
             }
             catch (Exception ex)
             {
-                _logger.WriteEntry("Error in loading Data from database " , LogLevels.Error, ex);
+                _logger.WriteEntry("Error in loading Data from database ", LogLevels.Error, ex);
                 return false;
             }
             foreach (DataRow row in dataTable.Rows)

@@ -1,7 +1,6 @@
-﻿using System;
-
-using Irisa.Common;
+﻿using Irisa.Common;
 using Irisa.Logger;
+using System;
 
 namespace OCP
 {
@@ -13,7 +12,7 @@ namespace OCP
         private readonly ILogger _logger;
         private readonly IRepository _repository;
         UpdateScadaPointOnServer _updateScadaPointOnServer;
-        
+
         public OCPCurrentEvaluation(IRepository repository, UpdateScadaPointOnServer aupdateScadaPointOnServer, ILogger logger)
         {
             _repository = repository ?? throw new ArgumentNullException(nameof(repository));
@@ -75,9 +74,9 @@ namespace OCP
                 }
                 _updateScadaPointOnServer.WriteSample(checkPoint, checkPoint.Value);
                 // 2021.04.24 A.K and B.A, added these lines:
-                if( OCPQualityConvertor.GetCheckPointQuality((QualityCodes)checkPoint.QualityCodes) == OCPCheckPointQuality.Invalid)
+                if (OCPQualityConvertor.GetCheckPointQuality((QualityCodes)checkPoint.QualityCodes) == OCPCheckPointQuality.Invalid)
                 {
-                    _logger.WriteEntry("Quality warning: " + "QualityCode = " + (QualityCodes)checkPoint.QualityCodes + " ; Value = " + checkPoint.Value.ToString() + " ; Name = "+checkPoint.Name +" ; Network Path = " + checkPoint.NetworkPath.ToString(), LogLevels.Warn);
+                    _logger.WriteEntry("Quality warning: " + "QualityCode = " + (QualityCodes)checkPoint.QualityCodes + " ; Value = " + checkPoint.Value.ToString() + " ; Name = " + checkPoint.Name + " ; Network Path = " + checkPoint.NetworkPath.ToString(), LogLevels.Warn);
                 }
             }
         }
@@ -159,7 +158,7 @@ namespace OCP
                     if (checkPoint.SubstitutionCounter < MAXCALCULATED)
                     {
                         float subsValue = 0;
-                        if ( !CalcSubstitution(checkPoint, ref subsValue))
+                        if (!CalcSubstitution(checkPoint, ref subsValue))
                         {
                             _logger.WriteEntry("Could not calculate the substitution value!", LogLevels.Error);
                             return false;
@@ -419,7 +418,7 @@ namespace OCP
         internal void QualityErrorAlarm(OCPCheckPoint checkpoint, QualityCodes Quality, SinglePointStatus Status)
         {
             if (checkpoint.QualityErrorId != Guid.Empty)
-            { 
+            {
                 if (!_updateScadaPointOnServer.SendAlarm(checkpoint.QualityErrorId, Status, "Quality Code = " + Quality + " ; Value = " + checkpoint.Value.ToString() + " ; Network Path = " + checkpoint.NetworkPath))
                     _logger.WriteEntry("Sending alarm failed for QualityError", LogLevels.Error);
             }

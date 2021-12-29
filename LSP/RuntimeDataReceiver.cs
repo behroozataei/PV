@@ -1,12 +1,11 @@
-﻿using System;
-using System.Threading.Tasks;
-using System.Collections.Concurrent;
-using Google.Protobuf.Collections;
-
+﻿using Google.Protobuf.Collections;
 using Irisa.Common;
 using Irisa.Logger;
 using Irisa.Message;
 using Irisa.Message.CPS;
+using System;
+using System.Collections.Concurrent;
+using System.Threading.Tasks;
 
 namespace LSP
 {
@@ -31,7 +30,7 @@ namespace LSP
 
         public void Start()
         {
-            
+
 
             _isWorking = true;
             _rpcService.ConnectAsync();
@@ -82,7 +81,7 @@ namespace LSP
                         //_logger.WriteEntry("Digital..Checkpoint " + checkPoint.NetworkPath + ";" + checkPoint.Value, LogLevels.Info);
                     }
 
-                    
+
 
                     var lspScadaPoint = _repository.GetLSPScadaPoint(measurementGUID);
                     if (lspScadaPoint != null)
@@ -90,8 +89,8 @@ namespace LSP
                         lspScadaPoint.Value = measurement.Value;
                         lspScadaPoint.Quality = (QualityCodes)measurement.QualityCodes;
 
-                       // if (lspScadaPoint.Name == "Network/Substations/MIS1/63kV/GMF4/CB/STATE")
-                       //   _logger.WriteEntry("DigitalPoint " + lspScadaPoint.NetworkPath + ";" + lspScadaPoint.Id + ";" + lspScadaPoint.Value, LogLevels.Info);
+                        // if (lspScadaPoint.Name == "Network/Substations/MIS1/63kV/GMF4/CB/STATE")
+                        //   _logger.WriteEntry("DigitalPoint " + lspScadaPoint.NetworkPath + ";" + lspScadaPoint.Id + ";" + lspScadaPoint.Value, LogLevels.Info);
                     }
 
                     _dataProcessing.SCADAEventRaised(measurement);

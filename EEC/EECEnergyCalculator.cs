@@ -12,10 +12,9 @@
 //'
 //'
 //'***************************************************************************************
-using System;
-
 using Irisa.Logger;
 using Irisa.Message.CPS;
+using System;
 
 namespace EEC
 {
@@ -234,7 +233,7 @@ namespace EEC
 
             try
             {
-                if( _DeltaP == null )
+                if (_DeltaP == null)
                     InitialValues();
 
                 lastStatus &= _updateScadaPointOnServer.WriteAnalog(_DeltaP, _DeltaP_User.Value);
