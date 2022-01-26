@@ -26,7 +26,7 @@ namespace CLR
         {
             Console.Clear();
             Console.WriteLine("Clear Application Tables from Redis");
-            Console.WriteLine("Please Select Aplication number to clear these tables");
+            Console.WriteLine("Please Select an Aplication number to clear these tables");
             Console.WriteLine(" 1- OCP");
             Console.WriteLine(" 2- LSP");
             Console.WriteLine(" 3- MAB");
