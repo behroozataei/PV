@@ -410,8 +410,8 @@ namespace LSP
                 {
                     aJob.ShedValue = aJob.SumIt * (aJob.PrimaryVoltage / aJob.SecondaryVoltage);
                     _logger.WriteEntry("SumIt = " + aJob.SumIt.ToString() + " A", LogLevels.Info);
-                    _logger.WriteEntry("PrimaryVoltage = " + aJob.PrimaryVoltage.ToString() + " kV", LogLevels.Info);
-                    _logger.WriteEntry("SecondaryVoltage = " + aJob.SecondaryVoltage.ToString() + " kV", LogLevels.Info);
+                    _logger.WriteEntry("PrimaryVoltage = " + (aJob.PrimaryVoltage/10.0f).ToString() + " kV", LogLevels.Info);
+                    _logger.WriteEntry("SecondaryVoltage = " + (aJob.SecondaryVoltage/10.0f).ToString() + " kV", LogLevels.Info);
                 }
 
                 _logger.WriteEntry("Shed value of Job = " + aJob.ShedValue.ToString() + " A", LogLevels.Info);

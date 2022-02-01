@@ -520,7 +520,7 @@ namespace EEC
 
 
 
-                            var datatable = eec_sfsceafprio.Where(n => n.GROUPNUM == (busbar + 1).ToString())
+                            var datatable = eec_sfsceafprio.Where(n => n.GROUPNUM == (busbar + 1).ToString() && n.STATUS_OF_FURNACE == "ON")
                                                         .OrderBy(n => Convert.ToDecimal(n.CONSUMED_ENERGY_PER_HEAT)).ToArray();
 
                             // DataTable datatable = _repository.GetFromHistoricalDB(sql);

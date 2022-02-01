@@ -81,7 +81,7 @@ namespace DCP
 
                 _CPCSInterface = new PCSInterface(_logger, _repository, _updateScadaPointOnServer);
 
-                DCManager_start();
+                PCSManager_start();
 
             }
             catch (System.Exception excep)
@@ -101,7 +101,7 @@ namespace DCP
             }
         }
 
-        public void DCManager_start()
+        public void PCSManager_start()
         {
             try
             {

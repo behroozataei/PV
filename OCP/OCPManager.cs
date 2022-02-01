@@ -18,6 +18,7 @@ namespace OCP
         private readonly Timer _timer;
         private bool _firstRun;
         private bool isCompleted = true;
+        private bool isActived = false;
 
         internal OCPManager(ILogger logger, IRepository repository, ICpsCommandService scadaCommand)
         {
@@ -67,9 +68,22 @@ namespace OCP
                 if (!_overloadCheck.OCP_Function_Status())
                 {
                     isCompleted = true;
-                    _logger.WriteEntry("OCP Funtion is OFF!", LogLevels.Error);
+                    if (isActived)
+                    {
+                        _logger.WriteEntry("OCP Funtion is OFF!", LogLevels.Error);
+                        isActived=false;
+                    }
+
+
                     return;
                 }
+                else
+                    if (!isActived)
+                    {
+                        _logger.WriteEntry("OCP Funtion is ON!", LogLevels.Info);
+                        isActived = true;
+                    }
+
 
 
                 if (!_cycleValidator.GetOCPCycleNo(_firstRun))

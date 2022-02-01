@@ -1317,11 +1317,7 @@ namespace LSP
 
             try
             {
-                //if (LoadfromCache)
                 dataTable = JsonConvert.DeserializeObject<DataTable>(_RedisConnectorHelper.DataBase.StringGet(RedisKeyPattern.LSP_PRIORITYLIST));
-                //else
-                //    dataTable = _staticDataManager.GetRecord($"SELECT * FROM {GetEndStringCommand()}LSP_PRIORITYLIST ORDER BY PRIORITYLISTNO");
-
             }
             catch (Irisa.DataLayer.DataException ex)
             {
@@ -1338,41 +1334,35 @@ namespace LSP
         public FetchEAFSPriority_Str[] FetchEAFSPriority(string grpNumber, string FurnaceStatus, List<string> Exception)
         {
             FetchEAFSPriority_Str[] dataTable = null;
-
-
-
             try
             {
-                //if (LoadfromCache)
-                //{
-
-                if (GetRedisUtiles().GetKeys(pattern: RedisKeyPattern.EEC_SFSCEAFSPRIORITY).Length == 0)
+                var EEC_SFSCEAFSPRIORITY_KEYs = GetRedisUtiles().GetKeys(pattern: RedisKeyPattern.EEC_SFSCEAFSPRIORITY);
+                if (EEC_SFSCEAFSPRIORITY_KEYs.Length == 0)
                 {
-                    _logger.WriteEntry("Error in running get furnce number from EEC_SFSCEAFSPRIORITY cache", LogLevels.Error);
-
+                    _logger.WriteEntry("Error in running get Keys from EEC_SFSCEAFSPRIORITY cache", LogLevels.Error);
                     return dataTable;
                 }
 
-                var keys = GetRedisUtiles().GetKeys(pattern: RedisKeyPattern.EEC_EAFSPriority);
-                if (keys.Length == 0)
+                var EEC_EAFSPriority_KEYs = GetRedisUtiles().GetKeys(pattern: RedisKeyPattern.EEC_EAFSPriority);
+                if (EEC_EAFSPriority_KEYs.Length == 0)
                 {
-                    _logger.WriteEntry("Error in running get furnce number from EEC_EAFSPriority cache", LogLevels.Error);
-
+                    _logger.WriteEntry("Error in running get Keys from EEC_EAFSPriority cache", LogLevels.Error);
                     return dataTable;
                 }
 
-
+                EEC_SFSCEAFSPRIORITY_Str[] eec_sfscprio_rows = new EEC_SFSCEAFSPRIORITY_Str[8];
                 EEC_EAFSPRIORITY_Str[] eec_eafprio_rows = new EEC_EAFSPRIORITY_Str[8];
-                EEC_SFSCEAFSPRIORITY_Str[] _eec_sfscprio_table = new EEC_SFSCEAFSPRIORITY_Str[8];
-                var _eec_eafprio_table = _RedisConnectorHelper.StringGet<EEC_EAFSPRIORITY_Str>(keys).ToArray();
 
-                for (int fur = 0; fur < 8; fur++)
-                {
-                    eec_eafprio_rows[fur] = _eec_eafprio_table.Where(n => n.FURNACE == (fur + 1).ToString()).First();
-                    _eec_sfscprio_table[fur] = JsonConvert.DeserializeObject<EEC_SFSCEAFSPRIORITY_Str>(_RedisConnectorHelper.DataBase.StringGet(RedisKeyPattern.EEC_SFSCEAFSPRIORITY + (fur + 1).ToString()));
-                }
+                var _eec_sfscprio_table = _RedisConnectorHelper.StringGet<EEC_SFSCEAFSPRIORITY_Str>(EEC_SFSCEAFSPRIORITY_KEYs).ToArray();
+                var _eec_eafprio_table = _RedisConnectorHelper.StringGet<EEC_EAFSPRIORITY_Str>(EEC_EAFSPriority_KEYs).ToArray();
 
-                var dataTable_1 = from ee in eec_eafprio_rows
+                //for (int fur = 0; fur < 8; fur++)
+                //{
+                //    eec_sfscprio_rows[fur] = _eec_sfscprio_table.Where(n => n.FURNACE == (fur + 1).ToString()).First();
+                //    eec_eafprio_rows[fur] = _eec_eafprio_table.Where(n => n.FURNACE == (fur + 1).ToString()).First();
+                //}
+
+                var dataTable_1 = from ee in _eec_eafprio_table
                                   join es in _eec_sfscprio_table on ee.FURNACE.ToString() equals es.FURNACE.ToString()
                                   select new FetchEAFSPriority_Str
                                   {
@@ -1392,25 +1382,8 @@ namespace LSP
                 if (grpNumber != "")
                     dataTable_2 = dataTable_1.Where(n => n.GROUPNUM == grpNumber).ToArray();
                 var dataTable_3 = dataTable_2.Where(n => n.STATUS_OF_FURNACE == FurnaceStatus).OrderBy(n => (Convert.ToDecimal(n.CONSUMED_ENERGY_PER_HEAT))).ToArray();
-                dataTable = dataTable_3.Where(n => !Exception.Contains(n.CB_NETWORKPATH)).ToArray();
-                //}
-                //else
-                //{
-                //    string selectsql = "select ee.CB_NETWORKPATH, ee.CT_NETWORKPATH, ee.HASPARTNER, ee.PARTNERADDRESS, " +
-                //      "ee.FURNACE, es.CONSUMED_ENERGY_PER_HEAT, es.STATUS_OF_FURNACE, es.FURNACE, " +
-                //      "es.GROUPNUM from SCADAHIS.APP_EEC_SFSCEAFSPRIORITY es, SCADA.APP_EEC_EAFSPRIORITY ee " +
-                //      "WHERE ee.FURNACE = es.FURNACE ";
-
-                //    //  1399-10-03
-                //    //ToDO :
-                //    // why does for Line Overloaded (Line 914 or 915)  not considered grpnumber  ?
-                //    string selgrpNumber = (grpNumber != "") ? "AND GROUPNUM = '" + grpNumber + "'" : "";
-
-                //    string StringSql = selectsql + selgrpNumber + " AND STATUS_OF_FURNACE = '" + FurnaceStatus + "' " + strSQLException + " ORDER BY CAST( CONSUMED_ENERGY_PER_HEAT AS FLOAT) ASC";
-                //    //string StringSql = "SELECT * FROM app.EEC_EAFSPriority WHERE GROUPNUM = " + grpNumber + " AND STATUS_OF_FURNACE = '" + FurnaceStatus + "' " + strSQLException + " ORDER BY CONSUMED_ENERGY_PER_HEAT ASC";
-
-                //    dataTable = _staticDataManager.GetRecord(StringSql);
-                //}
+                dataTable = dataTable_3.Where(n => !Exception.Any(a =>n.CB_NETWORKPATH.Contains(a))).ToArray();
+                
             }
             catch (Irisa.DataLayer.DataException ex)
             {

@@ -29,17 +29,15 @@ namespace COM
                                 _settings.GetValue("RedisKeySentinel1").ToString(),
                                 _settings.GetValue("RedisKeySentinel2").ToString(),
                                 _settings.GetValue("RedisKeySentinel3").ToString()
-                                //System.Configuration.ConfigurationSettings.AppSettings["RedisKeySentinel2"],
-                                //System.Configuration.ConfigurationSettings.AppSettings["RedisKeySentinel3"]
+
                            },
                            AbortOnConnectFail = false,
                            AllowAdmin = true,
-                           //CommandMap = CommandMap.Sentinel,
                            Password = "a-very-complex-password-here",
                            ServiceName = "mymaster",
 
 
-                           //EndPoints = { System.Configuration.ConfigurationSettings.AppSettings["RedisKey"] },
+                           //EndPoints = { _settings.GetValue("RedisKey_local").ToString() },
                            //AbortOnConnectFail = false,
                            //AllowAdmin = true,
                            //Password ="mdu.2121"
