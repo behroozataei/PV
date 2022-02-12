@@ -24,6 +24,8 @@ namespace COM
         public const string EEC_SFSCEAFSPRIORITY = "APP:EEC_SFSCEAFSPRIORITY:";
         public const string SFSC_EAFSPOWER = "APP:SFSC_EAFSPOWER:";
         public const string SFSC_FURNACE_TO_SHED = "APP:SFSC_FURNACE_TO_SHED:";
+        public const string SDK_TEMPLATE = "APP:SDK_TEMPLATE:";
+
 
     }
     public class MAB_PARAMS_Str
@@ -238,6 +240,15 @@ namespace COM
         public bool SHEADCOMMAND;
 
     }
+
+     public class SDK_TEMP_PARAMS_Str
+    {
+        public string Name;
+        public string NetworkPath;
+        public string DirectionType;
+        public string ScadaType;
+        public Guid ID;
+    };
 
 
 }

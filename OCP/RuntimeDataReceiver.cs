@@ -105,13 +105,13 @@ namespace OCP
                     checkPoint.Value = measurement.Value;
                     checkPoint.QualityCodes = measurement.QualityCodes;
                     // 2021.04.24 A.K and B.A, added these lines:
-                    if (((QualityCodes)measurement.QualityCodes != QualityCodes.None) && GlobalData.CPSStatus == true)
+                    if (((QualityCodes)measurement.QualityCodes != QualityCodes.None) &&((QualityCodes)measurement.QualityCodes != QualityCodes.LocalEntered) && GlobalData.CPSStatus == true)
                     {
                         _logger.WriteEntry("Quality Error : " + "QualityCode = " + (QualityCodes)measurement.QualityCodes + " ; Value = " + measurement.Value.ToString() + " ; Network Path = " + checkPoint.NetworkPath.ToString(), LogLevels.Warn);
                         _dataProcessing.QualityError(checkPoint, (QualityCodes)measurement.QualityCodes, SinglePointStatus.Appear);
 
                     }
-                    else if (((QualityCodes)checkPoint.QualityCodes_Old != QualityCodes.None) && GlobalData.CPSStatus == true)
+                    else if (((QualityCodes)checkPoint.QualityCodes_Old != QualityCodes.None) && ((QualityCodes)measurement.QualityCodes != QualityCodes.LocalEntered) && GlobalData.CPSStatus == true)
                         _dataProcessing.QualityError(checkPoint, (QualityCodes)measurement.QualityCodes, SinglePointStatus.Disappear);
 
                     checkPoint.Quality = OCPQualityConvertor.GetCheckPointQuality((QualityCodes)measurement.QualityCodes);

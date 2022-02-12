@@ -64,10 +64,11 @@ namespace OCP
                                 _logger.WriteEntry($"Unable to Write data to SCADA! - " + "Overload", LogLevels.Error);
                             }
 
-                            if (!_updateScadaPointOnServer.WriteAAP(checkPoint, checkPoint.ActivePower.Value))
-                            {
-                                _logger.WriteEntry("Unable to Write Data for OCPCHECKPOINT into SCADA! - " + checkPoint.Name + " ALLOWEDACTIVEPOWER=" + checkPoint.Overload.Value, LogLevels.Error);
-                            }
+                            //1400.11.23
+                            //if (!_updateScadaPointOnServer.WriteAAP(checkPoint, checkPoint.ActivePower.Value))
+                            //{
+                            //    _logger.WriteEntry("Unable to Write Data for OCPCHECKPOINT into SCADA! - " + checkPoint.Name + " ALLOWEDACTIVEPOWER=" + checkPoint.Overload.Value, LogLevels.Error);
+                            //}
 
                             //' 1394.04.10;   Ali.A.Kaji;  New lines, END
 
@@ -134,10 +135,14 @@ namespace OCP
                                 {
                                     _logger.WriteEntry($"Unable to Write data to SCADA! - " + "Overload", LogLevels.Error);
                                 }
-
-                                if (!_updateScadaPointOnServer.WriteAAP(checkPoint, checkPoint.ActivePower.Value))
+                                //1400.11.23
+                                if (checkPoint.Category == "PRIMARY" || checkPoint.Category == "SECONDARY")
                                 {
-                                    _logger.WriteEntry($"Unable to Write data to SCADA! - " + "ALLOWEDACTIVEPOWER", LogLevels.Error);
+
+                                    if (!_updateScadaPointOnServer.WriteAAP(checkPoint, checkPoint.ActivePower.Value))
+                                    {
+                                        _logger.WriteEntry($"Unable to Write data to SCADA! - " + "ALLOWEDACTIVEPOWER", LogLevels.Error);
+                                    }
                                 }
                                 //' 1394.04.10;   Ali.A.Kaji;  New lines, END
 
@@ -152,7 +157,12 @@ namespace OCP
 
                                 _logger.WriteEntry($"Average  = " + checkPoint.Average.Value.ToString(), LogLevels.Info);
                                 _logger.WriteEntry($"IT       = " + checkPoint.Overload.Value.ToString(), LogLevels.Info);
-                                _logger.WriteEntry($"AllowedActivePower  = " + checkPoint.ActivePower.Value.ToString(), LogLevels.Info);
+                                //1400.11.23
+
+                                if (checkPoint.Category == "PRIMARY" || checkPoint.Category == "SECONDARY")
+                                {
+                                    _logger.WriteEntry($"AllowedActivePower  = " + checkPoint.ActivePower.Value.ToString(), LogLevels.Info);
+                                }
 
                                 // Reset the values
                                 // For NIS transformers reset both the primary and the secondary sides.

@@ -24,7 +24,7 @@ namespace OCP
             applyCalculatedValue.Items.Add(
                 new CalculatedValueItem() { Console = "OCP", ElementId = checkPoint.ALLOWEDACTIVEPOWER_GUID.ToString(), Value = value });
 
-            _logger.WriteEntry($"Write data for AAP of {checkPoint.Name} = {value}", LogLevels.Info);
+            _logger.WriteEntry($"Write data for Allowd Active Power of {checkPoint.Name} = {value}", LogLevels.Info);
 
             try
             {

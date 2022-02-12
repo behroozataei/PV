@@ -31,7 +31,6 @@ namespace DCP
         public WorkerService(IServiceProvider serviceProvider)
         {
             var config = serviceProvider.GetService<IConfiguration>();
-
             _logger = serviceProvider.GetService<ILogger>();
             _RedisConnectorHelper = new RedisUtils(0);
             _staticDataManager = new Irisa.DataLayer.Oracle.OracleDataManager(config["OracleServicename"], config["OracleDatabaseAddress"], config["OracleStaticUser"], config["OracleStaticPassword"]);
