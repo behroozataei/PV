@@ -138,10 +138,12 @@ namespace EEC
                 var functionStatus = (DigitalSingleStatusOnOff)_repository.GetScadaPoint("FSTATUS").Value;
                 if (functionStatus == DigitalSingleStatusOnOff.Off)
                 {
-                    if (!_updateScadaPointOnServer.SendAlarm(_repository.GetScadaPoint("SCADAError"), (DigitalSingleStatus)DigitalSingleStatusOnOff.Off, ""))
-                        _logger.WriteEntry("Error: Can not send Alarm for 'EEC Function is Disabled'.", LogLevels.Error);
-                    if (!_updateScadaPointOnServer.SendAlarm(_repository.GetScadaPoint("SCADAError"), (DigitalSingleStatus)DigitalSingleStatusOnOff.On, "Warning SFSC: EEC Function is Off"))
-                        _logger.WriteEntry("Error: Can not send Alarm for 'EEC Function is Disabled'.", LogLevels.Error);
+                    _logger.WriteEntry("SFSC Stop Upadating of Powers, EEC is OFF", LogLevels.Error);
+
+                    //if (!_updateScadaPointOnServer.SendAlarm(_repository.GetScadaPoint("SCADAError"), (DigitalSingleStatus)DigitalSingleStatusOnOff.Off, ""))
+                    //    _logger.WriteEntry("Error: Can not send Alarm for 'EEC Function is Disabled'.", LogLevels.Error);
+                    //if (!_updateScadaPointOnServer.SendAlarm(_repository.GetScadaPoint("SCADAError"), (DigitalSingleStatus)DigitalSingleStatusOnOff.On, "Warning SFSC: EEC Function is Off"))
+                    //    _logger.WriteEntry("Error: Can not send Alarm for 'EEC Function is Disabled'.", LogLevels.Error);
 
                     isWorking = false;
                     return;

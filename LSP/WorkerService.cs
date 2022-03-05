@@ -24,15 +24,16 @@ namespace LSP
         private readonly BlockingCollection<CpsRuntimeData> _cpsRuntimeDataBuffer;
         private readonly LSPManager _lspManager;
         private readonly RedisUtils _RedisConnectorHelper;
+        private readonly IConfiguration _config;
 
         public WorkerService(IServiceProvider serviceProvider)
         {
-            var config = serviceProvider.GetService<IConfiguration>();
+            _config = serviceProvider.GetService<IConfiguration>();
 
             _logger = serviceProvider.GetService<ILogger>();
             _RedisConnectorHelper = new RedisUtils(0);
 
-            _staticDataManager = new Irisa.DataLayer.Oracle.OracleDataManager(config["OracleServicename"], config["OracleDatabaseAddress"], config["OracleStaticUser"], config["OracleStaticPassword"]);
+            _staticDataManager = new Irisa.DataLayer.Oracle.OracleDataManager(_config["OracleServicename"], _config["OracleDatabaseAddress"], _config["OracleStaticUser"], _config["OracleStaticPassword"]);
             _storeLogs = new StoreLogs(_staticDataManager, _logger, "SCADA.\"HIS_HisLogs_Insert\"");
 
             var historyDataRequest = new HistoryDataRequest
@@ -44,26 +45,25 @@ namespace LSP
                 RequireConnectivityNode = false,
             };
             _cpsRuntimeDataBuffer = new BlockingCollection<CpsRuntimeData>();
-            _rpcService = new CpsRpcService(config["CpsIpAddress"], 10000, historyDataRequest, _cpsRuntimeDataBuffer);
-            _repository = new Repository(_logger, config, _RedisConnectorHelper);
+            _rpcService = new CpsRpcService(_config["CpsIpAddress"], 10000, historyDataRequest, _cpsRuntimeDataBuffer);
+            _repository = new Repository(_logger, _config, _RedisConnectorHelper);
             _lspManager = new LSPManager(_logger, _repository, _rpcService.CommandService);
             _runtimeDataReceiver = new RuntimeDataReceiver(_logger, _repository, _lspManager, _rpcService, _cpsRuntimeDataBuffer);
-            while (!Connection.PingHost(config["CpsIpAddress"], 10000))
-            {
-                Console.WriteLine(">>>>> Waiting for CPS Connection");
-                Thread.Sleep(5000);
-            }
-
-
-
         }
 
         public override Task StartAsync(CancellationToken cancellationToken)
         {
             _logger.LogReceived += OnLogReceived;
             _storeLogs.Start();
+            _logger.WriteEntry("Start of running LSP ... ", LogLevels.Critical);
+                       
+            while (!COM.Connection.PingHost(_config["CpsIpAddress"], 10000))
+            {
+                _logger.WriteEntry(">>>>> Waiting for CPS Connection", LogLevels.Info);
+                Thread.Sleep(5000);
+            }
+            _logger.WriteEntry(">>>>> Connected to CPS", LogLevels.Info);
 
-            _logger.WriteEntry("Start of running LSP.", LogLevels.Info);
             _logger.WriteEntry("Loading data from database/redis is started.", LogLevels.Info);
 
             if (_repository.Build() == false)
@@ -76,6 +76,7 @@ namespace LSP
             _runtimeDataReceiver.Start();
             _lspManager.CheckCPSStatus();  //waiting for connection
             _lspManager.Initialize();
+            _logger.WriteEntry("End of preparing data for LSP ... ", LogLevels.Critical);
             return base.StartAsync(cancellationToken);
         }
 

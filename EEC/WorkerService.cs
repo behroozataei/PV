@@ -24,18 +24,16 @@ namespace EEC
         private readonly BlockingCollection<CpsRuntimeData> _cpsRuntimeDataBuffer;
         private readonly RuntimeDataReceiver _runtimeDataReceiver;
         private readonly RedisUtils _RedisConnectorHelper;
+        private readonly IConfiguration _config;
 
         public WorkerService(IServiceProvider serviceProvider)
         {
-            var config = serviceProvider.GetService<IConfiguration>();
+            _config = serviceProvider.GetService<IConfiguration>();
 
             _logger = serviceProvider.GetService<ILogger>();
             _RedisConnectorHelper = new RedisUtils(0);
-            _dataManager = new Irisa.DataLayer.Oracle.OracleDataManager(config["OracleServicename"], config["OracleDatabaseAddress"], config["OracleStaticUser"], config["OracleStaticPassword"]);
+            _dataManager = new Irisa.DataLayer.Oracle.OracleDataManager(_config["OracleServicename"], _config["OracleDatabaseAddress"], _config["OracleStaticUser"], _config["OracleStaticPassword"]);
             _storeLogs = new StoreLogs(_dataManager, _logger, "SCADA.\"HIS_HisLogs_Insert\"");
-
-
-
 
             var historyDataRequest = new HistoryDataRequest
             {
@@ -47,26 +45,28 @@ namespace EEC
             };
             _cpsRuntimeDataBuffer = new BlockingCollection<CpsRuntimeData>();
 
-            _rpcService = new CpsRpcService(config["CpsIpAddress"], 10000, historyDataRequest, _cpsRuntimeDataBuffer);
+            _rpcService = new CpsRpcService(_config["CpsIpAddress"], 10000, historyDataRequest, _cpsRuntimeDataBuffer);
 
 
 
-            _repository = new Repository(_logger, config, _RedisConnectorHelper);
+            _repository = new Repository(_logger, _config, _RedisConnectorHelper);
             _eecManager = new EECManager(_logger, _repository, _rpcService.CommandService);
             _runtimeDataReceiver = new RuntimeDataReceiver(_logger, _repository, (IProcessing)_eecManager.RuntimeDataProcessing, _rpcService, _cpsRuntimeDataBuffer);
-            while (!Connection.PingHost(config["CpsIpAddress"], 10000))
-            {
-                Console.WriteLine(">>>>> Waiting for CPS Connection");
-                Thread.Sleep(5000);
-            }
         }
 
         public override Task StartAsync(CancellationToken cancellationToken)
         {
             _logger.LogReceived += OnLogReceived;
             _storeLogs.Start();
+            _logger.WriteEntry("Start of running EEC ... ", LogLevels.Critical);
+            //_logger.WriteEntry("Start of running EEC.", LogLevels.Info);
 
-            _logger.WriteEntry("Start of running EEC.", LogLevels.Info);
+            while (!COM.Connection.PingHost(_config["CpsIpAddress"], 10000))
+            {
+                _logger.WriteEntry(">>>>> Waiting for CPS Connection", LogLevels.Info);
+                Thread.Sleep(5000);
+            }
+            _logger.WriteEntry(">>>>> Connected to CPS", LogLevels.Info);
             _logger.WriteEntry("Loading data from database/redis is started.", LogLevels.Info);
 
             if (_repository.Build() == false)
@@ -81,6 +81,7 @@ namespace EEC
 
             _eecManager.StartCyclicOperation();
 
+            _logger.WriteEntry("End of preparing data for EEC ... ", LogLevels.Critical);
             return base.StartAsync(cancellationToken);
         }
 

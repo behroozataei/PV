@@ -19,4 +19,3 @@ WORKDIR /app
 RUN chmod +x DCP
 RUN chmod +x dcp-entrypoint.sh 
 ENTRYPOINT ["./dcp-entrypoint.sh"]
-

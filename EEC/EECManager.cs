@@ -32,6 +32,7 @@ namespace EEC
             _energyCalculator = new EECEnergyCalculator(_repository, _logger, _updateScadaPointOnServer);
 
             _SFSCManager = new EECSFSCManager(_logger, repository, commandService);
+            
         }
 
         private void RunCyclicOperation(object sender, ElapsedEventArgs e)

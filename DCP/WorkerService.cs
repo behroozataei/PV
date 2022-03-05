@@ -27,16 +27,17 @@ namespace DCP
         private readonly RuntimeDataReceiver _runtimeDataReceiver;
         private readonly DCPManager _dcpManager;
         private readonly RedisUtils _RedisConnectorHelper;
+        private readonly IConfiguration _config;
 
         public WorkerService(IServiceProvider serviceProvider)
         {
-            var config = serviceProvider.GetService<IConfiguration>();
+            _config = serviceProvider.GetService<IConfiguration>();
             _logger = serviceProvider.GetService<ILogger>();
             _RedisConnectorHelper = new RedisUtils(0);
-            _staticDataManager = new Irisa.DataLayer.Oracle.OracleDataManager(config["OracleServicename"], config["OracleDatabaseAddress"], config["OracleStaticUser"], config["OracleStaticPassword"]);
-            _historicalDataManager = new Irisa.DataLayer.Oracle.OracleDataManager(config["OracleServicename"], config["OracleDatabaseAddress"], config["OracleHISUser"], config["OracleHISPassword"]);
+            _staticDataManager = new Irisa.DataLayer.Oracle.OracleDataManager(_config["OracleServicename"], _config["OracleDatabaseAddress"], _config["OracleStaticUser"], _config["OracleStaticPassword"]);
+            _historicalDataManager = new Irisa.DataLayer.Oracle.OracleDataManager(_config["OracleServicename"], _config["OracleDatabaseAddress"], _config["OracleHISUser"], _config["OracleHISPassword"]);
             _storeLogs = new StoreLogs(_staticDataManager, _logger, "SCADA.\"HIS_HisLogs_Insert\"");
-            _linkDBpcsDataManager = new SqlServerDataManager(config["PCSLinkDatabaseName"], config["PCSLinkDatabaseAddress"], config["PCSLinkUser"], config["PCSLinkPassword"]);
+            _linkDBpcsDataManager = new SqlServerDataManager(_config["PCSLinkDatabaseName"], _config["PCSLinkDatabaseAddress"], _config["PCSLinkUser"], _config["PCSLinkPassword"]);
 
             var historyDataRequest = new HistoryDataRequest
             {
@@ -47,16 +48,12 @@ namespace DCP
                 RequireConnectivityNode = false,
             };
             _cpsRuntimeDataBuffer = new BlockingCollection<CpsRuntimeData>();
-            _rpcService = new CpsRpcService(config["CpsIpAddress"], 10000, historyDataRequest, _cpsRuntimeDataBuffer);
+            _rpcService = new CpsRpcService(_config["CpsIpAddress"], 10000, historyDataRequest, _cpsRuntimeDataBuffer);
 
             _repository = new Repository(_logger, _staticDataManager, _historicalDataManager, _linkDBpcsDataManager, _RedisConnectorHelper);
             _dcpManager = new DCPManager(_logger, _repository, _rpcService.CommandService);
             _runtimeDataReceiver = new RuntimeDataReceiver(_logger, _repository, (IProcessing)_dcpManager, _rpcService, _cpsRuntimeDataBuffer);
-            while (!Connection.PingHost(config["CpsIpAddress"], 10000))
-            {
-                Console.WriteLine(">>>>> Waiting for CPS Connection");
-                Thread.Sleep(5000);
-            }
+           
         }
 
         public override Task StartAsync(CancellationToken cancellationToken)
@@ -64,8 +61,16 @@ namespace DCP
 
             _logger.LogReceived += OnLogReceived;
             _storeLogs.Start();
+            _logger.WriteEntry("Start of running DCP ... ", LogLevels.Critical);
+            //_logger.WriteEntry("Start of running DCP.", LogLevels.Info);
 
-            _logger.WriteEntry("Start of running DCP.", LogLevels.Info);
+            while (!COM.Connection.PingHost(_config["CpsIpAddress"], 10000))
+            {
+                _logger.WriteEntry(">>>>> Waiting for CPS Connection", LogLevels.Info);
+                Thread.Sleep(5000);
+            }
+            _logger.WriteEntry(">>>>> Connected to CPS", LogLevels.Info);
+
             _logger.WriteEntry("Loading data from database/redis is started.", LogLevels.Info);
 
             if (_repository.Build() == false)
@@ -78,6 +83,7 @@ namespace DCP
             _runtimeDataReceiver.Start();
             _dcpManager.CheckCPSStatus();
             _dcpManager.DCManager_start();
+            _logger.WriteEntry("End of preparing data for DCP ... ", LogLevels.Critical);
 
             return base.StartAsync(cancellationToken);
         }

@@ -20,6 +20,7 @@ namespace COM
         public const string OCP_PARAMS = "APP:OCP_PARAMS:";
         public const string OPCMeasurement = "APP:OPCMeasurement:";
         public const string OPC_Params = "APP:OPC_Params:";
+
         public const string EEC_TELEGRAM = "APP:EEC_TELEGRAM:";
         public const string EEC_SFSCEAFSPRIORITY = "APP:EEC_SFSCEAFSPRIORITY:";
         public const string SFSC_EAFSPOWER = "APP:SFSC_EAFSPOWER:";
