@@ -16,40 +16,47 @@ namespace COM
         [Obsolete]
         static RedisUtils()
         {
+            try
+            {
 
-            JObject _settings = JObject.Parse(File.ReadAllText(@"appsettings.json"));
-            RedisConnections = new Lazy<ConnectionMultiplexer>(() =>
-               {
+                JObject _settings = JObject.Parse(File.ReadAllText(@"appsettings.json"));
+                RedisConnections = new Lazy<ConnectionMultiplexer>(() =>
+                   {
 
-                   return ConnectionMultiplexer.Connect(
-                       new ConfigurationOptions
-                       {
-                           EndPoints =
+                       return ConnectionMultiplexer.Connect(
+                           new ConfigurationOptions
                            {
+                               EndPoints =
+                               {
                                 _settings.GetValue("RedisKeySentinel1").ToString(),
                                 _settings.GetValue("RedisKeySentinel2").ToString(),
                                 _settings.GetValue("RedisKeySentinel3").ToString()
 
-                           },
-                           AbortOnConnectFail = false,
-                           AllowAdmin = true,
-                           Password = "a-very-complex-password-here",
-                           ServiceName = "mymaster",
+                               },
+                               AbortOnConnectFail = false,
+                               AllowAdmin = true,
+                               Password = "a-very-complex-password-here",
+                               ServiceName = "mymaster",
 
 
-                           //EndPoints = { _settings.GetValue("RedisKey_local").ToString() },
-                           //AbortOnConnectFail = false,
-                           //AllowAdmin = true,
-                           //Password ="mdu.2121"
-                       });
-               }
-            , LazyThreadSafetyMode.ExecutionAndPublication);
+                               //EndPoints = { _settings.GetValue("RedisKey_local").ToString() },
+                               //AbortOnConnectFail = false,
+                               //AllowAdmin = true,
+                               //Password = "mdu.2121"
+                           });
+                   }
+                , LazyThreadSafetyMode.ExecutionAndPublication);
 
 
-            //RedisConnection.ConnectionFailed += (sender, e) => { ConnectionFailed.Invoke(sender, e); };
-            //RedisConnection.ConnectionRestored += (sender, e) => { ConnectionRestored.Invoke(sender, e); };
-            //RedisConnection.ErrorMessage += (sender, e) => { ErrorMessage.Invoke(sender, e); };
-            //RedisConnection.ConfigurationChanged += (sender, e) => { ConfigurationChanged.Invoke(sender, e); };
+                //RedisConnection.ConnectionFailed += (sender, e) => { ConnectionFailed.Invoke(sender, e); };
+                //RedisConnection.ConnectionRestored += (sender, e) => { ConnectionRestored.Invoke(sender, e); };
+                //RedisConnection.ErrorMessage += (sender, e) => { ErrorMessage.Invoke(sender, e); };
+                //RedisConnection.ConfigurationChanged += (sender, e) => { ConfigurationChanged.Invoke(sender, e); };
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.ToString());
+            }
 
 
         }

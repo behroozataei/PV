@@ -66,16 +66,11 @@ namespace LSP
             _repository = repository;
             _scadaCommand = scadaCommand;
 
-
-
-
             //-----------------------------------------------------------------------------------
             // An array for Tag of all Digital Points in SCADA may be changed
             // Important Note: These names should match with TAG field of T_CDCPARAMS
-            m_arrChangeableDPoints = new string[] { "OVERLCOND", "OVERLOADRESET", "" };
-
+            ///m_arrChangeableDPoints = new string[] { "OVERLCOND", "OVERLOADRESET", "" };
             //-------------------------------------------------------------------------
-
         }
 
         public void Initialize()
@@ -291,8 +286,18 @@ namespace LSP
                     // LSPACTIVATED:	LSP informs Operator by this Alarm
                     // LSPTELEGRAM:		LSP to DC  trigerring
                     // TODO: LSPACTIVATED	=>	"INPUTOUTPUT" in table app.LSP_PARAMS
-                    if ((aTag.Name == "OVERLCOND") && ((SinglePointStatus)aTag.Value == SinglePointStatus.Appear))
+
+                    // 2022.03.07 A.K, B.A      Add new SCADAPoint for checking OVERLCOND from OCP, OVERLCONDA
+                    // if ((aTag.Name == "OVERLCOND") && ((SinglePointStatus)aTag.Value == SinglePointStatus.Appear))
+                    if (((aTag.Name == "OVERLCONDA") && (aTag.Value == 2)) || ((aTag.Name == "OVERLCOND") && ((SinglePointStatus)aTag.Value == SinglePointStatus.Appear)))
                     {
+                        _logger.WriteEntry($"Overload Triggerd OVELOADCOND Value = {_repository.GetLSPScadaPoint("OVERLCOND").Value}, OVELOADCONDA Value = {_repository.GetLSPScadaPoint("OVERLCONDA").Value} ", LogLevels.Info);
+                    }
+
+                        if ((aTag.Name == "OVERLCONDA") && (aTag.Value == 2))
+                    {
+                        strValue = "1";
+
                         _logger.WriteEntry("... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ...", LogLevels.Info);
                         _logger.WriteEntry("Processing OVERLOAD is started . . . ", LogLevels.Info);
 
@@ -318,6 +323,11 @@ namespace LSP
                         if (!_updateScadaPointOnServer.WriteDigital(overLCond, SinglePointStatus.Disappear,
                             "LSP has processed OVERLOAD from OCP, successfull processing."))
                             _logger.WriteEntry("Error in sending Alarm for 'LSP has received OVERLOAD, Clear flag after processing, Succesfull processing.'", LogLevels.Error);
+
+                        // 2022.03.07 A.K, B.A      Add new SCADAPoint for checking OVERLCOND from OCP, OVERLCONDA
+                        var overLCondA = _repository.GetLSPScadaPoint("OVERLCONDA");
+                        if (!_updateScadaPointOnServer.WriteAnalog( overLCondA, 1))
+                            _logger.WriteEntry("Error in sending Alarm for 'LSP has received OVERLOADA, Clear flag after processing, Succesfull processing.'", LogLevels.Error);
 
                         //--------------------------------------------------------------------------
                         // Log successful exit of LSP
@@ -406,6 +416,26 @@ namespace LSP
                 {
                     _logger.WriteEntry("Processing Jobs was failed", LogLevels.Error);
                     //' Send Alarm
+
+                    // 2022.03.06 A.K, B.A      Next lines were added, in case of no any error in Jobs processing.
+                    //-----------------------------------------------------------------------------------------------------------------
+                    // 6. Reset the Overload Tag
+                    // Removing SumIt of ShedPoints
+                    _logger.WriteEntry("--------------    Reset IT of Check Points    -----------------", LogLevels.Info);
+                    if (!ResetCheckPoints())
+                    {
+                        _logger.WriteEntry("Resetting IT of Activated Points by LSP was failed!", LogLevels.Error);
+                    }
+                    else
+                    {
+                        // TODO: Check
+                        if (!_updateScadaPointOnServer.WriteDigital(_repository.GetLSPScadaPoint("LSPACTIVATED"), SinglePointStatus.Disappear, ""))
+                        {
+                            _logger.WriteEntry("Resetting LSPACTIVATED in SCADA was failed", LogLevels.Error);
+                        }
+                    }
+                    _logger.WriteEntry("All Activated Priority lists was processed succesfully", LogLevels.Info);
+                    //-----------------------------------------------------------------------------------------------------------------
                 }
                 else
                 {
@@ -556,7 +586,8 @@ namespace LSP
                         _logger.WriteEntry("Processing Priority Lists was failed", LogLevels.Error);
                         // Send Alarm
                     }
-                    else
+                    // 2022.03.06 A.K, B.A      Next line was commented, in case of no any error in Priority List processing.
+                    // else
                     {
                         //-----------------------------------------------------------------------------------------------------------------
                         // 6. Reset the Overload Tag
@@ -815,14 +846,14 @@ namespace LSP
                     // 3. Finding matched combination of network for this Decision Table
                     if (!aDect.FindCombination(ref aCombNo))
                     {
-                        _logger.WriteEntry("Find combination was failed", LogLevels.Error);
+                        _logger.WriteEntry("Finding combination was failed", LogLevels.Error);
                         // Sending Alarm to Operator is required here
                         continue;
                     }
 
                     if (aCombNo == 0)
                     {
-                        _logger.WriteEntry("Found combination is not valid", LogLevels.Error);
+                        _logger.WriteEntry($"Found combination is not valid for Checkpoint: {checkPoint.Name}", LogLevels.Error);
 
                         // Sending Alarm to Operator is required here
                         if (!_updateScadaPointOnServer.SendAlarm(_repository.GetLSPScadaPoint("WRONGNETWORKSTATUS"), SinglePointStatus.Disappear, ""))
@@ -1151,7 +1182,6 @@ namespace LSP
 
                             }
 
-
                             for (byte idxItem = 1; idxItem <= aPriol._nBreakers; idxItem++)
                             {
                                 _logger.WriteEntry("idxItem = " + idxItem.ToString(), LogLevels.Info);
@@ -1180,12 +1210,8 @@ namespace LSP
                                     var cbToShed = _repository.GetLSPScadaPoint(shedItem);
                                     var breaker_current = _repository.GetLSPScadaPoint(aPriol.GetArrBreakers(idxItem).guid_curr);
 
-
                                     var shedItemPartner = aPriol.GetArrBreakers(idxItem).addressPartner_guid;
                                     var cbToShedPartner = _repository.GetLSPScadaPoint(shedItemPartner);
-
-
-
                                     if (cbToShed is null)
                                     {
                                         _logger.WriteEntry("Error: Breaker is null : " + aPriol.GetArrBreakers(idxItem).NetworkPath_Item, LogLevels.Error);
@@ -1204,7 +1230,6 @@ namespace LSP
                                         goto NextItemInPriol;
                                     }
 
-
                                     // TODO : check
                                     if (cbToShed.Quality != QualityCodes.None)
                                     {
@@ -1212,9 +1237,6 @@ namespace LSP
                                         //GoTo LastChecksForPriol
                                         goto NextItemInPriol;
                                     }
-
-
-
                                     else
                                     {
                                         // -------------------------------------------------------------------
@@ -1331,7 +1353,8 @@ namespace LSP
                                 {
                                     _logger.WriteEntry("Last shed time is below than 20 seconds than Now, LastShedTime = " + dtLastShedTime.ToString(), LogLevels.Info);
                                 }
-                            NextItemInPriol:;
+
+                                NextItemInPriol:;
                             }
 
                             // -------------------------------------------------------------------
@@ -1352,9 +1375,10 @@ namespace LSP
                             }
                         }
                     }
-                NextPriols:;
-                    result = true;
+
+                    NextPriols:;
                 }
+                result = true;
             }
             catch (System.Exception excep)
             {

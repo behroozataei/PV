@@ -89,6 +89,15 @@ namespace OCP
                             // For the other points
                             checkPoint.OverloadFlag = false;
                         } // end of if : (arrShedPoint(i).OverloadFlag)
+                        //1400.12.16
+                        else
+                        {
+                            if (!_updateScadaPointOnServer.WriteIT(checkPoint, 0))
+                            {
+                                _logger.WriteEntry($"Unable to Write data to SCADA! - " + "Overload", LogLevels.Error);
+                            }
+
+                        }
                     }
                     else
                     {
@@ -254,6 +263,15 @@ namespace OCP
                                 }
                                 checkPoint.OverloadFlag = false;
                             }
+                            //1400.12.16
+                            else
+                            {
+                                if (!_updateScadaPointOnServer.WriteIT(checkPoint, 0))
+                                {
+                                    _logger.WriteEntry($"Unable to Write data to SCADA! - " + "Overload", LogLevels.Error);
+                                }
+
+                            }
                         }
                         // End of if : CycleNo = 5 Or CycleNo = 2
                     }
@@ -266,9 +284,11 @@ namespace OCP
 
                     // TODO : check
                     var overlcond = _repository.GetOCPScadaPoint("OVERLCOND");
+                    var overlcondA = _repository.GetOCPScadaPoint("OVERLCONDA");
                     //if (!_updateScadaPointOnServer.SendOverloadToLSP(overlcond, SinglePointStatus.Appear))
-                    if (!_updateScadaPointOnServer.SendAlarm(_repository.GetOCPScadaPoint("OVERLCOND"), SinglePointStatus.Appear,
-                            "OCP is in OVERLOAD, trying to trigger the LSP ... "))
+                    if ((!_updateScadaPointOnServer.SendAlarm(_repository.GetOCPScadaPoint("OVERLCOND"), SinglePointStatus.Appear,
+                            "OCP is in OVERLOAD, trying to trigger the LSP ... "))||
+                         (!_updateScadaPointOnServer.WriteOVERLCONDA(_repository.GetOCPScadaPoint("OVERLCONDA"), 2.0f)))
                     {
                         LSPTrigger = false;
 
@@ -650,7 +670,7 @@ namespace OCP
             try
             {
                 var overlcond = _repository.GetOCPScadaPoint("OVERLCOND");
-                if (!_updateScadaPointOnServer.SendOverloadToLSP(overlcond, SinglePointStatus.Disappear))
+                if ((!_updateScadaPointOnServer.SendOverloadToLSP(overlcond, SinglePointStatus.Disappear))|| (!_updateScadaPointOnServer.WriteOVERLCONDA(_repository.GetOCPScadaPoint("OVERLCONDA"), 1.0f)))
                 {
                     // Send Alarm
                     if (!_updateScadaPointOnServer.SendAlarm(_repository.GetOCPScadaPoint("Functionality"), SinglePointStatus.Disappear, "Sending disappear for OVERLCOND is failed."))

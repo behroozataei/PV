@@ -96,6 +96,30 @@ namespace OCP
             return executed;
         }
 
+        public bool WriteOVERLCONDA(OCPScadaPoint scadapoint, float value)
+        {
+            var executed = false;
+
+            try
+            {
+                var applyCalculatedValue = new ApplyCalculatedValueRequest();
+                applyCalculatedValue.Items.Add(
+                    new CalculatedValueItem() { Console = "OCP", ElementId = scadapoint.Id.ToString(), Value = value });
+
+                var reply = _scadaCommand.ApplyCalculatedValue(applyCalculatedValue);
+
+                if (reply.Executed == false)
+                    _logger.WriteEntry("OCP", reply.Log, LogLevels.Warn);
+                else
+                    executed = true;
+            }
+            catch (Exception ex)
+            {
+                _logger.WriteEntry($"Write data for Overload Condition  of {scadapoint.Name} is not executed, {ex.Message}", LogLevels.Error);
+            }
+            return executed;
+        }
+
         public bool WriteAverage(OCPCheckPoint checkPoint, float value)
         {
             var executed = false;

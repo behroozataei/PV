@@ -35,7 +35,9 @@ namespace OCP
             var substitutionValue = 0.0f;
 
             SkipReadEval = false;
-            _cycleNo = ((vTime.Second % 15) / 3) + 1; // Cycles begin from 1 to 5
+            var Rndsecend = (vTime.Millisecond > 800)&&((vTime.Second % 3) == 2) ?  1 : 0;
+            _cycleNo = (((vTime.Second + Rndsecend)  % 15 ) / 3) + 1; // Cycles begin from 1 to 5
+            //_cycleNo = ((vTime.Second % 15) / 3) + 1; // Cycles begin from 1 to 5
             _actualCycleNo = _cycleNo;
             _cycles[_cycleNo] = vTime;
 
@@ -303,7 +305,7 @@ namespace OCP
 
             foreach (KeyValuePair<DateTime, Tuple<int, float>> kvp in dict)
             {
-                _logger.WriteEntry($"Cycle({kvp.Value.Item1}) = " + kvp.Key.ToString() + " ; " + kvp.Value.Item2.ToString(), LogLevels.Info);
+                _logger.WriteEntry($"Cycle({kvp.Value.Item1}) = " + kvp.Key.ToString("yyyy-MM-dd HH:mm:ss.fff") + " ; " + kvp.Value.Item2.ToString(), LogLevels.Info);
             }
 
             //_logger.WriteEntry("Cycle (1)  = " + _cycles[1].ToString() + " ; " + ocpCheckPoint.Value1.ToString(), LogLevels.Info);

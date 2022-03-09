@@ -120,6 +120,10 @@ namespace LSP
                         lspScadaPoint.Quality = (QualityCodes)measurement.QualityCodes;
 
                         //_logger.WriteEntry("OnRawDataReceived()..Analog..LSPScadaPoint: " + lspScadaPoint.NetworkPath + ";" + measurement.Value, LogLevels.Info);
+
+                        // 2022.03.07 A.K, B.A      Add new SCADAPoint for checking OVERLCOND from OCP, OVERLCONDA
+                        if( lspScadaPoint.NetworkPath.Contains("OVERLCONDA") )
+                            _dataProcessing.SCADAEventRaised(measurement);
                     }
 
                     // Updating values for ancealary points of CheckPoints:

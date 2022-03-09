@@ -3,6 +3,7 @@ using Irisa.Logger;
 using Irisa.Message;
 using System;
 using System.Timers;
+using COM;
 
 namespace OCP
 {
@@ -15,7 +16,8 @@ namespace OCP
         private readonly OCPOverloadCheck _overloadCheck;
         private readonly OCPOverloadPreparation _overloadPreparation;
         private readonly UpdateScadaPointOnServer _updateScadaPointOnServer;
-        private readonly Timer _timer;
+        //private readonly Timer _timer;
+        private readonly HighResolutionTimer _timer;
         private bool _firstRun;
         private bool isCompleted = true;
         private bool isActived = false;
@@ -30,10 +32,14 @@ namespace OCP
             _overloadPreparation = new OCPOverloadPreparation(logger, repository, repository.GetCheckPoints(), _updateScadaPointOnServer, _cycleValidator);
             _firstRun = true;
 
-            _timer = new Timer();
+            //_timer = new Timer();
+            _timer = new HighResolutionTimer();
             _timer.Interval = OCP_TIMER_TICKS;
             _timer.Elapsed += OnTimerElapsed;
+
+
         }
+
 
         public void Startwork()
         {
@@ -45,7 +51,8 @@ namespace OCP
             _timer.Stop();
         }
 
-        private void OnTimerElapsed(object sender, ElapsedEventArgs e)
+        //private void OnTimerElapsed(object sender, ElapsedEventArgs e)
+        private void OnTimerElapsed(object sender, HighResolutionTimerElapsedEventArgs e)
         {
             var cycleNo = 0;
 

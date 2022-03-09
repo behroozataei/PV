@@ -1,27 +1,67 @@
 ﻿using COM;
 using StackExchange.Redis;
 using System;
+using System.Timers;
 
 namespace CLR
 {
     class Program
     {
         private RedisUtils _RedisConnectorHelper;
+        static HighResolutionTimer timer1 = new HighResolutionTimer();
+        static Timer timer2 = new Timer();
+
         static void Main(string[] args)
         {
+            
+            timer1.Interval = 3000;
+            timer1.Elapsed += Timer_Elapsed1;
+           
 
-            Program p1 = new Program();
+            timer2.Interval = 3000;
+            timer2.Elapsed += Timer_Elapsed2;
 
-            p1.menu();
-            while (!p1.run())
-            {
-                Console.WriteLine("Error");
-                p1.menu();
-            }
+            int aSec = DateTime.Now.Second;
+            int mSec = DateTime.Now.Millisecond;
+                       
+            System.Threading.Thread.Sleep((3000 - ((aSec % 3) * 1000 + mSec)));
 
 
+            timer1.Start();
+            timer2.Start();
+
+            //Program p1 = new Program();
+
+
+
+            //p1.menu();
+            //while (!p1.run())
+            //{
+            //    Console.WriteLine("Error");
+            //    p1.menu();
+            //}
+
+            Console.ReadKey();
 
         }
+
+        private static void Timer_Elapsed1(object sender, HighResolutionTimerElapsedEventArgs e)
+        {
+            Console.WriteLine($"Time1 ={System.DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff")} ");
+        }
+
+        private static void Timer_Elapsed0(object sender, System.Timers.ElapsedEventArgs e)
+        {
+            
+            Console.WriteLine($"Time1 ={System.DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff")} ");
+            
+        }
+
+        private static void Timer_Elapsed2(object sender, System.Timers.ElapsedEventArgs e)
+        {
+            Console.WriteLine($"                                                                            Time2 ={System.DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff")} ");
+        }
+
         void menu()
         {
             Console.Clear();
