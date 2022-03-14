@@ -52,7 +52,7 @@ namespace OPC
         {
             _logger.LogReceived += OnLogReceived;
             _storeLogs.Start();
-            _logger.WriteEntry("Start of running OPC ... ", LogLevels.Critical);
+            _logger.WriteEntry("Start of running OPC ... ***************************************", LogLevels.Info);
 
             while (!COM.Connection.PingHost(_config["CpsIpAddress"], 10000))
             {
@@ -73,7 +73,7 @@ namespace OPC
             {
                 _opcManager.RunClient();
             }, TaskCreationOptions.LongRunning);
-            _logger.WriteEntry("End of preparing data for OPC ... ", LogLevels.Critical);
+            _logger.WriteEntry("End of preparing data for OPC ... ***************************************", LogLevels.Info);
 
 
             return base.StartAsync(cancellationToken);

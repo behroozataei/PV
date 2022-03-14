@@ -158,7 +158,7 @@ namespace DCP
 
                                 if (!_repository.ModifyOnLinkDB(sql))
                                 {
-                                    _logger.WriteEntry("'UPDATE dbo.T_FURNACE SET EndTime' is not possible!", LogLevels.Error);
+                                    _logger.WriteEntry("'UPDATE dbo.T_FURNACE SET EndTime' is not possible! ", LogLevels.Error);
                                 }
                                 //Module1.ArrayEAFsCurrent[J - 1, 1] = "Standby";
                                 //WriteData(ArrayEAFsConsumption[J - 1], "0");
@@ -207,7 +207,7 @@ namespace DCP
                                 "'";
                         if (!_repository.ModifyOnLinkDB(sql))
                         {
-                            _logger.WriteEntry("'UPDATE dbo.T_EAFsEnergyConsumption' is not possible!", LogLevels.Error);
+                            _logger.WriteEntry("'UPDATE dbo.T_EAFsEnergyConsumption' is not possible!; " + sql, LogLevels.Error);
                         }
                     }
                 }

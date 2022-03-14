@@ -55,6 +55,9 @@ namespace OCP
                     LastTrueCycleNo = _cycleNo;
                     LastTrueTime = _cycles[_cycleNo];
                 }
+
+                if (DeviationIstoomuch(vTime,3,200))
+                    _logger.WriteEntry($"Cycle time Deviation is too high,time = {vTime.ToString("yyyy-MM-dd HH:mm:ss.fff")}", LogLevels.Warn);
             }
             // First running
             else
@@ -293,6 +296,14 @@ namespace OCP
             return result;
         }
 
+        private bool DeviationIstoomuch(DateTime vTime, int Cycletime, int MaxDeviation )
+        {
+            if ((((vTime.Second % Cycletime) == 0) && vTime.Millisecond < MaxDeviation) ||
+                (((vTime.Second % Cycletime) == (Cycletime -1)) && (1000-vTime.Millisecond)< MaxDeviation))
+                return false;
+            else
+                return true;
+        }
         //' 1396.10.24 IMANIAN ; ADD LOGGS OF VALUES OF EACH CYCLES
         public object LogCycleVal(OCPCheckPoint ocpCheckPoint)
         {

@@ -16,8 +16,7 @@ namespace OCP
         private readonly OCPOverloadCheck _overloadCheck;
         private readonly OCPOverloadPreparation _overloadPreparation;
         private readonly UpdateScadaPointOnServer _updateScadaPointOnServer;
-        //private readonly Timer _timer;
-        private readonly HighResolutionTimer _timer;
+        private readonly Timer _timer;
         private bool _firstRun;
         private bool isCompleted = true;
         private bool isActived = false;
@@ -32,8 +31,7 @@ namespace OCP
             _overloadPreparation = new OCPOverloadPreparation(logger, repository, repository.GetCheckPoints(), _updateScadaPointOnServer, _cycleValidator);
             _firstRun = true;
 
-            //_timer = new Timer();
-            _timer = new HighResolutionTimer();
+            _timer = new Timer();
             _timer.Interval = OCP_TIMER_TICKS;
             _timer.Elapsed += OnTimerElapsed;
 
@@ -51,8 +49,7 @@ namespace OCP
             _timer.Stop();
         }
 
-        //private void OnTimerElapsed(object sender, ElapsedEventArgs e)
-        private void OnTimerElapsed(object sender, HighResolutionTimerElapsedEventArgs e)
+        private void OnTimerElapsed(object sender, ElapsedEventArgs e)
         {
             var cycleNo = 0;
 
@@ -60,6 +57,14 @@ namespace OCP
             {
                 if (isCompleted == false)
                     return;
+
+                if (GlobalData.CPSStatus == false)
+                {
+                    isCompleted = true;
+                    _logger.WriteEntry("CPS Connection Error!", LogLevels.Error);
+                    return;
+                }
+                    
 
                 isCompleted = false;
                 //_logger.WriteEntry("_________________________________________________________________________ ", LogLevels.Info);

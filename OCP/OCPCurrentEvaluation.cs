@@ -72,7 +72,8 @@ namespace OCP
                         checkPoint.TCycle5 = cycletime;  //"IMANIAN 96-11-07  ADD CYCLTIME FOR EACH POINT 
                         break;
                 }
-                _updateScadaPointOnServer.WriteSample(checkPoint, checkPoint.Value);
+                
+                 _updateScadaPointOnServer.WriteSample(checkPoint, checkPoint.Value);
                 // 2021.04.24 A.K and B.A, added these lines:
                 if (OCPQualityConvertor.GetCheckPointQuality((QualityCodes)checkPoint.QualityCodes) == OCPCheckPointQuality.Invalid)
                 {

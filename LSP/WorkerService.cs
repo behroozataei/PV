@@ -55,7 +55,7 @@ namespace LSP
         {
             _logger.LogReceived += OnLogReceived;
             _storeLogs.Start();
-            _logger.WriteEntry("Start of running LSP ... ", LogLevels.Critical);
+            _logger.WriteEntry("Start of running LSP ... ***************************************", LogLevels.Info);
                        
             while (!COM.Connection.PingHost(_config["CpsIpAddress"], 10000))
             {
@@ -76,7 +76,7 @@ namespace LSP
             _runtimeDataReceiver.Start();
             _lspManager.CheckCPSStatus();  //waiting for connection
             _lspManager.Initialize();
-            _logger.WriteEntry("End of preparing data for LSP ... ", LogLevels.Critical);
+            _logger.WriteEntry("End of preparing data for LSP ... ***************************************", LogLevels.Info);
             return base.StartAsync(cancellationToken);
         }
 

@@ -248,8 +248,8 @@ namespace LSP
                 controlRequest.Value = value;
 
                 // For "TEST ONLY" these lines will be uncommented!
-                _logger.WriteEntry($"Send Command is bypassed because of DEVELOPEMENT !!!", LogLevels.Info);
-                return true;
+                //_logger.WriteEntry($"Send Command is bypassed because of DEVELOPEMENT !!!", LogLevels.Info);
+                //return true;
 
                 // For "REAL COMMAND ONLY" these lines will be executed!
                 for (int cntr = 0; cntr < 3; cntr++)
@@ -298,8 +298,8 @@ namespace LSP
                 controlRequest.Value = value;
 
                 // for test only these lines will be uncommented!
-                _logger.WriteEntry($"send command is bypassed because of developement !!!", LogLevels.Info);
-                return true;
+                //_logger.WriteEntry($"send command is bypassed because of developement !!!", LogLevels.Info);
+                //return true;
 
                 // For "REAL COMMAND ONLY" these lines will be executed!
                 for (int cntr = 0; cntr < 3; cntr++)

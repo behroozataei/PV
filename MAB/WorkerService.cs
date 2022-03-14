@@ -54,7 +54,7 @@ namespace MAB
         {
             _logger.LogReceived += OnLogReceived;
             _storeLogs.Start();
-            _logger.WriteEntry("Start of running MAB ... ", LogLevels.Critical);
+            _logger.WriteEntry("Start of running MAB ... ***************************************", LogLevels.Info);
 
             while (!COM.Connection.PingHost(_config["CpsIpAddress"], 10000))
             {
@@ -84,7 +84,7 @@ namespace MAB
                 _mabManager.InitializeMAB();
 
             }, TaskContinuationOptions.OnlyOnRanToCompletion);
-            _logger.WriteEntry("End of preparing data for MAB ... ", LogLevels.Critical);
+            _logger.WriteEntry("End of preparing data for MAB ... ***************************************", LogLevels.Info);
 
             return base.StartAsync(cancellationToken);
         }

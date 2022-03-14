@@ -10,6 +10,9 @@ namespace COM
     public class STimer
     {
         public event Tdelegate Elapsed;
+        private double deviation;
+        private bool timerstarted;
+        public double Interval { get; set; }
         public STimer()
         {
             timer = new Timer();    
@@ -43,8 +46,6 @@ namespace COM
 
                 if (Math.Abs(deviation) > 0 && Math.Abs(deviation) < 200)
                 {
-
-                    Console.WriteLine($"Deviation = {deviation}");
                     timer.Interval = Interval - deviation; ;
                 }
 
@@ -54,11 +55,7 @@ namespace COM
                 Elapsed( sender, e);
         }
 
-        public double Interval { get; set; }
-        private double PrvTime;
-        private double deviation;
-
-        private bool timerstarted;
+        
 
 
     }

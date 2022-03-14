@@ -427,7 +427,7 @@ namespace OCP
                         case 4:
                             //  1399.11.27; Start of Alarm and Warning processing 
                             // Checking appear condition for OverloadWarningFourCycle
-                            if (checkPoint.Value4 > limitOncheckPoint)
+                            if ((checkPoint.Value4 > limitOncheckPoint)&&(Five_Value_OverloadWarning.Value == (float)SinglePointStatus.Disappear)) 
                             {
                                 if (!_updateScadaPointOnServer.SendAlarm(Four_Value_OverloadWarning, SinglePointStatus.Appear, checkPoint.NetworkPath + " ; DeltaOverLoadValue = " + (checkPoint.Value4 - limitOncheckPoint)))
                                     _logger.WriteEntry("Sending alarm Appear failed for four value Overload Alarm for " + checkPoint.NetworkPath, LogLevels.Error);

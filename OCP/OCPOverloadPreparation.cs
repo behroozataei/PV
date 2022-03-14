@@ -125,7 +125,7 @@ namespace OCP
                                 if (checkPoint.Category == "PRIMARY" || checkPoint.Category == "SECONDARY")
                                 {
                                     // TODO: check: in C#, skip for MZ3
-                                    if (checkPoint.Name != "CP40_MIS_T3AN-MZ3")
+                                    if (checkPoint.Name != "CP40_MIS_T3AN_MZ3")
                                         if (!PrepareTransOverloadData(checkPoint))
                                         {
                                             _logger.WriteEntry($"Transformer " + checkPoint.Name + " in overload, but checking not successful!", LogLevels.Error);
@@ -179,7 +179,7 @@ namespace OCP
                                 OCPCheckPoint jcheckpoint;
                                 // TODO : check for "CP40_MIS_T3AN_MZ3"
                                 if ((checkPoint.Category == "PRIMARY" || checkPoint.Category == "SECONDARY")
-                                     && checkPoint.Name != "CP40_MIS_T3AN-MZ3")
+                                     && checkPoint.Name != "CP40_MIS_T3AN_MZ3")
                                 {
                                     if (checkPoint.Category == "PRIMARY")
                                     {
@@ -529,7 +529,8 @@ namespace OCP
                     transOverloadCondition = TransSideOverload.Primary;
                     // TODO: Check with Mr. Imanian
                     //var actualVoltagePoint = _repository.GetOCPScadaPoint(voltageSide1);
-                    var actualVoltagePoint = _repository.GetOCPScadaPoint("TAN_PRIMVOLT_A");
+                    //var actualVoltagePoint = actualVoltagePointPrimSideAllBigTransesA.Value;
+                    var actualVoltagePoint = (actualVoltagePointPrimSideAllBigTransesA.Value > actualVoltagePointPrimSideAllBigTransesC.Value) ? _repository.GetOCPScadaPoint("TAN_PRIMVOLT_A") : _repository.GetOCPScadaPoint("TAN_PRIMVOLT_C");
 
                     var voltageQuality1 = actualVoltagePoint.Quality;
                     activePower1 = Convert.ToSingle(Math.Sqrt(3) * a_checkPoint.primeSideBigTans.NominalValue * actualVoltagePoint.Value);

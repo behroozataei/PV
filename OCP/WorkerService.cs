@@ -55,7 +55,7 @@ namespace OCP
         {
             _logger.LogReceived += OnLogReceived;
             _storeLogs.Start();
-            _logger.WriteEntry("Start of running OCP ... ", LogLevels.Critical);
+            _logger.WriteEntry("Start of running OCP ... ***************************************", LogLevels.Info);
 
             while (!COM.Connection.PingHost(_config["CpsIpAddress"], 10000))
             {
@@ -76,7 +76,7 @@ namespace OCP
             _ocpManager.CheckCPSStatus();
 
             _ocpManager.StartTimeService();
-            _logger.WriteEntry("End of preparing data for OCP ... ", LogLevels.Critical);
+            _logger.WriteEntry("End of preparing data for OCP ... ***************************************", LogLevels.Info);
 
             return base.StartAsync(cancellationToken);
         }

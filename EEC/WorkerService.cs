@@ -58,7 +58,7 @@ namespace EEC
         {
             _logger.LogReceived += OnLogReceived;
             _storeLogs.Start();
-            _logger.WriteEntry("Start of running EEC ... ", LogLevels.Critical);
+            _logger.WriteEntry("Start of running EEC ... ***************************************", LogLevels.Info);
             //_logger.WriteEntry("Start of running EEC.", LogLevels.Info);
 
             while (!COM.Connection.PingHost(_config["CpsIpAddress"], 10000))
@@ -81,7 +81,7 @@ namespace EEC
 
             _eecManager.StartCyclicOperation();
 
-            _logger.WriteEntry("End of preparing data for EEC ... ", LogLevels.Critical);
+            _logger.WriteEntry("End of preparing data for EEC ... ***************************************", LogLevels.Info);
             return base.StartAsync(cancellationToken);
         }
 
