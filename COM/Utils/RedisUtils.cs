@@ -30,7 +30,9 @@ namespace COM
                                {
                                 _settings.GetValue("RedisKeySentinel1").ToString(),
                                 _settings.GetValue("RedisKeySentinel2").ToString(),
-                                _settings.GetValue("RedisKeySentinel3").ToString()
+                                _settings.GetValue("RedisKeySentinel3").ToString(),
+                                _settings.GetValue("RedisKeySentinel4").ToString(),
+                                _settings.GetValue("RedisKeySentinel5").ToString()
 
                                },
                                AbortOnConnectFail = false,

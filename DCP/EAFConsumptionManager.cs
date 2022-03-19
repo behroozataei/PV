@@ -42,7 +42,9 @@ namespace DCP
                 string sql = "DELETE FROM T_Furnace WHERE ENDTIME IS NULL";
                 if (!_repository.ModifyOnLinkDB(sql))
                 {
-                    _logger.WriteEntry($"'DELETE FROM T_Furnace WHERE ENDTIME IS NULL' is not possible!", LogLevels.Error);
+                    System.Threading.Thread.Sleep(100);
+                    if (!_repository.ModifyOnLinkDB(sql))
+                        _logger.WriteEntry($"'DELETE FROM T_Furnace WHERE ENDTIME IS NULL' is not possible!; "+sql, LogLevels.Error);
                 }
 
                 // Insert new rows for furnaces into T_Furnace with current time as Start
@@ -51,7 +53,9 @@ namespace DCP
                     sql = "INSERT INTO T_Furnace(Start, FurnaceNumber) values('" + DateTime.Now.ToString() + "', " + furnace.ToString() + ")";
                     if (!_repository.ModifyOnLinkDB(sql))
                     {
-                        _logger.WriteEntry($"'INSERT INTO T_Furnace(Start, {furnace}) ' is not possible!", LogLevels.Error);
+                        System.Threading.Thread.Sleep(100);
+                        if (!_repository.ModifyOnLinkDB(sql))
+                            _logger.WriteEntry($"'INSERT INTO T_Furnace(Start, {furnace}) ' is not possible! ; "+sql, LogLevels.Error);
                     }
                 }
 
@@ -158,7 +162,9 @@ namespace DCP
 
                                 if (!_repository.ModifyOnLinkDB(sql))
                                 {
-                                    _logger.WriteEntry("'UPDATE dbo.T_FURNACE SET EndTime' is not possible! ", LogLevels.Error);
+                                    System.Threading.Thread.Sleep(100);
+                                    if (!_repository.ModifyOnLinkDB(sql))
+                                        _logger.WriteEntry("'UPDATE dbo.T_FURNACE SET EndTime' is not possible! ;  "+ sql, LogLevels.Error);
                                 }
                                 //Module1.ArrayEAFsCurrent[J - 1, 1] = "Standby";
                                 //WriteData(ArrayEAFsConsumption[J - 1], "0");
@@ -207,7 +213,9 @@ namespace DCP
                                 "'";
                         if (!_repository.ModifyOnLinkDB(sql))
                         {
-                            _logger.WriteEntry("'UPDATE dbo.T_EAFsEnergyConsumption' is not possible!; " + sql, LogLevels.Error);
+                            System.Threading.Thread.Sleep(100);
+                            if (!_repository.ModifyOnLinkDB(sql))
+                                _logger.WriteEntry("'UPDATE dbo.T_EAFsEnergyConsumption' is not possible!; " + sql, LogLevels.Error);
                         }
                     }
                 }
@@ -290,7 +298,9 @@ namespace DCP
                     {
                         if (!_repository.ModifyOnLinkDB(sql_T_EAFsEnergyConsumption))
                         {
-                            _logger.WriteEntry("'UPDATE [PU10_PCS].[dbo].[T_EAFsEnergyConsumption]' is not possible!", LogLevels.Error);
+                            System.Threading.Thread.Sleep(100);
+                            if (!_repository.ModifyOnLinkDB(sql_T_EAFsEnergyConsumption))
+                                _logger.WriteEntry("'UPDATE [PU10_PCS].[dbo].[T_EAFsEnergyConsumption]' is not possible! ; " + sql_T_EAFsEnergyConsumption, LogLevels.Error);
                         }
 
                         //if (!_repository.ModifyOnHistoricalDB(sql_EEC_SFSCEAFSPriority))

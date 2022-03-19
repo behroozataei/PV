@@ -145,7 +145,9 @@ namespace DCP
                         " );";
                     if (!_repository.ModifyOnLinkDB(sql))
                     {
-                        _logger.WriteEntry("1_LinkServer: INSERT INTO [PU10_PCS].[dbo].[T_EAFsPower] ", LogLevels.Error);
+                        System.Threading.Thread.Sleep(100);
+                        if (!_repository.ModifyOnLinkDB(sql))
+                            _logger.WriteEntry("1_LinkServer: INSERT INTO [PU10_PCS].[dbo].[T_EAFsPower]; "+sql, LogLevels.Error);
                     }
                 }
                 return true;
