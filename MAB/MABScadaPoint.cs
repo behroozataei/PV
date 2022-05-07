@@ -22,6 +22,30 @@ namespace MAB
         public float Value { get; set; }
 
         public string SCADAType { get; set; }
+
+        internal bool IsTransient()
+        {
+           if (((SCADAType == "DigitalMeasurement")||(SCADAType == "DigitalMeasurement_RPC")) && (((DigitalStatus)Value) == DigitalStatus.Intransit))
+                return true;    
+           else
+                return false;
+        }
+
+        internal bool IsOpen()
+        {
+            if (((SCADAType == "DigitalMeasurement") || (SCADAType == "DigitalMeasurement_RPC")) && (((DigitalStatus)Value) == DigitalStatus.Open))
+                return true;
+            else
+                return false;
+        }
+
+        internal bool IsClose()
+        {
+            if (((SCADAType == "DigitalMeasurement") || (SCADAType == "DigitalMeasurement_RPC")) && (((DigitalStatus)Value) == DigitalStatus.Close))
+                return true;
+            else
+                return false;
+        }
     }
 
     public enum PointDirectionType
@@ -37,4 +61,5 @@ namespace MAB
         Close = 2,
         Disturb = 3
     }
+    
 }

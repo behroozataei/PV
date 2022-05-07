@@ -92,6 +92,19 @@ namespace MAB
                         scadaPoint.Qulity = newQuality;
                         _dataProcessing.Update_VoltageSources();
                     }
+
+                    if ((scadaPoint.Value != (float)newValue || scadaPoint.Qulity != newQuality) && scadaPoint.SCADAType == "AnalogMeasurement_RPC")
+                    {
+                        scadaPoint.Value = (float)newValue;
+                        scadaPoint.Qulity = newQuality;
+                    }
+
+                    if ((scadaPoint.Value != (float)newValue || scadaPoint.Qulity != newQuality) && scadaPoint.SCADAType == "DigitalMeasurement_RPC")
+                    {
+                        scadaPoint.Value = (float)newValue;
+                        scadaPoint.Qulity = newQuality;
+                        _dataProcessing.Update_TransPrimaryVoltage();
+                    }
                 }
             }
         }

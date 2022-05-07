@@ -163,5 +163,30 @@ namespace MAB
 
             return executed;
         }
+
+        public bool WriteAnalog(MABScadaPoint scadaPoint, float value)
+        {
+            var executed = false;
+
+            var applyCalculatedValue = new ApplyCalculatedValueRequest();
+            applyCalculatedValue.Items.Add(
+                new CalculatedValueItem() { Console = "MAB", ElementId = scadaPoint.Id.ToString(), Value = value });
+
+            try
+            {
+                var reply = _commandService.ApplyCalculatedValue(applyCalculatedValue);
+
+                if (reply.Executed == false)
+                    _logger.WriteEntry("MAB", reply.Log, LogLevels.Warn);
+                else
+                    executed = true;
+            }
+            catch (Exception ex)
+            {
+                _logger.WriteEntry($"Write data for Avergae of {scadaPoint.Name} is not executed, {ex.Message}", LogLevels.Error);
+            }
+
+            return executed;
+        }
     }
 }

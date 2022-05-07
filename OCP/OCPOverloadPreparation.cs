@@ -425,6 +425,14 @@ namespace OCP
 
                 voltageSide1 = String.Empty;
                 voltageSide2 = String.Empty;
+                var T1AN_PRIMEBUS = _repository.GetOCPScadaPoint("T1AN_PRIMEBUS");
+                var T2AN_PRIMEBUS = _repository.GetOCPScadaPoint("T2AN_PRIMEBUS");
+                var T3AN_PRIMEBUS = _repository.GetOCPScadaPoint("T3AN_PRIMEBUS");
+                var T4AN_PRIMEBUS = _repository.GetOCPScadaPoint("T4AN_PRIMEBUS");
+                var T5AN_PRIMEBUS = _repository.GetOCPScadaPoint("T5AN_PRIMEBUS");
+                var T6AN_PRIMEBUS = _repository.GetOCPScadaPoint("T6AN_PRIMEBUS");
+                var T7AN_PRIMEBUS = _repository.GetOCPScadaPoint("T7AN_PRIMEBUS");
+                var T8AN_PRIMEBUS = _repository.GetOCPScadaPoint("T8AN_PRIMEBUS");
 
                 // Check for this transformer if the other side is in overload.
                 if (a_checkPoint.Category == "PRIMARY" || a_checkPoint.Category == "SECONDARY")
@@ -432,71 +440,71 @@ namespace OCP
                     switch (a_checkPoint.Name)
                     {
                         case "CP31_NIS_T1AN":  // T1AN 
-                            voltageSide1 = "T1AN_PRIMEVOLT";
+                            voltageSide1 = ((int)T1AN_PRIMEBUS.Value == 2) ? "TAN_PRIMVOLT_C" : "TAN_PRIMVOLT_A";
                             voltageSide2 = "T1AN_SECVOLT";
                             break;
                         case "CP32_NIS_T2AN":  // T2AN 
-                            voltageSide1 = "T2AN_PRIMEVOLT";
+                            voltageSide1 = ((int)T2AN_PRIMEBUS.Value == 2) ? "TAN_PRIMVOLT_C" : "TAN_PRIMVOLT_A";
                             voltageSide2 = "T2AN_SECVOLT";
                             break;
                         case "CP33_NIS_T3AN":  // T3AN 
-                            voltageSide1 = "T3AN_PRIMEVOLT";
+                            voltageSide1 = ((int)T3AN_PRIMEBUS.Value == 2) ? "TAN_PRIMVOLT_C" : "TAN_PRIMVOLT_A";
                             voltageSide2 = "T3AN_SECVOLT";
                             break;
                         case "CP34_NIS_T4AN":  // T4AN 
-                            voltageSide1 = "T4AN_PRIMEVOLT";
+                            voltageSide1 = ((int)T4AN_PRIMEBUS.Value == 2) ? "TAN_PRIMVOLT_C" : "TAN_PRIMVOLT_A";
                             voltageSide2 = "T4AN_SECVOLT";
                             break;
                         case "CP41_NIS_T6AN":  // T6AN 
-                            voltageSide1 = "T6AN_PRIMEVOLT";
+                            voltageSide1 = ((int)T6AN_PRIMEBUS.Value == 2) ? "TAN_PRIMVOLT_C" : "TAN_PRIMVOLT_A";
                             voltageSide2 = "T6AN_SECVOLT";
                             break;
                         case "CP35_NIS_T5AN":  // T5AN 
-                            voltageSide1 = "T5AN_PRIMEVOLT";
+                            voltageSide1 = ((int)T5AN_PRIMEBUS.Value == 2) ? "TAN_PRIMVOLT_C" : "TAN_PRIMVOLT_A";
                             voltageSide2 = "T5AN_SECVOLT";
                             break;
                         case "CP42_NIS_T7AN":  // T7AN 
-                            voltageSide1 = "T7AN_PRIMEVOLT";
+                            voltageSide1 = ((int)T7AN_PRIMEBUS.Value == 2) ? "TAN_PRIMVOLT_C" : "TAN_PRIMVOLT_A";
                             voltageSide2 = "T7AN_SECVOLT";
                             //' KAJI START of T8AN 
                             break;
                         case "CP56_NIS_T8AN":  // T8AN 
-                            voltageSide1 = "T8AN_PRIMEVOLT";
+                            voltageSide1 = ((int)T8AN_PRIMEBUS.Value == 2) ? "TAN_PRIMVOLT_C" : "TAN_PRIMVOLT_A";
                             voltageSide2 = "T8AN_SECVOLT";
                             //' KAJI END of T8AN 
                             break;
 
                         case "CP21_MIS_T1AN":  // T1AN 
-                            voltageSide1 = "T1AN_PRIMEVOLT";
+                            voltageSide1 = ((int)T1AN_PRIMEBUS.Value == 2) ? "TAN_PRIMVOLT_C" : "TAN_PRIMVOLT_A";
                             voltageSide2 = "T1AN_SECVOLT";
                             break;
                         case "CP22_MIS_T2AN":  // T2AN 
-                            voltageSide1 = "T2AN_PRIMEVOLT";
+                            voltageSide1 = ((int)T2AN_PRIMEBUS.Value == 2) ? "TAN_PRIMVOLT_C" : "TAN_PRIMVOLT_A";
                             voltageSide2 = "T2AN_SECVOLT";
                             break;
                         case "CP23_MIS_T3AN_MV3":  // T3AN 
-                            voltageSide1 = "T3AN_PRIMEVOLT";
+                            voltageSide1 = ((int)T3AN_PRIMEBUS.Value == 2) ? "TAN_PRIMVOLT_C" : "TAN_PRIMVOLT_A";
                             voltageSide2 = "T3AN_SECVOLT";
                             break;
                         case "CP29_MIS_T4AN":  // T4AN 
-                            voltageSide1 = "T4AN_PRIMEVOLT";
+                            voltageSide1 = ((int)T4AN_PRIMEBUS.Value == 2) ? "TAN_PRIMVOLT_C" : "TAN_PRIMVOLT_A";
                             voltageSide2 = "T4AN_SECVOLT";
                             break;
                         case "CP43_MIS_T6AN":  // T6AN 
-                            voltageSide1 = "T6AN_PRIMEVOLT";
+                            voltageSide1 = ((int)T6AN_PRIMEBUS.Value == 2) ? "TAN_PRIMVOLT_C" : "TAN_PRIMVOLT_A";
                             voltageSide2 = "T6AN_SECVOLT";
                             break;
                         case "CP36_MIS_T5AN":  // T5AN 
-                            voltageSide1 = "T5AN_PRIMEVOLT";
+                            voltageSide1 = ((int)T5AN_PRIMEBUS.Value == 2) ? "TAN_PRIMVOLT_C" : "TAN_PRIMVOLT_A";
                             voltageSide2 = "T5AN_SECVOLT";
                             break;
                         case "CP44_MIS_T7AN":  // T7AN 
-                            voltageSide1 = "T7AN_PRIMEVOLT";
+                            voltageSide1 = ((int)T7AN_PRIMEBUS.Value == 2) ? "TAN_PRIMVOLT_C" : "TAN_PRIMVOLT_A";
                             voltageSide2 = "T7AN_SECVOLT";
                             break;
                         //' KAJI START of T8AN 
                         case "CP57_MIS_T8AN":  // T8AN 
-                            voltageSide1 = "T8AN_PRIMEVOLT";
+                            voltageSide1 = ((int)T8AN_PRIMEBUS.Value == 2) ? "TAN_PRIMVOLT_C" : "TAN_PRIMVOLT_A";
                             voltageSide2 = "T8AN_SECVOLT";
                             break;
                             //' KAJI END of T8AN 
@@ -517,21 +525,13 @@ namespace OCP
                     return false;
                 }
 
-                // TODO:
-                var actualVoltagePointPrimSideAllBigTransesA = _repository.GetOCPScadaPoint("TAN_PRIMVOLT_A");
-                var actualVoltagePointPrimSideAllBigTransesC = _repository.GetOCPScadaPoint("TAN_PRIMVOLT_C");
-
-
                 // Check if overload is on both side of the transformer or only on one side
                 if (a_checkPoint.primeSideBigTans.OverloadFlag)
                 {
                     // Overload on primary side
                     transOverloadCondition = TransSideOverload.Primary;
-                    // TODO: Check with Mr. Imanian
-                    //var actualVoltagePoint = _repository.GetOCPScadaPoint(voltageSide1);
-                    //var actualVoltagePoint = actualVoltagePointPrimSideAllBigTransesA.Value;
-                    var actualVoltagePoint = (actualVoltagePointPrimSideAllBigTransesA.Value > actualVoltagePointPrimSideAllBigTransesC.Value) ? _repository.GetOCPScadaPoint("TAN_PRIMVOLT_A") : _repository.GetOCPScadaPoint("TAN_PRIMVOLT_C");
 
+                    var actualVoltagePoint = _repository.GetOCPScadaPoint(voltageSide1);
                     var voltageQuality1 = actualVoltagePoint.Quality;
                     activePower1 = Convert.ToSingle(Math.Sqrt(3) * a_checkPoint.primeSideBigTans.NominalValue * actualVoltagePoint.Value);
 

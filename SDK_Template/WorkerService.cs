@@ -7,7 +7,6 @@ using Irisa.Message.CPS;
 using Irisa.DataLayer;
 using Irisa.DataLayer.SqlServer;
 
-
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using System;
@@ -34,6 +33,7 @@ namespace SDK_Template
         {
             var config = serviceProvider.GetService<IConfiguration>();
             _logger = serviceProvider.GetService<ILogger>();
+            
             _RedisConnectorHelper = new RedisUtils(0);
 
             //if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
@@ -80,6 +80,7 @@ namespace SDK_Template
                 return Task.FromException<Exception>(new Exception("Create repository is failed"));
             else
                 _logger.WriteEntry("Loading data from database/redis is completed", LogLevels.Info);
+            
 
             _runtimeDataReceiver.Start();
 

@@ -43,12 +43,14 @@ namespace MAB
         private DigitalStatus _oldMAB;
         private bool _initialize_Voltage_Source;
         private bool _mabInitialized;
+        private readonly RPCTANVoltage _rpcTanVoltage;
 
         internal MABManager(ILogger logger, IRepository repository, ICpsCommandService cpsCommandService)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _repository = repository ?? throw new ArgumentNullException(nameof(repository));
             _updateScadaPointOnServer = new UpdateScadaPointOnServer(_logger, cpsCommandService);
+            _rpcTanVoltage = new RPCTANVoltage(_repository, _updateScadaPointOnServer, _logger);
             _oldMAB = DigitalStatus.Open;
         }
 
@@ -117,6 +119,7 @@ namespace MAB
                 _mabInitialized = true;
                 UpdateMAB();
                 Update_VoltageSources();
+                Update_TransPrimaryVoltage();
             }
             catch (Exception ex)
             {
@@ -1631,6 +1634,20 @@ namespace MAB
             {
                 _logger.WriteEntry(ex.Message, LogLevels.Error);
                 _logger.WriteEntry("Updating Voltage Sources was failed.", LogLevels.Error);
+            }
+        }
+
+        public void Update_TransPrimaryVoltage()
+        {
+           try
+            {
+                _rpcTanVoltage.TransPrimeVoltageCalc();
+            }
+            catch(Exception ex)
+            {
+                _logger.WriteEntry(ex.Message, LogLevels.Error);
+                _logger.WriteEntry("Updating Transformer Primary Voltage was failed.", LogLevels.Error);
+
             }
         }
     }

@@ -24,6 +24,8 @@ namespace MAB
         private readonly Repository _repository;
         private readonly RuntimeDataReceiver _runtimeDataReceiver;
         private readonly MABManager _mabManager;
+       
+
         private readonly RedisUtils _RedisConnectorHelper;
         private readonly IConfiguration _config;
         public WorkerService(IServiceProvider serviceProvider)
