@@ -1,5 +1,6 @@
 using COM;
 using Irisa.Logger;
+using Irisa.Common.Utils;
 using Newtonsoft.Json;
 using StackExchange.Redis;
 using System;
@@ -46,6 +47,10 @@ namespace DCP
 
         private int TIMER_CYCLE_EECTelegramReq = 60000;
         private Timer _timer_EECTelegramReq_1_Minute;
+
+        private int TIMER_CYCLE_CheckPCSLink = 300000;
+        private Timer _timer_CheckPCSLink_5_Minute;
+
 
         private readonly IRepository _repository;
         private readonly ILogger _logger;
@@ -116,6 +121,11 @@ namespace DCP
                 _timer_EECTelegramReq_1_Minute.Interval = TIMER_CYCLE_EECTelegramReq;
                 _timer_EECTelegramReq_1_Minute.Elapsed += runCyclicOperationPCS1Min;
 
+                _timer_CheckPCSLink_5_Minute = new Timer();
+                _timer_CheckPCSLink_5_Minute.Interval = TIMER_CYCLE_CheckPCSLink;
+                _timer_CheckPCSLink_5_Minute.Elapsed += runCyclicCheckPCSLink5Min;
+
+
                 //--------------------------------------------------------------------------
                 // This procesure runs some required activities in start of DC, about PCS Part
                 DC_StartupProcedure();
@@ -123,6 +133,7 @@ namespace DCP
                 //----------------------------------------------------------------------------------
                 // TODO: commented for test 
                 _timer_EAFGroupReq_10_Seconds.Start();
+                _timer_CheckPCSLink_5_Minute.Start();
                 Start();
 
                 //--------------------------------------------------------------------------
@@ -245,6 +256,32 @@ namespace DCP
             isWoring_timer_EAFGroupReq = false;
         }
 
+        
+        public void runCyclicCheckPCSLink5Min(object sender, ElapsedEventArgs e)
+        {
+            try
+            {
+                var scadaPoint = _repository.GetScadaPoint("LINKSERVERERROR2");
+                if (!_CPCSInterface.CheckPCSLink())
+                {
+                    if (!_updateScadaPointOnServer.SendAlarm(scadaPoint, SinglePointStatus.Appear, "PCS Link Error"))
+                        _logger.WriteEntry("Sending alarm 'PCS Link Error' was failed.", LogLevels.Error);
+                }
+                else
+                {
+                    if((SinglePointStatus)scadaPoint.Value == SinglePointStatus.Appear)
+                        if (!_updateScadaPointOnServer.SendAlarm(scadaPoint, SinglePointStatus.Disappear, "PCS Link OK"))
+                            _logger.WriteEntry("Sending alarm 'PCS Link Error' was failed.", LogLevels.Error);
+                }
+            }
+            catch (System.Exception excep)
+            {
+                _logger.WriteEntry(excep.Message, LogLevels.Error);
+            }
+
+
+        }
+
         // Important NotE: EAF1Group is determined in the VMAB application, and here is read from SCADAPoint "GRPEAF1"
         // After installing other GISes, they should be changed same as EAF1
         // This Job/Event will be trigerred by PowerCC, when group of one EAF is changed.
@@ -282,7 +319,8 @@ namespace DCP
                 _EAFGroupTelegram.EAF7Group = (int)EAF7Group.Value;
                 _EAFGroupTelegram.EAF8Group = (int)EAF8Group.Value;
 
-                _EAFGroupTelegram.TelDate = DateTime.Now;
+                //1401.3.24 IranTime to PCS
+                _EAFGroupTelegram.TelDate = DateTime.UtcNow.ToIranDateTime();
             }
             catch (System.Exception excep)
             {

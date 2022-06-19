@@ -2,6 +2,7 @@
 using Irisa.DataLayer;
 using Irisa.DataLayer.Oracle;
 using Irisa.Logger;
+using Irisa.Common.Utils;
 using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
 using System;
@@ -228,7 +229,8 @@ namespace EEC
 
 
             EEC_TELEGRAM_Str eec_telegram = new EEC_TELEGRAM_Str();
-            eec_telegram.TELDATETIME = DateTime.Now;
+            //1401.03.24 IranTime
+            eec_telegram.TELDATETIME = DateTime.UtcNow.ToIranDateTime();
             eec_telegram.SENTTIME = DateTime.Parse("1900-01-01 00:00:00");
             eec_telegram.RESIDUALTIME = RESTIME;
             eec_telegram.RESIDUALENERGY = ER_Cycle;
@@ -304,7 +306,8 @@ namespace EEC
             try
             {
                 SFSC_EAFPOWER_Str sfsc_eafpower = new SFSC_EAFPOWER_Str();
-                sfsc_eafpower.TELDATETIME = DateTime.Now;
+                //1401.03.24 IranTime
+                sfsc_eafpower.TELDATETIME = DateTime.UtcNow.ToIranDateTime();
                 sfsc_eafpower.SUMATION = _BusbarPowers[0] + _BusbarPowers[1];
                 sfsc_eafpower.POWERGRP1 = _BusbarPowers[0];
                 sfsc_eafpower.POWERGRP2 = _BusbarPowers[1];

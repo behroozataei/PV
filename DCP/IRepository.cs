@@ -24,6 +24,7 @@ namespace DCP
         bool UpdateEAFGroupRequest();
         bool ModifyOnLinkDB(string sql);
         float GetPowerSumationFromT_EAFsPower(string sql);
+        public int GetNRecord(string sql);
         bool ModifyOnStaticDB(string sql);
         bool ModifyOnHistoricalDB(string sql);
         //DataTable GetFromHistoricalDB(string sql);

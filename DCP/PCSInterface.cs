@@ -1,4 +1,5 @@
 using Irisa.Logger;
+using Irisa.Common.Utils;
 using System;
 using System.Data;
 
@@ -299,7 +300,8 @@ namespace DCP
                 //    Exit Function
                 //End If
 
-                strDate = DateTime.Now.ToString();
+                //1401.03.24 IranTime
+                strDate = DateTime.UtcNow.ToIranDateTime().ToString();
 
                 // -------------------------------------------------------------------------
                 // 3. Put in the Database, T_LSPTelegram Table
@@ -496,6 +498,14 @@ namespace DCP
                 _logger.WriteEntry(excep.Message, LogLevels.Error, excep);
                 return false;
             }
+        }
+
+        public bool CheckPCSLink()
+        {
+            if (_repository.GetNRecord("SELECT * FROM T_EAFsPower") > 1 || _repository.GetNRecord("SELECT * FROM T_EECTelegram") > 1 )
+                return false;
+            else
+                return true;
         }
     }
 }
