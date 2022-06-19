@@ -16,6 +16,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Google.Protobuf" Version="3.20.1" />
     <PackageReference Include="StackExchange.Redis" Version="2.2.79" />
   </ItemGroup>
 

@@ -1,6 +1,7 @@
 ﻿using COM;
 using Irisa.DataLayer;
 using Irisa.DataLayer.SqlServer;
+using Irisa.Common.Utils;
 using Irisa.Logger;
 using Newtonsoft.Json;
 using System;
@@ -268,11 +269,31 @@ namespace DCP
 
             return -1;
         }
+        public int GetNRecord(string sql)
+        {
+            int Rows = -1;
+            try
+            {
+                var dataTable = _linkDBpcsDataManager.GetRecord(sql);
+                Rows = dataTable.Rows.Count;
+            }
+            catch (Irisa.DataLayer.DataException ex)
+            {
+                _logger.WriteEntry(ex.ToString(), LogLevels.Error);
+            }
+            catch (Exception ex)
+            {
+                _logger.WriteEntry(ex.Message, LogLevels.Error, ex);
+            }
+
+            return Rows;
+        }
 
         public bool WriteTimeNowToFurnace(int I)
         {
+            //1401.03.24
             var sql = "INSERT INTO dbo.T_FURNACE + (Start, FurnaceNumber) values('" +
-                        DateTime.Now.ToString(("yyyy-MMMM-dd HH:mm:ss")) +
+                        DateTime.UtcNow.ToIranDateTime().ToString(("yyyy-MMMM-dd HH:mm:ss")) +
                         "', " + I.ToString() + ")";
 
             try
