@@ -1,7 +1,9 @@
-﻿using Irisa.Logger;
+﻿using Google.Protobuf.WellKnownTypes;
+using Irisa.Logger;
 using Irisa.Message;
 using Irisa.Message.CPS;
 using System;
+using System.Threading.Tasks;
 
 namespace EEC
 {
@@ -208,6 +210,43 @@ namespace EEC
             }
 
             return executed;
+        }
+
+        public bool ApplyMarkerCommand(EECScadaPoint ascadaPoint)
+        {
+            try
+            {
+                var markerModifierRequset = new MarkerModifierRequset()
+                {
+                    Console = "EEC",
+                    User = "mscfunction",
+                };
+
+                var newmarker = new MarkerData()
+                {
+                    ElementId = ascadaPoint.Id.ToString(),
+                    MarkerType = 2,     // Blocked = 2
+                    IsOwnership = true,
+                    IsSetMarker = false,
+                    LastChanged = Timestamp.FromDateTime(DateTime.UtcNow),
+                    User = "mscfunction",
+                    OwnershipLevel = 0
+                };
+                markerModifierRequset.Markers.Add(newmarker);
+
+                var response = _commandService.MarkerModifierCommand(markerModifierRequset);
+                if (!response.Executed)
+                {
+                    _logger.WriteEntry($"Error in appling 'Remove Blocked Makrer' for {ascadaPoint.NetworkPath}", LogLevels.Error);
+                    return false;
+                }
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.WriteEntry(ex.ToString(), LogLevels.Error);
+                return false;
+            }
         }
 
     }

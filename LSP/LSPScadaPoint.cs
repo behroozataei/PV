@@ -20,6 +20,12 @@ namespace LSP
         Appear = 1
     }
 
+    public enum DigitalSingleStatusOnOff
+    {
+        Off = 0,
+        On = 1
+    }
+
     public sealed class LSPScadaPoint
     {
         public LSPScadaPoint(Guid id, string name, string networkPath)

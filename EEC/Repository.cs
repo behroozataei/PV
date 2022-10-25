@@ -75,6 +75,7 @@ namespace EEC
                     eec_sfsceafsproi[furnace] = new EEC_SFSCEAFSPRIORITY_Str();
                     eec_sfsceafsproi[furnace].FURNACE = (furnace + 1).ToString();
                     eec_sfsceafsproi[furnace].GROUPNUM = "1";
+                    eec_sfsceafsproi[furnace].GROUPNUM_EEC = "1";
                     eec_sfsceafsproi[furnace].CONSUMED_ENERGY_PER_HEAT = "0";
                     eec_sfsceafsproi[furnace].REASON = "";
                     eec_sfsceafsproi[furnace].STATUS_OF_FURNACE = "OFF";

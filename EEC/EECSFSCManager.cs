@@ -32,6 +32,7 @@ namespace EEC
         private int previousCycle = 0;
         private readonly DateTime[,] _cycles;  //Array for seconds period
         private readonly int[] _BBG_furnces;   //Array for Busbar group of furnaces
+        private readonly int[] _BBG_EEC_furnces;   //Array for Busbar group of furnaces
 
         internal EECSFSCManager(ILogger logger, IRepository repository, ICpsCommandService cpsCommandService)
         {
@@ -51,8 +52,12 @@ namespace EEC
             _cycles = new System.DateTime[NUMBER_OF_BUSBARS, NUMBER_OF_CYCLES_OVERLAD_CHECK];
 
             _BBG_furnces = new int[NUMBER_OF_FURNACES];
+            _BBG_EEC_furnces = new int[NUMBER_OF_FURNACES];
             for (int i = 0; i < NUMBER_OF_FURNACES; i++)
+            {
                 _BBG_furnces[i] = 0;
+                _BBG_EEC_furnces[i] = 0;
+            }
 
             // Reset Status of 'SFSC/STATUS/Sent Warning'
             //Call m_Scada.WriteDigitalData("Network/Model Functions/SFSC/STATUS/Sent Warning", STATUS_DISAPPEARED)
@@ -135,6 +140,14 @@ namespace EEC
                 //' Send Alarm To Operator
                 //If Not m_theCSCADADataInterface.SendAlarm("FSTATUS", "OFF", "Warning: EEC Function is Off") Then
                 //' 1. Check function status, If not enabled --> Return
+
+                // A.Kaji, 1399.10.09 Adding this code
+                // Step 0. Read EAF-Groups from SCADA and Update in EEC_SFSCEAFSPriority
+                if (!UpdateFurnaceGroupsInHistorical_EEC_SFSCEAFSPriority())
+                {
+                    _logger.WriteEntry("Error in Update EAFGroups In Historical.EEC_SFSCEAFSPriority!", LogLevels.Error);
+                }
+
                 var functionStatus = (DigitalSingleStatusOnOff)_repository.GetScadaPoint("FSTATUS").Value;
                 if (functionStatus == DigitalSingleStatusOnOff.Off)
                 {
@@ -149,12 +162,7 @@ namespace EEC
                     return;
                 }
 
-                // A.Kaji, 1399.10.09 Adding this code
-                // Step 0. Read EAF-Groups from SCADA and Update in EEC_SFSCEAFSPriority
-                if (!UpdateFurnaceGroupsInHistorical_EEC_SFSCEAFSPriority())
-                {
-                    _logger.WriteEntry("Error in Update EAFGroups In Historical.EEC_SFSCEAFSPriority!", LogLevels.Error);
-                }
+                
 
                 // Step 1. Calculate and update power of furnaces and busbars
                 if (!CalculateBusbarAndFurnacePowers())
@@ -175,6 +183,13 @@ namespace EEC
                 {
                     _logger.WriteEntry("Error in writing power of Busbars and Furnaces into SFSCPower Table!", LogLevels.Error);
                     //return;
+                }
+
+                // step 3.1 Check MAB Status, if MAB is Closed and MAB_EEC is Open force MAB_EEC status to Close
+                if (!Set_EEC_MAB_Status())
+                {
+                    _logger.WriteEntry("Error in checking MAB Status! ", LogLevels.Error);
+
                 }
 
                 // Step 4. Load PMax1 and PMax2 from EEC!
@@ -207,6 +222,8 @@ namespace EEC
                     //return;
                 }
 
+                
+
 
                 //'-------------------------------------------------------------------------
                 //' Writing exit message
@@ -217,6 +234,34 @@ namespace EEC
                 _logger.WriteEntry(ex.Message, LogLevels.Error, ex);
             }
             isWorking = false;
+        }
+
+        private bool Set_EEC_MAB_Status()
+        {
+            EECScadaPoint _MAB;
+            EECScadaPoint _MAB_EEC;
+            _MAB = _repository.GetScadaPoint("MAB");
+            _MAB_EEC = _repository.GetScadaPoint("MAB_EEC");
+
+            if (_MAB.Value == (float)DigitalDoubleStatus.Close)
+            {
+                if (_MAB_EEC.Value != (float)DigitalSingleStatusOnOff.On)
+                {
+                    if (!_updateScadaPointOnServer.ApplyMarkerCommand(_MAB_EEC))
+                    {
+                        _logger.WriteEntry("Error in EEC in 'trying to remove Blocked Marker from _MAB_EEC!'", LogLevels.Error);
+                        return false;
+                    }
+
+                        if (!_updateScadaPointOnServer.SendAlarm(_repository.GetScadaPoint("MAB_EEC"), (DigitalSingleStatus)DigitalSingleStatusOnOff.On, "MAB_EEC is Closed  . . . "))
+                    {
+                        _logger.WriteEntry("Fail to Closed MAB_EEC", LogLevels.Error);
+                        return false;
+                    }
+                }
+            }
+            return true;
+            
         }
 
         //private bool ReadEAFBusGroup()
@@ -298,28 +343,28 @@ namespace EEC
                     return false;
                 }
 
-                EECScadaPoint _MAB;
+                EECScadaPoint _MAB_EEC;
                 EECScadaPoint _PMAX1;
                 EECScadaPoint _PMAX2;
 
-                _MAB = _repository.GetScadaPoint("MAB");
+                _MAB_EEC = _repository.GetScadaPoint("MAB_EEC");
                 _PMAX1 = _repository.GetScadaPoint("PMAX1");
                 _PMAX2 = _repository.GetScadaPoint("PMAX2");
                 // Check MAB Status for _MaxBusbarPowers
                 if (((_MaxBusbarPowers[0] == 0.0 && _PMAX1.Value > 0.0) ||
                      (_MaxBusbarPowers[1] == 0.0 && _PMAX2.Value > 0.0)) &&
-                    (_MAB.Value == (float)DigitalDoubleStatus.Open))
+                    (_MAB_EEC.Value == (float)DigitalSingleStatusOnOff.Off))
                 {
-                    _logger.WriteEntry("Error: MAB opened and MAXOVERLOAD1 or MAXOVERLOAD2 is zero! ", LogLevels.Warn);
+                    _logger.WriteEntry("Error: MAB_EEC opened and MAXOVERLOAD1 or MAXOVERLOAD2 is zero! ", LogLevels.Warn);
                     return false;
                 }
 
-                if (_MAB.Value == (float)DigitalDoubleStatus.Close && _MaxBusbarPowers[0] > 0.0 && _MaxBusbarPowers[1] > 0.0)
+                if (_MAB_EEC.Value == (float)DigitalSingleStatusOnOff.On && _MaxBusbarPowers[0] > 0.0 && _MaxBusbarPowers[1] > 0.0)
                 {
                     float Busbarspowers = _MaxBusbarPowers[0] + _MaxBusbarPowers[1];
                     _MaxBusbarPowers[0] = Busbarspowers;
                     _MaxBusbarPowers[1] = Busbarspowers;
-                    _logger.WriteEntry("Error: MAB closed and both MAXOVERLOAD1 and MAXOVERLOAD2 > zero! ", LogLevels.Warn);
+                    _logger.WriteEntry("Error: MAB_EEC closed and both MAXOVERLOAD1 and MAXOVERLOAD2 > zero! ", LogLevels.Warn);
                 }
 
                 return true;
@@ -520,9 +565,7 @@ namespace EEC
 
                             }
 
-
-
-                            var datatable = eec_sfsceafprio.Where(n => n.GROUPNUM == (busbar + 1).ToString() && n.STATUS_OF_FURNACE == "ON")
+                            var datatable = eec_sfsceafprio.Where(n => n.GROUPNUM_EEC == (busbar + 1).ToString() && n.STATUS_OF_FURNACE == "ON")
                                                         .OrderBy(n => Convert.ToDecimal(n.CONSUMED_ENERGY_PER_HEAT)).ToArray();
 
                             // DataTable datatable = _repository.GetFromHistoricalDB(sql);
@@ -636,14 +679,14 @@ namespace EEC
                     else
                         _logger.WriteEntry("Error in reading EAFPower from SCADA for Furnace " + furnace, LogLevels.Warn);
 
-                    var scadapointEAFGroup = _repository.GetScadaPoint("EAF" + furnace.ToString() + "-Group");
+                    var scadapointEAFGroup = _repository.GetScadaPoint("EAF" + furnace.ToString() + "-Group-EEC");
                     if (!(scadapointEAFGroup is null) && !(scadapointEAFPower is null))
                     {
                         if ((int)scadapointEAFGroup.Value > 0)
-                            _BusbarPowers[(int)scadapointEAFGroup.Value - 1] += scadapointEAFPower.Value;
+                            _BusbarPowers[(int)scadapointEAFGroup.Value - 1] += scadapointEAFPower.Value;                            
                     }
                     else
-                        _logger.WriteEntry("Error in reading EAFGroup from SCADA for Furnace : " + furnace, LogLevels.Warn);
+                        _logger.WriteEntry("Error in reading EAFGroup-EEC from SCADA for Furnace : " + furnace, LogLevels.Warn);
                 }
 
                 return true;
@@ -689,10 +732,12 @@ namespace EEC
                 for (int furnace = 1; furnace < NUMBER_OF_FURNACES + 1; furnace++)
                 {
                     var scadapointEAFGroup = _repository.GetScadaPoint("EAF" + furnace.ToString() + "-Group");
+                    var scadapointEAFGroupEEC = _repository.GetScadaPoint("EAF" + furnace.ToString() + "-Group-EEC");
                     if (!String.IsNullOrEmpty(scadapointEAFGroup.Value.ToString()))
                     {
                         int bbg = (int)scadapointEAFGroup.Value;
-                        if (_BBG_furnces[furnace - 1] != bbg)
+                        int bbg_eec = (int)scadapointEAFGroupEEC.Value;
+                        if ((_BBG_furnces[furnace - 1] != bbg) || (_BBG_EEC_furnces[furnace - 1] != bbg_eec))
                         {
                             //var sql =$"UPDATE APP_EEC_SFSCEAFSPRIORITY SET Reason = 'EEC.SFSCManager => GROUPNUM is updated', GROUPNUM = '" + scadapointEAFGroup.Value.ToString() + "' " +
                             //    "Where FURNACE = '" + furnace.ToString() + "'";
@@ -706,10 +751,12 @@ namespace EEC
                             EEC_SFSCEAFSPRIORITY_Str eec_sfsceafprio = new EEC_SFSCEAFSPRIORITY_Str();
                             eec_sfsceafprio = JsonConvert.DeserializeObject<EEC_SFSCEAFSPRIORITY_Str>(_repository.GetRedisUtiles().DataBase.StringGet(RedisKeyPattern.EEC_SFSCEAFSPRIORITY + furnace.ToString()));
                             eec_sfsceafprio.GROUPNUM = scadapointEAFGroup.Value.ToString();
+                            eec_sfsceafprio.GROUPNUM_EEC = scadapointEAFGroupEEC.Value.ToString();
                             eec_sfsceafprio.REASON = "EEC.SFSCManager => GROUPNUM is updated";
                             _repository.GetRedisUtiles().DataBase.StringSet(RedisKeyPattern.EEC_SFSCEAFSPRIORITY + eec_sfsceafprio.FURNACE, JsonConvert.SerializeObject(eec_sfsceafprio));
 
                             _BBG_furnces[furnace - 1] = Convert.ToInt32(scadapointEAFGroup.Value.ToString());
+                            _BBG_EEC_furnces[furnace - 1] = Convert.ToInt32(scadapointEAFGroupEEC.Value.ToString());
                         }
                     }
                     else

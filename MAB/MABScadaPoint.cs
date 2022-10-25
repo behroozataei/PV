@@ -61,5 +61,11 @@ namespace MAB
         Close = 2,
         Disturb = 3
     }
-    
+
+    public enum DigitalSingleStatusOnOff
+    {
+        Off = 0,
+        On = 1
+    }
+
 }

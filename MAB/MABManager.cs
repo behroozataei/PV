@@ -26,7 +26,7 @@ namespace MAB
         private MABScadaPoint T5AN_BB;
         private MABScadaPoint T7AN_BB;
         private MABScadaPoint T8AN_BB;
-
+        
         private MABScadaPoint EAF1_Group;
         private MABScadaPoint EAF2_Group;
         private MABScadaPoint EAF3_Group;
@@ -35,6 +35,15 @@ namespace MAB
         private MABScadaPoint EAF6_Group;
         private MABScadaPoint EAF7_Group;
         private MABScadaPoint EAF8_Group;
+
+        private MABScadaPoint EAF1_Group_EEC;
+        private MABScadaPoint EAF2_Group_EEC;
+        private MABScadaPoint EAF3_Group_EEC;
+        private MABScadaPoint EAF4_Group_EEC;
+        private MABScadaPoint EAF5_Group_EEC;
+        private MABScadaPoint EAF6_Group_EEC;
+        private MABScadaPoint EAF7_Group_EEC;
+        private MABScadaPoint EAF8_Group_EEC;
 
         private readonly ILogger _logger;
         private readonly IRepository _repository;
@@ -80,6 +89,15 @@ namespace MAB
             EAF6_Group = _repository.GetScadaPoint("EAF6-Group");
             EAF7_Group = _repository.GetScadaPoint("EAF7-Group");
             EAF8_Group = _repository.GetScadaPoint("EAF8-Group");
+
+            EAF1_Group_EEC = _repository.GetScadaPoint("EAF1-Group-EEC");
+            EAF2_Group_EEC = _repository.GetScadaPoint("EAF2-Group-EEC");
+            EAF3_Group_EEC = _repository.GetScadaPoint("EAF3-Group-EEC");
+            EAF4_Group_EEC = _repository.GetScadaPoint("EAF4-Group-EEC");
+            EAF5_Group_EEC = _repository.GetScadaPoint("EAF5-Group-EEC");
+            EAF6_Group_EEC = _repository.GetScadaPoint("EAF6-Group-EEC");
+            EAF7_Group_EEC = _repository.GetScadaPoint("EAF7-Group-EEC");
+            EAF8_Group_EEC = _repository.GetScadaPoint("EAF8-Group-EEC");
         }
 
         public void InitializeMAB()
@@ -504,6 +522,8 @@ namespace MAB
                 var MF8_Group = ProcessEAFGroup8(OneGroup);
                 _logger.WriteEntry($"MF8 is connected to Busbar : {MF8_Group}", LogLevels.Info);
 
+                var _MAB_EEC = _repository.DigitalSingleStatusOnOffByScadaName("MAB_EEC");
+
                 bool _groupsWasChanged = false;
                 if (((int)EAF1_Group.Value != MF1_Group) ||
                         ((int)EAF2_Group.Value != MF2_Group) ||
@@ -524,6 +544,18 @@ namespace MAB
                     EAF7_Group.Value = (float)MF7_Group;
                     EAF8_Group.Value = (float)MF8_Group;
                 }
+
+                EAF1_Group_EEC.Value = (_MAB_EEC == DigitalSingleStatusOnOff.On && (float)MF1_Group > 0.0) ? (float)1.0 : (float)MF1_Group;
+                EAF2_Group_EEC.Value = (_MAB_EEC == DigitalSingleStatusOnOff.On && (float)MF2_Group > 0.0) ? (float)1.0 : (float)MF2_Group;
+                EAF3_Group_EEC.Value = (_MAB_EEC == DigitalSingleStatusOnOff.On && (float)MF3_Group > 0.0) ? (float)1.0 : (float)MF3_Group;
+                EAF4_Group_EEC.Value = (_MAB_EEC == DigitalSingleStatusOnOff.On && (float)MF4_Group > 0.0) ? (float)1.0 : (float)MF4_Group;
+                EAF5_Group_EEC.Value = (_MAB_EEC == DigitalSingleStatusOnOff.On && (float)MF5_Group > 0.0) ? (float)1.0 : (float)MF5_Group;
+                EAF6_Group_EEC.Value = (_MAB_EEC == DigitalSingleStatusOnOff.On && (float)MF6_Group > 0.0) ? (float)1.0 : (float)MF6_Group;
+                EAF7_Group_EEC.Value = (_MAB_EEC == DigitalSingleStatusOnOff.On && (float)MF7_Group > 0.0) ? (float)1.0 : (float)MF7_Group;
+                EAF8_Group_EEC.Value = (_MAB_EEC == DigitalSingleStatusOnOff.On && (float)MF8_Group > 0.0) ? (float)1.0 : (float)MF8_Group;
+                _updateScadaPointOnServer.SendEAFGroups(EAF1_Group_EEC, EAF2_Group_EEC, EAF3_Group_EEC, EAF4_Group_EEC,
+                           EAF5_Group_EEC, EAF6_Group_EEC, EAF7_Group_EEC, EAF8_Group_EEC);
+
 
                 /*
                 var Group = 0;

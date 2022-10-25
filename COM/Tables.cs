@@ -188,6 +188,7 @@ namespace COM
         public string STATUS_OF_FURNACE;
         public string FURNACE;
         public string GROUPNUM;
+        public string GROUPNUM_EEC;
         public string REASON;
     }
 

@@ -81,6 +81,7 @@ namespace EEC
         private EECScadaPoint _EG3;
         private EECScadaPoint _EG4;
         private EECScadaPoint _MAB;
+        private EECScadaPoint _MAB_EEC;
         private EECScadaPoint _OVERL1;
         private EECScadaPoint _OVERL2;
         private EECScadaPoint _ECONEAF_EREAF;
@@ -153,6 +154,7 @@ namespace EEC
             _EG3 = _repository.GetScadaPoint("EGEN3");
             _EG4 = _repository.GetScadaPoint("EGEN4");
             _MAB = _repository.GetScadaPoint("MAB");
+            _MAB_EEC = _repository.GetScadaPoint("MAB_EEC");
             _OVERL1 = _repository.GetScadaPoint("OVERLOAD1");
             _OVERL2 = _repository.GetScadaPoint("OVERLOAD2");
             _ECONEAF_EREAF = _repository.GetScadaPoint("ECONEAF_EREAF");
@@ -701,11 +703,11 @@ namespace EEC
                 var PSend2 = 0.0f;
                 var PDiv = 0.0f;
 
-                _MAB = _repository.GetScadaPoint("MAB");
+                _MAB_EEC = _repository.GetScadaPoint("MAB_EEC");
                 _OVERL1 = _repository.GetScadaPoint("OVERLOAD1");
                 _OVERL2 = _repository.GetScadaPoint("OVERLOAD2");
 
-                if (_MAB.Value == (float)DigitalDoubleStatus.Close)
+                if (_MAB_EEC.Value == (float)DigitalSingleStatusOnOff.On)
                 {
                     if (_OVERL1.Value <= CPS_ZERO_VALUE && _OVERL2.Value <= CPS_ZERO_VALUE)
                     {
@@ -731,10 +733,10 @@ namespace EEC
                 else
                 {
                     // ' In case of MABOpen, only PSend1 and PSend2 are important for PCS
-                    if (_MAB.Value == (float)DigitalSingleStatus.Open)
+                    if (_MAB_EEC.Value == (float)DigitalSingleStatusOnOff.Off)
                     {
                         //'------------------------------------------------
-                        // In case of MABOpen, only PSend1 and PSend2 are important for PCS
+                        // In case of MAB-EEC Open, only PSend1 and PSend2 are important for PCS
                         // To Be Checked: if (MABStat == GeneralModule.BREAKER_OPEN)
                         if (_OVERL1.Value <= CPS_ZERO_VALUE && _OVERL2.Value > CPS_ZERO_VALUE)
                         {
@@ -840,7 +842,7 @@ namespace EEC
                     }
                     else
                     {
-                        _logger.WriteEntry(" Value of MAB is not valid!, MAB = " + _MAB.Value.ToString(), LogLevels.Error);
+                        _logger.WriteEntry(" Value of MAB_EEC is not valid!, MAB_EEC = " + _MAB_EEC.Value.ToString(), LogLevels.Error);
                     }
                 }
 

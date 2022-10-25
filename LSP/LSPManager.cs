@@ -1808,9 +1808,9 @@ namespace LSP
                     }
                 }
 
-                var mabValue = _repository.GetLSPScadaPoint("MAB").Value;
+                var mab_EECValue = _repository.GetLSPScadaPoint("MAB_EEC").Value;
                 //if (m_CLSPParams.MABStatus == ((byte) Breaker_Status.bClose))
-                if (mabValue == ((byte)Breaker_Status.bClose))
+                if (mab_EECValue == ((float)DigitalSingleStatusOnOff.On))
                 {
                     _EAFBusbars[1].BusbarPower += _EAFBusbars[2].BusbarPower;
                     _EAFBusbars[2].BusbarPower = 0;

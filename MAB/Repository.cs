@@ -184,6 +184,14 @@ namespace MAB
             else
                 throw new InvalidOperationException($"Scada point with name {name} can not found");
         }
+
+        public DigitalSingleStatusOnOff DigitalSingleStatusOnOffByScadaName(string name)
+        {
+            if (_scadaPointsHelper.TryGetValue(name, out var scadaPoint))
+                return (DigitalSingleStatusOnOff)scadaPoint.Value;
+            else
+                throw new InvalidOperationException($"Scada point with name {name} can not found");
+        }
         public Guid GetGuid(String networkpath)
         {
             if (isBuild)
