@@ -81,7 +81,7 @@ namespace DCP
 
                     dcp_param.ID = id.ToString();
                     if (RedisUtils.IsConnected)
-                        _RedisConnectorHelper.DataBase.StringSet(RedisKeyPattern.DCP_PARAMS + networkPath, JsonConvert.SerializeObject(dcp_param));
+                        RedisUtils.RedisConnection1.Set(RedisKeyPattern.DCP_PARAMS + networkPath, JsonConvert.SerializeObject(dcp_param));
 
                     var scadaPoint = new DCPScadaPoint(id, name, networkPath, (PointDirectionType)Enum.Parse(typeof(PointDirectionType), pointDirectionType));
 
@@ -110,8 +110,8 @@ namespace DCP
         {
             _logger.WriteEntry("Loading DCP_PARAMS Data from Cache", LogLevels.Info);
 
-            var keys = _RedisConnectorHelper.GetKeys(pattern: RedisKeyPattern.DCP_PARAMS);
-            var dataTable_cache = _RedisConnectorHelper.StringGet<DCP_PARAMS_Str>(keys);
+            var keys = RedisUtils.GetKeys(pattern: RedisKeyPattern.DCP_PARAMS);
+            var dataTable_cache = RedisUtils.StringGet<DCP_PARAMS_Str>(keys);
             try
             {
 
@@ -193,11 +193,10 @@ namespace DCP
 
             try
             {
-                if (_RedisConnectorHelper.GetKeys(pattern: RedisKeyPattern.SFSC_EAFSPOWER).Length == 0)
-                    return dataTable;
+               // if (_RedisConnectorHelper.GetKeys(pattern: RedisKeyPattern.SFSC_EAFSPOWER).Length == 0)
+               //     return dataTable;
 
-                dataTable = JsonConvert.DeserializeObject<SFSC_EAFSPOWER_Str>(_RedisConnectorHelper.DataBase.StringGet(RedisKeyPattern.SFSC_EAFSPOWER));
-
+                dataTable = JsonConvert.DeserializeObject<SFSC_EAFSPOWER_Str>(RedisUtils.RedisConnection1.Get(RedisKeyPattern.SFSC_EAFSPOWER));
             }
             catch (Irisa.DataLayer.DataException ex)
             {
@@ -534,7 +533,7 @@ namespace DCP
 
             try
             {
-                string sql = "Select * From dbo.T_EAFGroupRequest Where RequestDateTime = (Select MAX(RequestDateTime) From dbo.T_EAFGroupRequest)";
+                string sql = "Select * From PU10_PCS.dbo.T_EAFGroupRequest Where RequestDateTime = (Select MAX(RequestDateTime) From PU10_PCS.dbo.T_EAFGroupRequest)";
                 dataTable = _linkDBpcsDataManager.GetRecord(sql);
             }
             catch (Irisa.DataLayer.DataException ex)

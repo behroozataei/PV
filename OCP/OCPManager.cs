@@ -16,6 +16,7 @@ namespace OCP
         private readonly OCPOverloadCheck _overloadCheck;
         private readonly OCPOverloadPreparation _overloadPreparation;
         private readonly UpdateScadaPointOnServer _updateScadaPointOnServer;
+        private readonly IRepository _repository;
         private readonly Timer _timer;
         private bool _firstRun;
         private bool isCompleted = true;
@@ -29,19 +30,22 @@ namespace OCP
             _currentEvaluation = new OCPCurrentEvaluation(repository, _updateScadaPointOnServer, logger);
             _overloadCheck = new OCPOverloadCheck(repository, _updateScadaPointOnServer, logger);
             _overloadPreparation = new OCPOverloadPreparation(logger, repository, repository.GetCheckPoints(), _updateScadaPointOnServer, _cycleValidator);
+            _repository = repository;
             _firstRun = true;
 
             _timer = new Timer();
             _timer.Interval = OCP_TIMER_TICKS;
-            _timer.Elapsed += OnTimerElapsed;
 
-
+            // A.K  1401.11.24 Commented this line
+         
+           // _timer.Elapsed += OnTimerElapsed;
         }
 
-
+        
         public void Startwork()
         {
-            _timer.Start();
+            // _timer.Start();
+            CheckOCPTimer();
         }
 
         public void StopWork()
@@ -49,9 +53,32 @@ namespace OCP
             _timer.Stop();
         }
 
-        private void OnTimerElapsed(object sender, ElapsedEventArgs e)
+       // A.K  1401.11.24 Added this method
+        public void CheckOCPTimer()
+        {
+            var callme = true;
+            while (true)
+            {
+                DateTime vTime = DateTime.Now;
+                if (callme && ((vTime.Second % 3) == 0) && (vTime.Millisecond < 500))
+                {
+                    //_logger.WriteEntry(" --------------- OnOCPTimer :     " + vTime.ToString(), LogLevels.Info);
+                    OnOCPTimer();
+                    callme = false;
+                }
+
+                if (!callme && ((vTime.Millisecond >= 500)))
+                    callme = true;
+
+                System.Threading.Thread.Sleep(100);
+            }
+        }
+
+        // private void OnTimerElapsed(object sender, EventArgs e )
+        void OnOCPTimer()
         {
             var cycleNo = 0;
+            //_logger.WriteEntry($"Delay of Runtime Cycle: {e.Delay} , Timer faults = {e.Fallouts}", LogLevels.Info);
 
             try
             {
@@ -188,6 +215,15 @@ namespace OCP
         public void QualityError(OCPCheckPoint checkpoint, QualityCodes Quality, SinglePointStatus Status)
         {
             _currentEvaluation.QualityErrorAlarm(checkpoint, Quality, Status);
+        }
+
+        public void AlarmAcked_Processing(OCPScadaPoint ocpScadaPoint)
+        {
+            if (!_updateScadaPointOnServer.SendAlarm(_repository.GetOCPScadaPoint(ocpScadaPoint.Name), SinglePointStatus.Disappear, string.Empty))
+            {
+                _logger.WriteEntry($"Fail to Disappear Alarm {ocpScadaPoint.Name}", LogLevels.Error);
+                return;
+            }
         }
     }
 }

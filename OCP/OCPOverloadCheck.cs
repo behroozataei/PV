@@ -31,10 +31,10 @@ namespace OCP
 
                     checkPoint.ResetIT = false;
 
-                    checkPoint.OverloadAlarmFiveCycle = false;
-                    checkPoint.OverloadAlarmFourCycle = false;
-                    checkPoint.OverloadWarningFiveCycle = false;
-                    checkPoint.OverloadWarningFourCycle = false;
+                    //checkPoint.OverloadAlarmFiveCycle = false;
+                    //checkPoint.OverloadAlarmFourCycle = false;
+                    //checkPoint.OverloadWarningFiveCycle = false;
+                    //checkPoint.OverloadWarningFourCycle = false;
                 }
             }
         }

@@ -1,4 +1,5 @@
 ﻿using COM;
+using Irisa.Common.Utils;
 using Irisa.Logger;
 using Irisa.Message;
 using Newtonsoft.Json;
@@ -22,17 +23,18 @@ namespace EEC
         private readonly Timer _timer_4_Seconds;
         private UpdateScadaPointOnServer _updateScadaPointOnServer;
 
-        private float[] _MaxBusbarPowers;   // Maximum power from EEC, On two busbars
-        private float[] _BusbarPowers;      // On two busbars
-        //private int[] _EAF_BusbarGroups;  // For 8 furnaces; Values: 0, 1 or 2
-        private float[] _FurnacePowers;     // For 8 furnaces
-        private bool[,] _IsOverloadAppear;  // For 2 busbars, for 6 cycles, check and write overload here
+        private float[] _MaxBusbarPowers;           // Maximum power from EEC, On two busbars
+        private float[] _BusbarPowers_Limit;        // power Limit for SFSC, On two busbars
+        private float[] _BusbarPowers;              // On two busbars
+        //private int[] _EAF_BusbarGroups;          // For 8 furnaces; Values: 0, 1 or 2
+        private float[] _FurnacePowers;             // For 8 furnaces
+        private bool[,] _IsOverloadAppear;          // For 2 busbars, for 6 cycles, check and write overload here
         private bool isWorking = false;
         private int cycle = 0;
         private int previousCycle = 0;
         private readonly DateTime[,] _cycles;  //Array for seconds period
         private readonly int[] _BBG_furnces;   //Array for Busbar group of furnaces
-        private readonly int[] _BBG_EEC_furnces;   //Array for Busbar group of furnaces
+        private readonly int[] _BBG_EEC_furnces;   //Array for Busbar group of furnaces for EEC
 
         internal EECSFSCManager(ILogger logger, IRepository repository, ICpsCommandService cpsCommandService)
         {
@@ -45,6 +47,7 @@ namespace EEC
             _timer_4_Seconds.Elapsed += RunCyclicOperation_SFSC;
 
             _MaxBusbarPowers = new float[NUMBER_OF_BUSBARS];
+            _BusbarPowers_Limit = new float[NUMBER_OF_BUSBARS];
             _BusbarPowers = new float[NUMBER_OF_BUSBARS];
             //_EAF_BusbarGroups = new int[NUMBER_OF_FURNACES];
             _FurnacePowers = new float[NUMBER_OF_FURNACES];
@@ -118,28 +121,13 @@ namespace EEC
             try
             {
                 if (isWorking)
+                {
+                    _logger.WriteEntry("Warning: RunCyclicOperation_SFSC is busy!", LogLevels.Warn);
                     return;
+                }
                 else
                     isWorking = true;
-
-                //_logger.WriteEntry("▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼", LogLevels.Info);
-                // TODO: 
-                //_logger.WriteEntry("Enter to method on: " + "& GetMachineName()", LogLevels.Info);
-                //_logger.WriteEntry(" Machine State is: " + "& GetProcessState(eEECState)", LogLevels.Info);
-
-                //'-------------------------------------------------------------------------
-                //TODO:  Check Machine State, if this is StandBy, Exit CyclicActivation
-
-                //' 0.2. Read FStatus of SCADA, Check it, and update it in the table or update SCADA of table
-                //'If Not m_theCEECParameters.checkUpdateFSTATUS() Then
-
-                //'-------------------------------------------------------------------------
-                //' 1. Check function status, If not enabled --> Return
-                //If Not m_theCEECParameters.EECStatus Then
-                //'---------------------------------------
-                //' Send Alarm To Operator
-                //If Not m_theCSCADADataInterface.SendAlarm("FSTATUS", "OFF", "Warning: EEC Function is Off") Then
-                //' 1. Check function status, If not enabled --> Return
+                
 
                 // A.Kaji, 1399.10.09 Adding this code
                 // Step 0. Read EAF-Groups from SCADA and Update in EEC_SFSCEAFSPriority
@@ -152,11 +140,6 @@ namespace EEC
                 if (functionStatus == DigitalSingleStatusOnOff.Off)
                 {
                     _logger.WriteEntry("SFSC Stop Upadating of Powers, EEC is OFF", LogLevels.Error);
-
-                    //if (!_updateScadaPointOnServer.SendAlarm(_repository.GetScadaPoint("SCADAError"), (DigitalSingleStatus)DigitalSingleStatusOnOff.Off, ""))
-                    //    _logger.WriteEntry("Error: Can not send Alarm for 'EEC Function is Disabled'.", LogLevels.Error);
-                    //if (!_updateScadaPointOnServer.SendAlarm(_repository.GetScadaPoint("SCADAError"), (DigitalSingleStatus)DigitalSingleStatusOnOff.On, "Warning SFSC: EEC Function is Off"))
-                    //    _logger.WriteEntry("Error: Can not send Alarm for 'EEC Function is Disabled'.", LogLevels.Error);
 
                     isWorking = false;
                     return;
@@ -185,12 +168,12 @@ namespace EEC
                     //return;
                 }
 
-                // step 3.1 Check MAB Status, if MAB is Closed and MAB_EEC is Open force MAB_EEC status to Close
-                if (!Set_EEC_MAB_Status())
-                {
-                    _logger.WriteEntry("Error in checking MAB Status! ", LogLevels.Error);
+                //// step 3.1 Check MAB Status, if MAB is Closed and MAB_EEC is Open force MAB_EEC status to Close
+                //if (!Set_EEC_MAB_Status())
+                //{
+                //    _logger.WriteEntry("Error in setting EEC_MAB Status! ", LogLevels.Error);
 
-                }
+                //}
 
                 // Step 4. Load PMax1 and PMax2 from EEC!
                 if (!ReadEECPMaxFromTableOrSCADA())
@@ -236,62 +219,7 @@ namespace EEC
             isWorking = false;
         }
 
-        private bool Set_EEC_MAB_Status()
-        {
-            EECScadaPoint _MAB;
-            EECScadaPoint _MAB_EEC;
-            _MAB = _repository.GetScadaPoint("MAB");
-            _MAB_EEC = _repository.GetScadaPoint("MAB_EEC");
-
-            if (_MAB.Value == (float)DigitalDoubleStatus.Close)
-            {
-                if (_MAB_EEC.Value != (float)DigitalSingleStatusOnOff.On)
-                {
-                    if (!_updateScadaPointOnServer.ApplyMarkerCommand(_MAB_EEC))
-                    {
-                        _logger.WriteEntry("Error in EEC in 'trying to remove Blocked Marker from _MAB_EEC!'", LogLevels.Error);
-                        return false;
-                    }
-
-                        if (!_updateScadaPointOnServer.SendAlarm(_repository.GetScadaPoint("MAB_EEC"), (DigitalSingleStatus)DigitalSingleStatusOnOff.On, "MAB_EEC is Closed  . . . "))
-                    {
-                        _logger.WriteEntry("Fail to Closed MAB_EEC", LogLevels.Error);
-                        return false;
-                    }
-                }
-            }
-            return true;
-            
-        }
-
-        //private bool ReadEAFBusGroup()
-        //{
-        //    try
-        //    {
-        //        var sql = "SELECT GROUPNUM, FURNACE FROM app.EEC_SFSCEAFSPriority ORDER BY FURNACE ASC";
-
-        //        DataTable datatable_EAFSPRIORITY = _repository.getFromHistoricalDB(sql);
-        //        if ((datatable_EAFSPRIORITY is null) || (datatable_EAFSPRIORITY.Rows.Count == 0))
-        //        {
-        //            _logger.WriteEntry("Error in loading GROUPNUM From EEC_SFSCEAFSPriority! ", LogLevels.Error);
-        //            return false;
-        //        }
-
-        //        foreach ( DataRow dr in datatable_EAFSPRIORITY.Rows)
-        //        {
-        //            int furnace = Convert.ToInt32(dr["FURNACE"].ToString());
-        //            _EAF_BusbarGroups[furnace-1] = Convert.ToInt32( dr["GROUPNUM"].ToString());
-        //        }
-
-        //        return true;
-        //    }
-        //    catch ( Exception ex)
-        //    {
-        //        _logger.WriteEntry(ex.Message, LogLevels.Error, ex);
-        //    }
-
-        //    return false;
-        //}
+        
 
         private bool ReadEECPMaxFromTableOrSCADA()
         {
@@ -299,20 +227,17 @@ namespace EEC
 
             try
             {
-                //var sql = $"SELECT MAXOVERLOAD1, MAXOVERLOAD2, TELDATETIME FROM APP_EEC_TELEGRAMS " +
-                //            "WHERE TELDATETIME = " +
-                //            $"(SELECT MAX(TELDATETIME) FROM APP_EEC_TELEGRAMS)";
-
                 EEC_TELEGRAM_Str _eec_tel = new EEC_TELEGRAM_Str();
-                if (_repository.GetRedisUtiles().GetKeys(RedisKeyPattern.EEC_TELEGRAM).Length == 0)
-                {
-                    _logger.WriteEntry("There EEC Calculation not Compeleted", LogLevels.Warn);
-                    return false;
-                }
+                // 1401-12-02 delay on redis query
+                //if (_repository.GetRedisUtiles().GetKeys(RedisKeyPattern.EEC_TELEGRAM).Length == 0)
+                //{
+                //    _logger.WriteEntry("There EEC Calculation not Compeleted", LogLevels.Warn);
+                //    return false;
+                //}
 
-                _eec_tel = JsonConvert.DeserializeObject<EEC_TELEGRAM_Str>(_repository.GetRedisUtiles().DataBase.StringGet(RedisKeyPattern.EEC_TELEGRAM));
+                _eec_tel = JsonConvert.DeserializeObject<EEC_TELEGRAM_Str>(RedisUtils.RedisConnection1.Get(RedisKeyPattern.EEC_TELEGRAM));
 
-                // DataTable datatable_EEC = _repository.GetFromHistoricalDB(sql);
+                
                 if (!(_eec_tel is null))
                 {
                     _MaxBusbarPowers[0] = _eec_tel.MAXOVERLOAD1;
@@ -364,7 +289,7 @@ namespace EEC
                     float Busbarspowers = _MaxBusbarPowers[0] + _MaxBusbarPowers[1];
                     _MaxBusbarPowers[0] = Busbarspowers;
                     _MaxBusbarPowers[1] = Busbarspowers;
-                    _logger.WriteEntry("Error: MAB_EEC closed and both MAXOVERLOAD1 and MAXOVERLOAD2 > zero! ", LogLevels.Warn);
+                  //  _logger.WriteEntry("Error: MAB_EEC closed and both MAXOVERLOAD1 and MAXOVERLOAD2 > zero! ", LogLevels.Warn);
                 }
 
                 return true;
@@ -416,37 +341,10 @@ namespace EEC
         {
             try
             {
-
-
-                //String Datatime = DateTime.Now.ToString(("yyyy-MMMM-dd HH:mm:ss"));
-                //String sql = $"Insert Into APP_SFSC_EAFSPower( TelDateTime, SUMATION, PowerGrp1, PowerGrp2, " +
-                //    "Furnace1, Furnace2, Furnace3, Furnace4, Furnace5, Furnace6, Furnace7, Furnace8) " +
-                //    "VALUES( " +
-                //     $"TO_DATE('{Datatime}', 'yyyy-mm-dd HH24:mi:ss')" + ",'" +
-                //    (_BusbarPowers[0] + _BusbarPowers[1]) + "', '" +
-                //    _BusbarPowers[0] + "', '" +
-                //    _BusbarPowers[1] + "', '" +
-                //    _FurnacePowers[0] + "', '" +
-                //    _FurnacePowers[1] + "', '" +
-                //    _FurnacePowers[2] + "', '" +
-                //    _FurnacePowers[3] + "', '" +
-                //    _FurnacePowers[4] + "', '" +
-                //    _FurnacePowers[5] + "', '" +
-                //    _FurnacePowers[6] + "', '" +
-                //    _FurnacePowers[7] + "')";
-
-                //if (!_repository.ModifyOnHistoricalDB(sql))
-                //{
-                //    _logger.WriteEntry($" Error in 'Insert Into APP_SFSCEAFSPOWER'", LogLevels.Error);
-                //}
-
                 if (!_repository.ModifyOnHistoricalCache(_BusbarPowers, _FurnacePowers))
                 {
                     _logger.WriteEntry($" Error in 'Insert Into APP_SFSCEAFSPOWER'", LogLevels.Error);
                 }
-
-
-
                 return true;
             }
             catch (Exception ex)
@@ -483,15 +381,13 @@ namespace EEC
 
                 for (int busbar = 0; busbar < NUMBER_OF_BUSBARS; busbar++)
                 {
-                    if (_BusbarPowers[busbar] > ((_MaxBusbarPowers[busbar] + 10) * 1.02))
+                    _BusbarPowers_Limit[busbar] = (_MaxBusbarPowers[busbar] + 10.0f) * 1.02f;
+                    if (_BusbarPowers[busbar] > _BusbarPowers_Limit[busbar])
                     {
-
-                        //_logger.WriteEntry("Power overload is detected for Busbar = " + (busbar+1) , LogLevels.Info);
-                        _logger.WriteEntry($"Warning: BusbarPowers[{(busbar + 1)}] = {_BusbarPowers[busbar]} ; MaxBusbarPowers[{(busbar + 1)}] = {_MaxBusbarPowers[busbar]} ; CycleNumber = {cycle} ;  CycleTime = {_cycles[busbar, cycle]} "
-                                               , LogLevels.Warn);
-
                         _IsOverloadAppear[busbar, cycle] = true;
                         _cycles[busbar, cycle] = DateTime.Now;
+                        _logger.WriteEntry($"Warning: BusbarPowers[{(busbar + 1)}] = {_BusbarPowers[busbar]} ; MaxBusbarPowers[{(busbar + 1)}] = {_MaxBusbarPowers[busbar]} ; CycleNumber = {cycle} ;  CycleTime = {_cycles[busbar, cycle]} "
+                                               , LogLevels.Warn);
 
                         // TODO: check
                         var scadapointAlarm = _repository.GetScadaPoint("SFCWarning");
@@ -527,15 +423,7 @@ namespace EEC
         {
             try
             {
-                //int mod = (int)(DateTime.Now.Second / (TIMER_TICKS_SFSC / 1000));
-                //var cycle = (int)mod % NUMBER_OF_CYCLES_OVERLAD_CHECK;
 
-                //var previousCycle = cycle + 1;
-                //if (previousCycle >= NUMBER_OF_CYCLES_OVERLAD_CHECK)
-                //    previousCycle = 0;
-
-                // TODO: check
-                ////var scadapointAlarm = _repository.GetScadaPoint("SFSCShedding");
                 var scadapointAlarm = _repository.GetScadaPoint("SFCWarning");
 
                 // TODO: check condition of overload checking
@@ -547,21 +435,19 @@ namespace EEC
                         {
                             _logger.WriteEntry("Start of reporting Overload on busbar " + (busbar + 1) + "; previousCycle = " + previousCycle + "; previousCycleTime =" + _cycles[busbar, previousCycle] + "; Cycle = " + cycle + "; CycleTime =" + _cycles[busbar, cycle], LogLevels.Warn);
 
-                            //var sql = $"SELECT FURNACE, CONSUMED_ENERGY_PER_HEAT FROM APP_EEC_SFSCEAFSPRIORITY WHERE GROUPNUM = " +
-                            //    (busbar + 1).ToString() +
-                            //    " AND STATUS_OF_FURNACE='ON' ORDER BY CAST( CONSUMED_ENERGY_PER_HEAT AS FLOAT) ASC";
                             EEC_SFSCEAFSPRIORITY_Str[] eec_sfsceafprio = new EEC_SFSCEAFSPRIORITY_Str[8];
 
 
                             for (int fur = 0; fur < 8; fur++)
                             {
-                                if (_repository.GetRedisUtiles().GetKeys(pattern: RedisKeyPattern.EEC_SFSCEAFSPRIORITY + (fur + 1).ToString()).Length != 0)
-                                    eec_sfsceafprio[fur] = JsonConvert.DeserializeObject<EEC_SFSCEAFSPRIORITY_Str>(_repository.GetRedisUtiles().DataBase.StringGet(RedisKeyPattern.EEC_SFSCEAFSPRIORITY + (fur + 1).ToString()));
-                                else
-                                {
-                                    _logger.WriteEntry($"Error in 'SELECT PRIORITY TABLE FROM APP_EEC_SFSCEAFSPRIORITY'", LogLevels.Error);
-                                    return false;
-                                }
+                                // if (_repository.GetRedisUtiles().GetKeys(pattern: RedisKeyPattern.EEC_SFSCEAFSPRIORITY + (fur + 1).ToString()).Length != 0)
+                                // 1401-12-02 delay on redis query
+                                eec_sfsceafprio[fur] = JsonConvert.DeserializeObject<EEC_SFSCEAFSPRIORITY_Str>(RedisUtils.RedisConnection1.Get(RedisKeyPattern.EEC_SFSCEAFSPRIORITY + (fur + 1).ToString()));
+                                //else
+                                //{
+                                //    _logger.WriteEntry($"Error in 'SELECT PRIORITY TABLE FROM APP_EEC_SFSCEAFSPRIORITY'", LogLevels.Error);
+                                //    return false;
+                                //}
 
                             }
 
@@ -569,14 +455,15 @@ namespace EEC
                                                         .OrderBy(n => Convert.ToDecimal(n.CONSUMED_ENERGY_PER_HEAT)).ToArray();
 
                             // DataTable datatable = _repository.GetFromHistoricalDB(sql);
-                            if ((datatable is null))
+                            if ((datatable is null || datatable.Length == 0))
                             {
-                                _logger.WriteEntry($"Error in 'SELECT FURNACE FROM APP_EEC_SFSCEAFSPRIORITY'", LogLevels.Error);
+                                _logger.WriteEntry($"Error in 'SELECT FURNACE OF GROUP{busbar + 1} FROM APP_EEC_SFSCEAFSPRIORITY'", LogLevels.Error);
                                 continue;
                             }
                             else
                             {
                                 var furnace = Convert.ToInt32(datatable[0].FURNACE.ToString());
+                                var energy = Convert.ToDecimal(datatable[0].CONSUMED_ENERGY_PER_HEAT.ToString());
                                 _updateScadaPointOnServer.SendAlarm(scadapointAlarm, DigitalSingleStatus.Close, "SFSC Shedded Furnace " + furnace + " Because EAFS exceed its Limit On BusBar " + (busbar + 1));
                                 _updateScadaPointOnServer.SendAlarm(scadapointAlarm, DigitalSingleStatus.Open, "SFSC Shedded Furnace " + furnace + " Because EAFS exceed its Limit On BusBar " + (busbar + 1));
 
@@ -614,22 +501,28 @@ namespace EEC
                                 sfsc_furnace_to_shed.SHEADTIME = DateTime.Parse("1900-01-01 00:00:00");
                                 sfsc_furnace_to_shed.SHEADCOMMAND = true;
 
-                                _repository.GetRedisUtiles().DataBase.StringSet(RedisKeyPattern.SFSC_FURNACE_TO_SHED, JsonConvert.SerializeObject(sfsc_furnace_to_shed));
-                                // RedisKeyPattern.EEC_PARAMS + networkPath, JsonConvert.SerializeObject(_eec_param);
+                                RedisUtils.RedisConnection1.Set(RedisKeyPattern.SFSC_FURNACE_TO_SHED, JsonConvert.SerializeObject(sfsc_furnace_to_shed));
+                                //_updateScadaPointOnServer.SendAlarm(_repository.GetScadaPoint("SFSCACTIVATED"), DigitalSingleStatus.Open, " ");
 
-                                //String Datatime = DateTime.Now.ToString(("yyyy-MMMM-dd HH:mm:ss"));
-                                //    sql = $"INSERT INTO APP_SFSC_FURNACE_TO_SHED(TELDATETIME, FURNACE, GROUPPOWER) VALUES(" +
-                                //         $"TO_DATE('{Datatime}', 'yyyy-mm-dd HH24:mi:ss')" +
-                                //         ", '" +
-                                //         furnace +
-                                //         "', '" + _BusbarPowers[busbar] + "')";
+                                //1401_08_08 Preparing Data For HMI
+                                String Datatime = DateTime.UtcNow.ToIranDateTime().ToString("yyyy/MM/dd HH:mm:ss");
 
-                                //if (!_repository.ModifyOnHistoricalDB(sql))
-                                //{
-                                //    _logger.WriteEntry($"Error in INSERT Into APP_SFSC_FURNACE_TO_SHED, Furnace " + furnace, LogLevels.Error);
-                                //}
-                                //else
-                                //{
+
+                                string sql = $"INSERT INTO APP_SFSC_FURNACE_SHEDDED (DATETIME, FURNACE, ENERGY, EEC_POWER_LIMIT, CONSUMED_POWER, FURNACE_BUS_NUMBER) VALUES(" +
+                                                $"'{Datatime}'" +
+                                                ",'" +
+                                                furnace + "', '" +
+                                                Math.Round(energy,2) + "', '" +
+                                                Math.Round(_MaxBusbarPowers[busbar],2) + "', '" +
+                                                Math.Round(_BusbarPowers[busbar],2) + "', '" +
+                                                (busbar+1) + "')";
+                                        
+                                if (!_repository.ModifyOnHistoricalDB(sql))
+                                {
+                                    _logger.WriteEntry($"Error in INSERT Into APP_SFSC_FURNACE_SHEDDED, Furnace " + furnace, LogLevels.Error);
+                                }
+
+
                                 _logger.WriteEntry("Overloaded furnace " + furnace + " with POWER OVERLOAD " + _BusbarPowers[busbar], LogLevels.Warn);
 
                                 // For "Network/Model Functions/SFSC/STATUS/Sent Warning"
@@ -711,6 +604,15 @@ namespace EEC
                 {
                     _logger.WriteEntry("Error in write Power EAF Busbar2 into SCADA", LogLevels.Error);
                 }
+                if (!_updateScadaPointOnServer.WriteAnalog(_repository.GetScadaPoint("PowerGrp1_Limit"), _BusbarPowers_Limit[0]))
+                {
+                    _logger.WriteEntry("Error in write Power Limit EAF Busbar1 into SCADA", LogLevels.Error);
+                }
+
+                if (!_updateScadaPointOnServer.WriteAnalog(_repository.GetScadaPoint("PowerGrp2_Limit"), _BusbarPowers_Limit[1]))
+                {
+                    _logger.WriteEntry("Error in write Power Limit EAF Busbar2 into SCADA", LogLevels.Error);
+                }
 
                 if (!_updateScadaPointOnServer.WriteAnalog(_repository.GetScadaPoint("Total Power"), _BusbarPowers[0] + _BusbarPowers[1]))
                 {
@@ -739,21 +641,12 @@ namespace EEC
                         int bbg_eec = (int)scadapointEAFGroupEEC.Value;
                         if ((_BBG_furnces[furnace - 1] != bbg) || (_BBG_EEC_furnces[furnace - 1] != bbg_eec))
                         {
-                            //var sql =$"UPDATE APP_EEC_SFSCEAFSPRIORITY SET Reason = 'EEC.SFSCManager => GROUPNUM is updated', GROUPNUM = '" + scadapointEAFGroup.Value.ToString() + "' " +
-                            //    "Where FURNACE = '" + furnace.ToString() + "'";
-
-
-                            //if (!_repository.ModifyOnHistoricalDB(sql))
-                            //{
-                            //    _logger.WriteEntry($"'UPDATE APP_EEC_SFSCEAFSPriority' is not possible!", LogLevels.Error);
-                            //}
-
                             EEC_SFSCEAFSPRIORITY_Str eec_sfsceafprio = new EEC_SFSCEAFSPRIORITY_Str();
-                            eec_sfsceafprio = JsonConvert.DeserializeObject<EEC_SFSCEAFSPRIORITY_Str>(_repository.GetRedisUtiles().DataBase.StringGet(RedisKeyPattern.EEC_SFSCEAFSPRIORITY + furnace.ToString()));
+                            eec_sfsceafprio = JsonConvert.DeserializeObject<EEC_SFSCEAFSPRIORITY_Str>(RedisUtils.RedisConnection1.Get(RedisKeyPattern.EEC_SFSCEAFSPRIORITY + furnace.ToString()));
                             eec_sfsceafprio.GROUPNUM = scadapointEAFGroup.Value.ToString();
                             eec_sfsceafprio.GROUPNUM_EEC = scadapointEAFGroupEEC.Value.ToString();
                             eec_sfsceafprio.REASON = "EEC.SFSCManager => GROUPNUM is updated";
-                            _repository.GetRedisUtiles().DataBase.StringSet(RedisKeyPattern.EEC_SFSCEAFSPRIORITY + eec_sfsceafprio.FURNACE, JsonConvert.SerializeObject(eec_sfsceafprio));
+                            RedisUtils.RedisConnection1.Set(RedisKeyPattern.EEC_SFSCEAFSPRIORITY + eec_sfsceafprio.FURNACE, JsonConvert.SerializeObject(eec_sfsceafprio));
 
                             _BBG_furnces[furnace - 1] = Convert.ToInt32(scadapointEAFGroup.Value.ToString());
                             _BBG_EEC_furnces[furnace - 1] = Convert.ToInt32(scadapointEAFGroupEEC.Value.ToString());
@@ -761,8 +654,9 @@ namespace EEC
                     }
                     else
                         _logger.WriteEntry("Error in reading EAFGroup from SCADA for Furnace : " + furnace, LogLevels.Warn);
-                }
 
+
+                }
                 return true;
             }
             catch (Exception ex)
@@ -771,5 +665,6 @@ namespace EEC
                 return false;
             }
         }
+        
     }
 }

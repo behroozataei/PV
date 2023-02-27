@@ -1,5 +1,6 @@
 ﻿using COM;
 using Irisa.Common;
+using Irisa.Common.Utils;
 using Irisa.Logger;
 using Irisa.Message;
 using Irisa.Message.CPS;
@@ -54,6 +55,8 @@ namespace LSP
 
         public List<LSPScadaPoint> _LSPSCADAPoints = new List<LSPScadaPoint>();
 
+        public Queue<Tuple<CPriorityList , LSPBreakerToShed, bool, bool>> Loads_shedded = new Queue<Tuple<CPriorityList, LSPBreakerToShed, bool, bool>> ();
+        // Loads_shedded < Prio , Breakertoshed , Partnersheded , current_shedded)
         private readonly IRepository _repository;
         //==============================================================================
         //MEMBER FUNCTIONS
@@ -1159,12 +1162,14 @@ namespace LSP
                                 if (!_updateScadaPointOnServer.SendCommand(cbToShed, (int)Breaker_Status.BOpen))
                                 {
                                     _logger.WriteEntry("Sending OPEN command is failed for Breaker : " + cbToShed.NetworkPath, LogLevels.Error);
+                                   
                                     // Send Alarm
                                 }
                                 else
                                 {
-                                    aPriol.GetArrBreakers(idxItem).LastShedTime = DateTime.Now.AddDays(-1000);
+                                     aPriol.GetArrBreakers(idxItem).LastShedTime = DateTime.UtcNow.ToIranDateTime();
                                     _logger.WriteEntry("Sending OPEN command was accomlished for Breaker : " + cbToShed.NetworkPath, LogLevels.Info);
+                                    Loads_shedded.Enqueue(new Tuple<CPriorityList, LSPBreakerToShed, bool, bool>(aPriol, aPriol.GetArrBreakers(idxItem), false, true));
                                 }
                             }
                         }
@@ -1197,7 +1202,7 @@ namespace LSP
                                 // Checking last shed time for this CB
                                 //TODO: check
                                 var dtLastShedTime = aPriol.GetArrBreakers(idxItem).LastShedTime;
-                                dtCurrShedTime = DateTime.Now;
+                                dtCurrShedTime = DateTime.UtcNow.ToIranDateTime();
 
                                 var diffInSeconds = (dtCurrShedTime - dtLastShedTime).TotalSeconds;
                                 if ((dtLastShedTime == DateTime.MinValue) ||
@@ -1269,8 +1274,10 @@ namespace LSP
                                                 _logger.WriteEntry("Breaker Status Quality = " + cbToShedPartner.Quality.ToString(), LogLevels.Info);
                                                 _logger.WriteEntry("Breaker Status = " + CDecisionTable.SwitchStatusbyName((int)cbToShedPartner.Value), LogLevels.Info);
 
+
                                                 if ((DigitalDoubleStatus)cbToShedPartner.Value == DigitalDoubleStatus.Close)
                                                 {
+                                                    Loads_shedded.Enqueue(new Tuple<CPriorityList, LSPBreakerToShed, bool, bool>(aPriol, aPriol.GetArrBreakers(idxItem), false, false));
                                                     if (!_updateScadaPointOnServer.SendCommand(cbToShedPartner, (int)Breaker_Status.BOpen))
                                                     {
                                                         _logger.WriteEntry("OPEN command was failed for : " + cbToShedPartner.NetworkPath, LogLevels.Error);
@@ -1285,6 +1292,8 @@ namespace LSP
                                                         aPriol.GetArrBreakers(idxItem).LastShedTime = dtCurrShedTime;
 
                                                         _logger.WriteEntry("Reamined shed value = " + aPriol._shedValue.ToString(), LogLevels.Info);
+                                                        
+                                                        Loads_shedded.Enqueue(new Tuple<CPriorityList, LSPBreakerToShed, bool, bool>(aPriol, aPriol.GetArrBreakers(idxItem), true, true)) ;
                                                     }
                                                 }
                                                 else
@@ -1295,6 +1304,7 @@ namespace LSP
                                                     aPriol.GetArrBreakers(idxItem).LastShedTime = dtCurrShedTime;
 
                                                     _logger.WriteEntry("Reamined shed value = " + aPriol._shedValue.ToString(), LogLevels.Info);
+                                                    Loads_shedded.Enqueue(new Tuple<CPriorityList, LSPBreakerToShed, bool, bool>(aPriol, aPriol.GetArrBreakers(idxItem), false, true));
                                                 }
                                             }
                                         }
@@ -1317,6 +1327,7 @@ namespace LSP
                                                 aPriol.GetArrBreakers(idxItem).LastShedTime = dtCurrShedTime;
 
                                                 _logger.WriteEntry("Reamined shed value = " + aPriol._shedValue.ToString(), LogLevels.Info);
+                                                Loads_shedded.Enqueue(new Tuple<CPriorityList, LSPBreakerToShed, bool, bool >(aPriol, aPriol.GetArrBreakers(idxItem), false, true));
                                             }
                                         }
 
@@ -1344,6 +1355,7 @@ namespace LSP
                                                     aPriol.GetArrBreakers(idxItem).LastShedTime = dtCurrShedTime;
 
                                                     _logger.WriteEntry("Reamined shed value = " + aPriol._shedValue.ToString(), LogLevels.Info);
+                                                    Loads_shedded.Enqueue(new Tuple<CPriorityList, LSPBreakerToShed, bool, bool>(aPriol, aPriol.GetArrBreakers(idxItem), true, true));
                                                 }
                                             }
                                         }
@@ -1379,6 +1391,38 @@ namespace LSP
                     NextPriols:;
                 }
                 result = true;
+
+                //1401_08_08 Preparing Data For HMI
+                foreach (var Shedded_Breaker in Loads_shedded)
+                {
+                    float Breaker_Current = _repository.GetLSPScadaPoint(Shedded_Breaker.Item1.GetArrBreakers(Shedded_Breaker.Item2.BreakerNo).guid_curr).Value;
+                    if (!Shedded_Breaker.Item4) // if Current is not shedded
+                        Breaker_Current = 0.0f;
+
+                    var network_path = Shedded_Breaker.Item2.NetworkPath_Item;
+                    if (Shedded_Breaker.Item3) // if partner sheded
+                        network_path = Shedded_Breaker.Item2.AddressPartner;
+                                     
+                    string sql = $"INSERT INTO APP_LSP_SHEDDED_BREAKERS (DATETIME, PRIORITY_NUMBER," +
+                                            $"SUMIT, BREAKER_NUMBER, NETWORKPATH, NETWORK_CURRENT) VALUES(" +
+                                            $"'{Shedded_Breaker.Item2.LastShedTime.ToString("yyyy/MM/dd HH:mm:ss.ff")}'" +
+                                            ",'" +
+                                            Shedded_Breaker.Item1._priorityNo + "', '" +
+                                            Math.Round(Shedded_Breaker.Item1._sumIt,2) + "', '" +
+                                            Shedded_Breaker.Item2.BreakerNo + "', '" +
+                                            network_path.Replace("Network/Substations/", "") + "', '" +
+                                            Math.Round(Breaker_Current,2) + "')";
+                    if (!_repository.ModifyOnHistoricalDB(sql))
+                    {
+                        _logger.WriteEntry($"Error in INSERT Into APP_LSP_SHEDDED_BREAKERS" + Shedded_Breaker.Item2.NetworkPath_Item, LogLevels.Error);
+                    }
+                }
+                Loads_shedded.Clear();
+
+
+
+
+
             }
             catch (System.Exception excep)
             {
@@ -1730,17 +1774,14 @@ namespace LSP
                 // Only for transformers 1, 2, 3, 5 ,7, 8; except overloaded transformer
                 for (byte idxTransformer = 1; idxTransformer <= Constants.MaxNoOfTransformers; idxTransformer = (byte)(idxTransformer + 1))
                 {
-
                     //--------------------------------------------------------------
                     // Excluding transformer 4,6
                     if (!(idxTransformer == 4 || idxTransformer == 6))
                     {
-
                         //--------------------------------------------------------------
-                        // Excluding Overloaded transformer, Allowed Active Power for this transformer was calculated previuosly
+                        // Excluding Overloaded transformer, Allowed Active Power for this transformer was calculated previously
                         if (!(m_arrOLTransOnEAFBB[idxTransformer]))
                         {
-
                             //--------------------------------------------------------------
                             // Calculating not overloaded transformers actual power
                             aPower = _repository.GetTANSecondaryActivePower(idxTransformer);
@@ -1886,23 +1927,41 @@ namespace LSP
 
                 var priol = _PriorityList.Find(priol => priol._priorityNo == Constants.PRIORITYLISTNO_EAF);
                 var FurnaceNumber = System.Convert.ToInt32(priol.GetArrBreakers(1).FurnaceIndex);
-                var reducePowerData = _repository.FetchReducedPower(FurnaceNumber);
+                //var reducePowerData = _repository.FetchReducedPower(FurnaceNumber);
 
-                if (reducePowerData.Rows.Count > 0)
+                //if (reducePowerData.Rows.Count > 0)
+                //{
+                //    var dr = reducePowerData.Rows[0];
+
+                //    _logger.WriteEntry("ReducePower" + " TelDateTime = " + dr["TelDateTime"].ToString(), LogLevels.Info);
+                //    _logger.WriteEntry("ReducePower" + " PowerFurnace = " + dr["Furnace" + FurnaceNumber].ToString(), LogLevels.Info);
+
+                //    // TODO: test is required 
+                //    result = (int)PowerMax - (int)Convert.ToDouble(dr["Furnace" + FurnaceNumber].ToString());
+                //    _logger.WriteEntry("ReducePower = " + result.ToString(), LogLevels.Info);
+                //}
+
+                //else
+                //{
+                //    _logger.WriteEntry("There is not any data in table for reducePowerData, default will be used . . . ", LogLevels.Warn);
+                //}
+                SFSC_EAFSPOWER_Str sfsc_eafsp = _repository.GetFromHistoricalCache();
+                if(sfsc_eafsp != null)
                 {
-                    var dr = reducePowerData.Rows[0];
+                    float[] furnacespower = new float[] { sfsc_eafsp.FURNACE1, sfsc_eafsp.FURNACE2, sfsc_eafsp.FURNACE3, sfsc_eafsp.FURNACE4,
+                                                           sfsc_eafsp.FURNACE5, sfsc_eafsp.FURNACE6, sfsc_eafsp.FURNACE7, sfsc_eafsp.FURNACE8 };
 
-                    _logger.WriteEntry("ReducePower" + " TelDateTime = " + dr["TelDateTime"].ToString(), LogLevels.Info);
-                    _logger.WriteEntry("ReducePower" + " PowerFurnace = " + dr["Furnace" + FurnaceNumber].ToString(), LogLevels.Info);
-
-                    // TODO: test is required 
-                    result = (int)PowerMax - (int)Convert.ToDouble(dr["Furnace" + FurnaceNumber].ToString());
+                    _logger.WriteEntry("ReducePower" + " TelDateTime = " + sfsc_eafsp.TELDATETIME.ToString(), LogLevels.Info);
+                    _logger.WriteEntry("ReducePower" + " PowerFurnace = " + furnacespower[FurnaceNumber-1].ToString(), LogLevels.Info);
+                    result = (int)PowerMax - (int)furnacespower[FurnaceNumber - 1];
                     _logger.WriteEntry("ReducePower = " + result.ToString(), LogLevels.Info);
                 }
                 else
                 {
                     _logger.WriteEntry("There is not any data in table for reducePowerData, default will be used . . . ", LogLevels.Warn);
                 }
+
+
             }
             catch (System.Exception excep)
             {
@@ -2073,6 +2132,15 @@ namespace LSP
                 _logger.WriteEntry(excep.Message, LogLevels.Error);
             }
             return result;
+        }
+
+        public void AlarmAcked_Processing(LSPScadaPoint lspScadaPoint)
+        {
+            if (!_updateScadaPointOnServer.SendAlarm(_repository.GetLSPScadaPoint(lspScadaPoint.Name), SinglePointStatus.Disappear, string.Empty))
+            {
+                _logger.WriteEntry($"Fail to Disappear Alarm {lspScadaPoint.Name}", LogLevels.Error);
+                return;
+            }
         }
     }
 }

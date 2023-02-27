@@ -4,12 +4,13 @@ namespace EEC
 {
     public sealed class EECScadaPoint
     {
-        public EECScadaPoint(Guid id, string name, string networkPath, PointDirectionType pointDirectionType)
+        public EECScadaPoint(Guid id, string name, string networkPath, PointDirectionType pointDirectionType, String scadatype)
         {
             Id = id;
             Name = name;
             NetworkPath = networkPath;
             PointDirectionType = pointDirectionType;
+            ScadaType = scadatype;
         }
 
         public string Name { get; }
@@ -17,6 +18,7 @@ namespace EEC
         public Guid Id { get; }
         public int Quality { get; set; }
         public PointDirectionType PointDirectionType { get; }
+        public String  ScadaType { get; }
         public float Value { get; set; }
     }
     public sealed class EECEAFPoint
@@ -43,8 +45,8 @@ namespace EEC
 
     public enum PointDirectionType
     {
-        Input,
-        Output
+        input,
+        output
     }
 
     public enum DigitalDoubleStatus

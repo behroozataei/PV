@@ -1,0 +1,14 @@
+
+<Mappings>
+<Mapping DotNetTypeName='CVoltageController' VB6MemberName='Class_Initialize'>Class_Initialize_Renamed</Mapping>
+<Mapping DotNetTypeName='CLimitChecker' VB6MemberName='Class_Initialize'>Class_Initialize_Renamed</Mapping>
+<Mapping DotNetTypeName='CRPCManager' VB6MemberName='Class_Terminate'>Class_Terminate_Renamed</Mapping>
+<Mapping DotNetTypeName='CRPCManager' VB6MemberName='Class_Initialize'>Class_Initialize_Renamed</Mapping>
+<Mapping DotNetTypeName='CRPCParameters' VB6MemberName='Class_Terminate'>Class_Terminate_Renamed</Mapping>
+<Mapping DotNetTypeName='CRPCParameters' VB6MemberName='Class_Initialize'>Class_Initialize_Renamed</Mapping>
+<Mapping DotNetTypeName='CTraceLogger' VB6MemberName='Class_Initialize'>Class_Initialize_Renamed</Mapping>
+<Mapping DotNetTypeName='CSCADADataInterface' VB6MemberName='Class_Terminate'>Class_Terminate_Renamed</Mapping>
+<Mapping DotNetTypeName='CSCADADataInterface' VB6MemberName='Class_Initialize'>Class_Initialize_Renamed</Mapping>
+<Mapping DotNetTypeName='CDBInterface' VB6MemberName='Class_Terminate'>Class_Terminate_Renamed</Mapping>
+<Mapping DotNetTypeName='CDBInterface' VB6MemberName='Class_Initialize'>Class_Initialize_Renamed</Mapping>
+</Mappings>

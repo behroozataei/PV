@@ -81,7 +81,7 @@ namespace OPC
                     opc_meas.ID = GetGuid(row["NetworkPath"].ToString());
                     opc_meas.TagType = (int)(row["TagType"].ToString() == "DMODigitalMeasurement" ? Type.Digital : Type.Analog);
                     if (RedisUtils.IsConnected)
-                        _RedisConnectorHelper.DataBase.StringSet(RedisKeyPattern.OPCMeasurement + opc_meas.NetworkPath, JsonConvert.SerializeObject(opc_meas));
+                        RedisUtils.RedisConnection1.Set(RedisKeyPattern.OPCMeasurement + opc_meas.NetworkPath, JsonConvert.SerializeObject(opc_meas));
                     else
                         _logger.WriteEntry("Redis Connection Error", LogLevels.Error);
 
@@ -114,8 +114,8 @@ namespace OPC
         {
             _logger.WriteEntry("Loading Data from Cache", LogLevels.Info);
 
-            var keys = _RedisConnectorHelper.GetKeys(pattern: RedisKeyPattern.OPCMeasurement);
-            var dataTable = _RedisConnectorHelper.StringGet<OPC_MEAS_Str>(keys);
+            var keys = RedisUtils.GetKeys(pattern: RedisKeyPattern.OPCMeasurement);
+            var dataTable = RedisUtils.StringGet<OPC_MEAS_Str>(keys);
 
             foreach (OPC_MEAS_Str row in dataTable)
             {
@@ -164,7 +164,7 @@ namespace OPC
                 opc_param.Description = row["Description"].ToString();
 
                 if (RedisUtils.IsConnected)
-                    _RedisConnectorHelper.DataBase.StringSet(RedisKeyPattern.OPC_Params, JsonConvert.SerializeObject(opc_param));
+                    RedisUtils.RedisConnection1.Set(RedisKeyPattern.OPC_Params, JsonConvert.SerializeObject(opc_param));
             }
             catch (Exception ex)
             {
@@ -178,8 +178,8 @@ namespace OPC
         {
             try
             {
-                var keys = _RedisConnectorHelper.GetKeys(pattern: RedisKeyPattern.OPC_Params);
-                var paramTable = _RedisConnectorHelper.StringGet<OPC_PARAM_Str>(keys);
+                var keys = RedisUtils.GetKeys(pattern: RedisKeyPattern.OPC_Params);
+                var paramTable = RedisUtils.StringGet<OPC_PARAM_Str>(keys);
                 var row = paramTable.First();
                 _OPCRepository.Connection.Name = row.Name;
                 _OPCRepository.Connection.IP = row.IP;

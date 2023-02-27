@@ -17,6 +17,7 @@ namespace OCP
     {
         private readonly ILogger _logger;
         private DataManager _dataManager;
+        private readonly DataManager _historicalDataManager;
         private readonly StoreLogs _storeLogs;
         private readonly CpsRpcService _rpcService;
         private readonly Repository _repository;
@@ -30,9 +31,9 @@ namespace OCP
         {
             _config = serviceProvider.GetService<IConfiguration>();
             _logger = serviceProvider.GetService<ILogger>();
-            _RedisConnectorHelper = new RedisUtils(0);
-
+           
             _dataManager = new Irisa.DataLayer.Oracle.OracleDataManager(_config["OracleServicename"], _config["OracleDatabaseAddress"], _config["OracleStaticUser"], _config["OracleStaticPassword"]);
+            _historicalDataManager = new Irisa.DataLayer.Oracle.OracleDataManager(_config["OracleServicename"], _config["OracleDatabaseAddress"], _config["OracleHISUser"], _config["OracleHISPassword"]);
             _storeLogs = new StoreLogs(_dataManager, _logger, "SCADA.\"HIS_HisLogs_Insert\"");
 
             var historyDataRequest = new HistoryDataRequest
@@ -43,16 +44,36 @@ namespace OCP
                 RequireEquipment = false,
                 RequireConnectivityNode = false,
             };
+
+            _RedisConnectorHelper = new RedisUtils(0, _config["RedisKeySentinel1"], _config["RedisKeySentinel2"], _config["RedisKeySentinel3"], _config["RedisKeySentinel4"], _config["RedisKeySentinel5"], _config["RedisPassword"], _config["RedisServiceName"],
+                                                     _config["RedisConName1"], _config["RedisConName2"], _config["RedisConName3"], _config["RedisConName4"], _config["RedisConName5"], _config["IsSentinel"]);
+            
+
             _cpsRuntimeDataBuffer = new BlockingCollection<CpsRuntimeData>();
             _rpcService = new CpsRpcService(_config["CpsIpAddress"], 10000, historyDataRequest, _cpsRuntimeDataBuffer);
 
-            _repository = new Repository(_logger, _dataManager, _RedisConnectorHelper);
+            _repository = new Repository(_logger, _dataManager, _historicalDataManager, _RedisConnectorHelper);
             _ocpManager = new OCPManager(_logger, _repository, _rpcService.CommandService);
             _runtimeDataReceiver = new RuntimeDataReceiver(_logger, _repository, (IProcessing)_ocpManager, _rpcService, _cpsRuntimeDataBuffer);
         }
 
+        private void CallConnection()
+        {
+            try
+            {
+                RedisUtils.RedisUtils_Connect();
+            }
+            catch (Exception ex)
+            {
+                _logger.WriteEntry($"Redis Connection Error {ex}", LogLevels.Error);
+            }
+        }
+
+        
+
         public override Task StartAsync(CancellationToken cancellationToken)
         {
+            CallConnection();
             _logger.LogReceived += OnLogReceived;
             _storeLogs.Start();
             _logger.WriteEntry("Start of running OCP ... ***************************************", LogLevels.Info);
@@ -63,6 +84,15 @@ namespace OCP
                 Thread.Sleep(5000);
             }
             _logger.WriteEntry(">>>>> Connected to CPS", LogLevels.Info);
+
+            _logger.WriteEntry("Check Redis Connection", LogLevels.Info);
+            while (!RedisUtils.IsConnected)
+            {
+                _logger.WriteEntry(">>>>> Waiting for Redis Connection", LogLevels.Info);
+                CallConnection();
+                Thread.Sleep(5000);
+
+            }
             _logger.WriteEntry("Loading data from database/redis is started.", LogLevels.Info);
 
             if (_repository.Build() == false)

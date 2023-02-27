@@ -1,4 +1,4 @@
-FROM dotnet_runtime:latest
+FROM func_runtime:latest
 WORKDIR /app
 COPY . . 
 RUN chmod +x MAB

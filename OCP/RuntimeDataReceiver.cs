@@ -136,6 +136,19 @@ namespace OCP
 
 
                     ocpScadaPoint.Quality = OCPQualityConvertor.GetCheckPointQuality((QualityCodes)measurement.QualityCodes);
+
+                    if (measurement.Acknowledged)
+                    {
+                        if (ocpScadaPoint.Name == "FourValueOverloaded" ||
+                            ocpScadaPoint.Name == "FourValueWarning" ||
+                            ocpScadaPoint.Name == "FiveValueOverloaded" ||
+                            ocpScadaPoint.Name == "FiveValueWarning" ||
+                            ocpScadaPoint.Name == "Functionality" ||
+                            ocpScadaPoint.Name == "OverloadAppear" ||
+                            ocpScadaPoint.Name == "OverloadWarning" ||
+                            ocpScadaPoint.Name == "QualityError")
+                            _dataProcessing.AlarmAcked_Processing(ocpScadaPoint);
+                    }
                 }
             }
         }

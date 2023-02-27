@@ -55,6 +55,7 @@ namespace OCP
                     LastTrueCycleNo = _cycleNo;
                     LastTrueTime = _cycles[_cycleNo];
                 }
+                //_logger.WriteEntry($"Current time: time = {vTime.ToString("yyyy-MM-dd HH:mm:ss.fff")}", LogLevels.Info);
 
                 if (DeviationIstoomuch(vTime,3,200))
                     _logger.WriteEntry($"Cycle time Deviation is too high,time = {vTime.ToString("yyyy-MM-dd HH:mm:ss.fff")}", LogLevels.Warn);

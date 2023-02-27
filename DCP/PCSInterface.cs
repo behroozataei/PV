@@ -83,6 +83,31 @@ namespace DCP
                 // -------------------------------------------------------------------
                 // 5.
                 // On first Link Server
+
+                //  //1401_08_23 Preparing Data For HMI
+                try
+                {
+                    string strSQLHIS = "Insert Into APP_DCP_EECTelegram (\"TELDATETIME\", \"RESIDUALTIME[Min]\"," +
+                         " \"RESIDUALENERGY[Mwh]\", \"POWERLIMIT1[MW]\", \"POWERLIMIT2[MW]\", \"RESIDUALENERGYEND[Mwh]\") " +
+                         "VALUES('" +
+                         aEECTelegram.m_Date.ToString("yyyy/MM/dd HH:mm:ss") + "', '" +
+                         aEECTelegram.m_ResidualTime.Trim() + "', " +
+                         Math.Round((Double.Parse(aEECTelegram.m_ResidualEnergy)), 2).ToString().Trim() + ", " +
+                         Math.Round((Double.Parse(aEECTelegram.m_OverLoad1)),2).ToString().Trim() + ", " +
+                         Math.Round((Double.Parse(aEECTelegram.m_OverLoad2)), 2).ToString().Trim() + ", " +
+                         Math.Round((Double.Parse(aEECTelegram.m_ResidualEnergyEnd)), 2).ToString().Trim() + ")";
+
+                    if (!_repository.ModifyOnHistoricalDB(strSQLHIS))
+
+                        _logger.WriteEntry("Archive: Could not insert into APP_DCP_EECTelegram Table in the HIS DB", LogLevels.Error);
+                }
+                catch (Exception excep)
+                {
+                    _logger.WriteEntry(excep.Message, LogLevels.Error, excep);
+
+
+                }
+
                 if (!_repository.InsertTELEGRAM(strSQL))
                 {
                     SetAlarmForLinkServer("1_LinkServer: Could not insert into T_EECTelegram Table in the SQLServer.PU10_PCS DB");
@@ -91,8 +116,10 @@ namespace DCP
                 {
                     ClearAlarmForLinkServer("1_LinkServer: Send EECTelegram was accomlished successfully ");
                 }
-
                 result = true;
+
+                
+
             }
             catch (System.Exception excep)
             {
@@ -406,28 +433,31 @@ namespace DCP
                 // -------------------------------------------------------------------------
                 // 2. Retreiving the last requsted record
                 var dtbEAFGroupRequest = _repository.GetEAFGROUPREQUEST();
-                if (dtbEAFGroupRequest.Rows.Count == 0)
-                    SetAlarmForLinkServer("1_LinkServer: Could not read from T_EAFGroupRequest Table in the SQLServer->PU10_PCS DB");
-                else
+                if (dtbEAFGroupRequest != null)
                 {
-                    DataRow dr = dtbEAFGroupRequest.Rows[0];
-
-                    ClearAlarmForLinkServer("1_LinkServer: Request Time = " + dr["RequestDateTime"].ToString());
-
-                    // -------------------------------------------------------------------------
-                    // 3. Processing the last requsted record
-                    if (!string.IsNullOrEmpty(dr["ResponseDateTime"].ToString()))
-                    {
-                        var RespDate = DateTime.Parse(dr["ResponseDateTime"].ToString());
-
-                        if (RespDate.Year < 2000)
-                        {
-                            result = true;
-                            //_logger.WriteEntry("1_LinkServer: Request Time = " + dr["RequestDateTime"].ToString(), LogLevels.Info);
-                        }
-                    }
+                    if (dtbEAFGroupRequest.Rows.Count == 0)
+                        SetAlarmForLinkServer("1_LinkServer: Could not read from T_EAFGroupRequest Table in the SQLServer->PU10_PCS DB");
                     else
-                        result = true;
+                    {
+                        DataRow dr = dtbEAFGroupRequest.Rows[0];
+
+                        ClearAlarmForLinkServer("1_LinkServer: Request Time = " + dr["RequestDateTime"].ToString());
+
+                        // -------------------------------------------------------------------------
+                        // 3. Processing the last requsted record
+                        if (!string.IsNullOrEmpty(dr["ResponseDateTime"].ToString()))
+                        {
+                            var RespDate = DateTime.Parse(dr["ResponseDateTime"].ToString());
+
+                            if (RespDate.Year < 2000)
+                            {
+                                result = true;
+                                //_logger.WriteEntry("1_LinkServer: Request Time = " + dr["RequestDateTime"].ToString(), LogLevels.Info);
+                            }
+                        }
+                        else
+                            result = true;
+                    }
                 }
 
                 // -------------------------------------------------------------------------

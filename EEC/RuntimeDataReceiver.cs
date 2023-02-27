@@ -66,13 +66,26 @@ namespace EEC
             foreach (var measurement in measurements)
             {
                 var scadaPoint = _repository.GetScadaPoint(Guid.Parse(measurement.MeasurementId));
-                if (scadaPoint != null)
+                if (scadaPoint != null && !(scadaPoint.PointDirectionType == PointDirectionType.output && scadaPoint.ScadaType.ToLower().Equals("analogmeasurement")))
                 {
                     scadaPoint.Value = measurement.Value;
                     scadaPoint.Quality = measurement.QualityCodes;
 
                     _dataProcessing.Check_Apply_EECConst(measurement);
+
+                    if (scadaPoint.Name == "MAB" || scadaPoint.Name == "MAB_EEC")
+                        _dataProcessing.Set_EEC_MAB_Status(scadaPoint);
+                    //Message Ack Processing
+                    if (measurement.Acknowledged)
+
+                        if (scadaPoint.Name == "ALARM_ENERGY" || scadaPoint.Name == "SCADAError" || scadaPoint.Name == "SFCWarning")
+                        {
+                            _dataProcessing.AlarmAcked_Processing(scadaPoint);
+                        }
+
                 }
+
+
             }
         }
     }

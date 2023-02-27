@@ -213,7 +213,7 @@ namespace LSP
 
 
                 if (RedisUtils.IsConnected)
-                    _RedisConnectorHelper.DataBase.StringSet(RedisKeyPattern.OCP_CheckPoints + ocp_checkpoint_obj.OCPSHEDPOINT_ID, JsonConvert.SerializeObject(ocp_checkpoint_obj));
+                    RedisUtils.RedisConnection1.Set(RedisKeyPattern.OCP_CheckPoints + ocp_checkpoint_obj.OCPSHEDPOINT_ID, JsonConvert.SerializeObject(ocp_checkpoint_obj));
                 else
                     _logger.WriteEntry("Redis Connection Error", LogLevels.Error);
 
@@ -252,8 +252,8 @@ namespace LSP
         {
             _logger.WriteEntry("Loading OCP_Checkpoint Data from Cache", LogLevels.Info);
 
-            var keys = _RedisConnectorHelper.GetKeys(pattern: RedisKeyPattern.OCP_CheckPoints);
-            var dataTable_cache = _RedisConnectorHelper.StringGet<OCP_CHECKPOINTS_Str>(keys);
+            var keys = RedisUtils.GetKeys(pattern: RedisKeyPattern.OCP_CheckPoints);
+            var dataTable_cache = RedisUtils.StringGet<OCP_CHECKPOINTS_Str>(keys);
 
             try
             {
@@ -445,7 +445,7 @@ namespace LSP
                     lsp_param.SCADATYPE = row["SCADATYPE"].ToString();
                     lsp_param.ID = id.ToString();
                     if (RedisUtils.IsConnected)
-                        _RedisConnectorHelper.DataBase.StringSet(RedisKeyPattern.LSP_PARAMS + networkPath, JsonConvert.SerializeObject(lsp_param));
+                        RedisUtils.RedisConnection1.Set(RedisKeyPattern.LSP_PARAMS + networkPath, JsonConvert.SerializeObject(lsp_param));
 
 
 
@@ -488,8 +488,8 @@ namespace LSP
         {
             _logger.WriteEntry("Loading LSP_PARAMS Data from Cache", LogLevels.Info);
 
-            var keys = _RedisConnectorHelper.GetKeys(pattern: RedisKeyPattern.LSP_PARAMS);
-            var dataTable_cache = _RedisConnectorHelper.StringGet<LSP_PARAMS_Str>(keys);
+            var keys = RedisUtils.GetKeys(pattern: RedisKeyPattern.LSP_PARAMS);
+            var dataTable_cache = RedisUtils.StringGet<LSP_PARAMS_Str>(keys);
 
             try
             {
@@ -561,7 +561,7 @@ namespace LSP
                         lsp_dectitems.DECTNO = Convert.ToInt32(row["DECTNO"]);
                         lsp_dectitems.DECTITEMNO = Convert.ToInt32(row["DECTITEMNO"]);
                         if (RedisUtils.IsConnected)
-                            _RedisConnectorHelper.DataBase.StringSet(RedisKeyPattern.LSP_DECTITEMS + row["DECTNO"].ToString() + "-" + row["DECTITEMNO"].ToString(), JsonConvert.SerializeObject(lsp_dectitems));
+                            RedisUtils.RedisConnection1.Set(RedisKeyPattern.LSP_DECTITEMS + row["DECTNO"].ToString() + "-" + row["DECTITEMNO"].ToString(), JsonConvert.SerializeObject(lsp_dectitems));
 
                         if (!_scadaPoints.ContainsKey(id))
                         {
@@ -594,8 +594,8 @@ namespace LSP
         {
             _logger.WriteEntry("Loading LSP_DECTITEMS Data from Cache", LogLevels.Info);
 
-            var keys = _RedisConnectorHelper.GetKeys(pattern: RedisKeyPattern.LSP_DECTITEMS);
-            var dataTable = _RedisConnectorHelper.StringGet<LSP_DECTITEMS_Str>(keys);
+            var keys = RedisUtils.GetKeys(pattern: RedisKeyPattern.LSP_DECTITEMS);
+            var dataTable = RedisUtils.StringGet<LSP_DECTITEMS_Str>(keys);
             try
             {
                 foreach (LSP_DECTITEMS_Str row in dataTable)
@@ -669,7 +669,7 @@ namespace LSP
                     lsp_priorityitems.ADDRESSPARTNER = row["ADDRESSPARTNER"].ToString();
 
                     if (RedisUtils.IsConnected)
-                        _RedisConnectorHelper.DataBase.StringSet(RedisKeyPattern.LSP_PRIORITYITEMS + row["PRIORITYLISTNO"].ToString() + "-" + row["ITEMNO"].ToString(), JsonConvert.SerializeObject(lsp_priorityitems));
+                        RedisUtils.RedisConnection1.Set(RedisKeyPattern.LSP_PRIORITYITEMS + row["PRIORITYLISTNO"].ToString() + "-" + row["ITEMNO"].ToString(), JsonConvert.SerializeObject(lsp_priorityitems));
 
                     //if (Guid.TryParse(row["GUID_CURR"].ToString(), out var id))
                     if (id_curr != Guid.Empty)
@@ -730,8 +730,8 @@ namespace LSP
         {
             _logger.WriteEntry("Loading LSP_DECTITEMS Data from Cache", LogLevels.Info);
 
-            var keys = _RedisConnectorHelper.GetKeys(pattern: RedisKeyPattern.LSP_PRIORITYITEMS);
-            var dataTable = _RedisConnectorHelper.StringGet<LSP_PRIORITYITEMS_Str>(keys);
+            var keys = RedisUtils.GetKeys(pattern: RedisKeyPattern.LSP_PRIORITYITEMS);
+            var dataTable = RedisUtils.StringGet<LSP_PRIORITYITEMS_Str>(keys);
             try
             {
                 foreach (LSP_PRIORITYITEMS_Str row in dataTable)
@@ -818,7 +818,7 @@ namespace LSP
                     eec_eafpriority.PARTNERADDRESS = row["PARTNERADDRESS"].ToString();
                     eec_eafpriority.FURNACE = row["FURNACE"].ToString();
                     if (RedisUtils.IsConnected)
-                        _RedisConnectorHelper.DataBase.StringSet(RedisKeyPattern.EEC_EAFSPriority + row["CB_NETWORKPATH"].ToString(), JsonConvert.SerializeObject(eec_eafpriority));
+                        RedisUtils.RedisConnection1.Set(RedisKeyPattern.EEC_EAFSPriority + row["CB_NETWORKPATH"].ToString(), JsonConvert.SerializeObject(eec_eafpriority));
 
 
 
@@ -903,8 +903,8 @@ namespace LSP
         {
             _logger.WriteEntry("Loading EEC_EAFSPRIORITY Data from Cache", LogLevels.Info);
 
-            var keys = _RedisConnectorHelper.GetKeys(pattern: RedisKeyPattern.EEC_EAFSPriority);
-            var dataTable = _RedisConnectorHelper.StringGet<EEC_EAFSPRIORITY_Str>(keys);
+            var keys = RedisUtils.GetKeys(pattern: RedisKeyPattern.EEC_EAFSPriority);
+            var dataTable = RedisUtils.StringGet<EEC_EAFSPRIORITY_Str>(keys);
             try
             {
                 foreach (EEC_EAFSPRIORITY_Str row in dataTable)
@@ -996,17 +996,17 @@ namespace LSP
                     dataTable = _staticDataManager.GetRecord($"SELECT * from APP_LSP_DECTCOMB");
                     //var ff1 = JsonConvert.SerializeObject(dataTable);
                     //var ff2 = JsonConvert.DeserializeObject<DataTable>(ff1);
-                    _RedisConnectorHelper.DataBase.StringSet(RedisKeyPattern.LSP_DECTCOMB, JsonConvert.SerializeObject(dataTable));
+                    RedisUtils.RedisConnection1.Set(RedisKeyPattern.LSP_DECTCOMB, JsonConvert.SerializeObject(dataTable));
 
 
                     dataTable = _staticDataManager.GetRecord($"SELECT * from APP_LSP_DECTLIST");
-                    _RedisConnectorHelper.DataBase.StringSet(RedisKeyPattern.LSP_DECTLIST, JsonConvert.SerializeObject(dataTable));
+                    RedisUtils.RedisConnection1.Set(RedisKeyPattern.LSP_DECTLIST, JsonConvert.SerializeObject(dataTable));
 
                     dataTable = _staticDataManager.GetRecord($"SELECT * from APP_LSP_DECTPRIOLS");
-                    _RedisConnectorHelper.DataBase.StringSet(RedisKeyPattern.LSP_DECTPRIOLS, JsonConvert.SerializeObject(dataTable));
+                    RedisUtils.RedisConnection1.Set(RedisKeyPattern.LSP_DECTPRIOLS, JsonConvert.SerializeObject(dataTable));
 
                     dataTable = _staticDataManager.GetRecord($"SELECT * from APP_LSP_PRIORITYLIST");
-                    _RedisConnectorHelper.DataBase.StringSet(RedisKeyPattern.LSP_PRIORITYLIST, JsonConvert.SerializeObject(dataTable));
+                    RedisUtils.RedisConnection1.Set(RedisKeyPattern.LSP_PRIORITYLIST, JsonConvert.SerializeObject(dataTable));
 
                 }
 
@@ -1066,7 +1066,7 @@ namespace LSP
             try
             {
                 //if(LoadfromCache)
-                dataTable = JsonConvert.DeserializeObject<DataTable>(_RedisConnectorHelper.DataBase.StringGet(RedisKeyPattern.LSP_DECTLIST));
+                dataTable = JsonConvert.DeserializeObject<DataTable>(RedisUtils.RedisConnection1.Get(RedisKeyPattern.LSP_DECTLIST));
                 //else
                 //    dataTable = _staticDataManager.GetRecord($"SELECT * from {GetEndStringCommand()}LSP_DECTLIST ORDER BY DECTNO");
 
@@ -1092,8 +1092,8 @@ namespace LSP
             {
                 //if (LoadfromCache)
                 //{
-                var keys = _RedisConnectorHelper.GetKeys(pattern: RedisKeyPattern.LSP_DECTITEMS);
-                row = _RedisConnectorHelper.StringGet<LSP_DECTITEMS_Str>(keys).ToArray();
+                var keys = RedisUtils.GetKeys(pattern: RedisKeyPattern.LSP_DECTITEMS);
+                row = RedisUtils.StringGet<LSP_DECTITEMS_Str>(keys).ToArray();
                 //}
                 //else
                 //    dataTable = _staticDataManager.GetRecord($"SELECT * from {GetEndStringCommand()}LSP_DECTITEMS WHERE DECTNO = " + decisionTableNo.ToString() + " ORDER BY DECTITEMNO ");
@@ -1118,7 +1118,7 @@ namespace LSP
             try
             {
                 //if (LoadfromCache)
-                dataTable = JsonConvert.DeserializeObject<DataTable>(_RedisConnectorHelper.DataBase.StringGet(RedisKeyPattern.LSP_DECTCOMB));
+                dataTable = JsonConvert.DeserializeObject<DataTable>(RedisUtils.RedisConnection1.Get(RedisKeyPattern.LSP_DECTCOMB));
                 //else
                 //dataTable = _staticDataManager.GetRecord($"SELECT * from {GetEndStringCommand()}LSP_DECTCOMB WHERE DECTNO = " + decisionTableNo.ToString() + " ORDER BY COMBINATIONNO, DECTITEMNO");
 
@@ -1142,7 +1142,7 @@ namespace LSP
             try
             {
                 //if (LoadfromCache)
-                dataTable = JsonConvert.DeserializeObject<DataTable>(_RedisConnectorHelper.DataBase.StringGet(RedisKeyPattern.LSP_DECTPRIOLS));
+                dataTable = JsonConvert.DeserializeObject<DataTable>(RedisUtils.RedisConnection1.Get(RedisKeyPattern.LSP_DECTPRIOLS));
                 //else
                 //{
                 //    string strSQL = $"SELECT * FROM {GetEndStringCommand()}LSP_DECTPRIOLS WHERE DECTNO = " + decisionTableNo.ToString() + " ORDER BY COMBINATIONNO";
@@ -1171,8 +1171,8 @@ namespace LSP
             {
                 //if (LoadfromCache)
                 //{
-                var keys = _RedisConnectorHelper.GetKeys(pattern: RedisKeyPattern.LSP_PRIORITYITEMS);
-                row = _RedisConnectorHelper.StringGet<LSP_PRIORITYITEMS_Str>(keys).ToArray();
+                var keys = RedisUtils.GetKeys(pattern: RedisKeyPattern.LSP_PRIORITYITEMS);
+                row = RedisUtils.StringGet<LSP_PRIORITYITEMS_Str>(keys).ToArray();
                 //}
                 //else
                 //{
@@ -1317,7 +1317,7 @@ namespace LSP
 
             try
             {
-                dataTable = JsonConvert.DeserializeObject<DataTable>(_RedisConnectorHelper.DataBase.StringGet(RedisKeyPattern.LSP_PRIORITYLIST));
+                dataTable = JsonConvert.DeserializeObject<DataTable>(RedisUtils.RedisConnection1.Get(RedisKeyPattern.LSP_PRIORITYLIST));
             }
             catch (Irisa.DataLayer.DataException ex)
             {
@@ -1336,14 +1336,14 @@ namespace LSP
             FetchEAFSPriority_Str[] dataTable = null;
             try
             {
-                var EEC_SFSCEAFSPRIORITY_KEYs = GetRedisUtiles().GetKeys(pattern: RedisKeyPattern.EEC_SFSCEAFSPRIORITY);
+                var EEC_SFSCEAFSPRIORITY_KEYs = RedisUtils.GetKeys(pattern: RedisKeyPattern.EEC_SFSCEAFSPRIORITY);
                 if (EEC_SFSCEAFSPRIORITY_KEYs.Length == 0)
                 {
                     _logger.WriteEntry("Error in running get Keys from EEC_SFSCEAFSPRIORITY cache", LogLevels.Error);
                     return dataTable;
                 }
 
-                var EEC_EAFSPriority_KEYs = GetRedisUtiles().GetKeys(pattern: RedisKeyPattern.EEC_EAFSPriority);
+                var EEC_EAFSPriority_KEYs = RedisUtils.GetKeys(pattern: RedisKeyPattern.EEC_EAFSPriority);
                 if (EEC_EAFSPriority_KEYs.Length == 0)
                 {
                     _logger.WriteEntry("Error in running get Keys from EEC_EAFSPriority cache", LogLevels.Error);
@@ -1353,8 +1353,8 @@ namespace LSP
                 EEC_SFSCEAFSPRIORITY_Str[] eec_sfscprio_rows = new EEC_SFSCEAFSPRIORITY_Str[8];
                 EEC_EAFSPRIORITY_Str[] eec_eafprio_rows = new EEC_EAFSPRIORITY_Str[8];
 
-                var _eec_sfscprio_table = _RedisConnectorHelper.StringGet<EEC_SFSCEAFSPRIORITY_Str>(EEC_SFSCEAFSPRIORITY_KEYs).ToArray();
-                var _eec_eafprio_table = _RedisConnectorHelper.StringGet<EEC_EAFSPRIORITY_Str>(EEC_EAFSPriority_KEYs).ToArray();
+                var _eec_sfscprio_table = RedisUtils.StringGet<EEC_SFSCEAFSPRIORITY_Str>(EEC_SFSCEAFSPRIORITY_KEYs).ToArray();
+                var _eec_eafprio_table = RedisUtils.StringGet<EEC_EAFSPRIORITY_Str>(EEC_EAFSPriority_KEYs).ToArray();
 
                 //for (int fur = 0; fur < 8; fur++)
                 //{
@@ -1421,6 +1421,29 @@ namespace LSP
                 _logger.WriteEntry(ex.Message, LogLevels.Error, ex);
             }
 
+            return dataTable;
+        }
+
+        public SFSC_EAFSPOWER_Str GetFromHistoricalCache()
+        {
+            SFSC_EAFSPOWER_Str dataTable = null;
+
+            try
+            {
+                if (RedisUtils.GetKeys(pattern: RedisKeyPattern.SFSC_EAFSPOWER).Length == 0)
+                    return dataTable;
+
+                dataTable = JsonConvert.DeserializeObject<SFSC_EAFSPOWER_Str>(RedisUtils.RedisConnection1.Get(RedisKeyPattern.SFSC_EAFSPOWER));
+
+            }
+            catch (Irisa.DataLayer.DataException ex)
+            {
+                _logger.WriteEntry(ex.ToString(), LogLevels.Error);
+            }
+            catch (Exception ex)
+            {
+                _logger.WriteEntry(ex.Message, LogLevels.Error, ex);
+            }
             return dataTable;
         }
 

@@ -20,12 +20,16 @@ namespace COM
         public const string OCP_PARAMS = "APP:OCP_PARAMS:";
         public const string OPCMeasurement = "APP:OPCMeasurement:";
         public const string OPC_Params = "APP:OPC_Params:";
+        public const string RPC_PARAMS = "APP:RPC_PARAMS:";
 
         public const string EEC_TELEGRAM = "APP:EEC_TELEGRAM:";
         public const string EEC_SFSCEAFSPRIORITY = "APP:EEC_SFSCEAFSPRIORITY:";
         public const string SFSC_EAFSPOWER = "APP:SFSC_EAFSPOWER:";
         public const string SFSC_FURNACE_TO_SHED = "APP:SFSC_FURNACE_TO_SHED:";
         public const string SDK_TEMPLATE = "APP:SDK_TEMPLATE:";
+
+        public const string T_RPCCycles = "APP:T_RPCCycles:";
+
 
 
     }
@@ -251,6 +255,21 @@ namespace COM
         public string ScadaType;
         public Guid ID;
     };
+
+    public class RPC_PARAMS_Str
+    {
+        public string ID;
+        public string FUNCTIONNAME;
+        public string NAME;
+        public string DIRECTIONTYPE;
+        public string NETWORKPATH;
+        public string SCADATYPE;
+    }
+
+    public class T_RPCCycles_Str
+    {
+        public DateTime[] CYCLE = new DateTime[16];
+    }
 
 
 }

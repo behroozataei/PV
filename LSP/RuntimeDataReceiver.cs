@@ -78,22 +78,27 @@ namespace LSP
                         checkPoint.Value = measurement.Value;
                         checkPoint.Quality = (QualityCodes)measurement.QualityCodes;
 
-                        //_logger.WriteEntry("Digital..Checkpoint " + checkPoint.NetworkPath + ";" + checkPoint.Value, LogLevels.Info);
                     }
-
-
+                   
 
                     var lspScadaPoint = _repository.GetLSPScadaPoint(measurementGUID);
                     if (lspScadaPoint != null)
                     {
                         lspScadaPoint.Value = measurement.Value;
                         lspScadaPoint.Quality = (QualityCodes)measurement.QualityCodes;
+                        if (measurement.Acknowledged)
+                        {
+                            if (lspScadaPoint.Name == "LSPActivated" ||
+                                lspScadaPoint.Name == "OverloadReset" ||
+                                lspScadaPoint.Name == "PCSPowerLimit" ||
+                                lspScadaPoint.Name == "WrongNetworkStatus")
+                                _dataProcessing.AlarmAcked_Processing(lspScadaPoint);
+                        }
 
-                        // if (lspScadaPoint.Name == "Network/Substations/MIS1/63kV/GMF4/CB/STATE")
-                        //   _logger.WriteEntry("DigitalPoint " + lspScadaPoint.NetworkPath + ";" + lspScadaPoint.Id + ";" + lspScadaPoint.Value, LogLevels.Info);
                     }
 
                     _dataProcessing.SCADAEventRaised(measurement);
+                    
                 }
                 else if (measurement.MeasurementType == MeasurementDataType.Analog)
                 {
@@ -122,7 +127,7 @@ namespace LSP
                         //_logger.WriteEntry("OnRawDataReceived()..Analog..LSPScadaPoint: " + lspScadaPoint.NetworkPath + ";" + measurement.Value, LogLevels.Info);
 
                         // 2022.03.07 A.K, B.A      Add new SCADAPoint for checking OVERLCOND from OCP, OVERLCONDA
-                        if( lspScadaPoint.NetworkPath.Contains("OVERLCONDA") )
+                        if (lspScadaPoint.NetworkPath.Contains("OVERLCONDA"))
                             _dataProcessing.SCADAEventRaised(measurement);
                     }
 

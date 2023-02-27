@@ -86,7 +86,7 @@ namespace MAB
                         _dataProcessing.UpdateMAB();
                     }
 
-                    if ((scadaPoint.Value != (float)newValue || scadaPoint.Qulity != newQuality) && scadaPoint.SCADAType == "AnalogMeasurement")
+                    if ((scadaPoint.Value != (float)newValue || scadaPoint.Qulity != newQuality) && scadaPoint.SCADAType == "AnalogMeasurement" && scadaPoint.PointDirectionType == PointDirectionType.Input)
                     {
                         scadaPoint.Value = (float)newValue;
                         scadaPoint.Qulity = newQuality;

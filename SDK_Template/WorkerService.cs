@@ -33,8 +33,9 @@ namespace SDK_Template
         {
             var config = serviceProvider.GetService<IConfiguration>();
             _logger = serviceProvider.GetService<ILogger>();
-            
-            _RedisConnectorHelper = new RedisUtils(0);
+
+            _RedisConnectorHelper.ConnectionFailed += _RedisConnectorHelper_ConnectionFailed;
+            _RedisConnectorHelper.RedisUtils_Connect(0, config["RedisKeySentinel1"], config["RedisKeySentinel2"], config["RedisKeySentinel3"], config["RedisKeySentinel4"], config["RedisKeySentinel5"], config["RedisPassword"], config["RedisServiceName"]);
 
             //if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             //{
@@ -64,6 +65,11 @@ namespace SDK_Template
             _repository = new Repository(_logger, _dataManager, _RedisConnectorHelper);
             _sdk_template_manager = new SDK_Template_Manager(_logger, _repository, _rpcService.CommandService);
             _runtimeDataReceiver = new RuntimeDataReceiver(_logger, _repository, (IProcessing)_sdk_template_manager, _rpcService, _cpsRuntimeDataBuffer);
+        }
+        private void _RedisConnectorHelper_ConnectionFailed(object sender, StackExchange.Redis.ConnectionFailedEventArgs e)
+        {
+            _logger.WriteEntry("Redis Connection Failed", LogLevels.Error);
+
         }
 
         public override Task StartAsync(CancellationToken cancellationToken)

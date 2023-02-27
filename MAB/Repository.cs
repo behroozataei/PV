@@ -94,7 +94,7 @@ namespace MAB
                 try
                 {
                     if (RedisUtils.IsConnected)
-                        _RedisConnectorHelper.DataBase.StringSet(RedisKeyPattern.MAB_PARAMS + networkPath, JsonConvert.SerializeObject(mab_param));
+                        RedisUtils.RedisConnection1.Set(RedisKeyPattern.MAB_PARAMS + networkPath, JsonConvert.SerializeObject(mab_param));
                     else
                         _logger.WriteEntry("Redis Connection Error", LogLevels.Error);
 
@@ -127,8 +127,8 @@ namespace MAB
         {
             _logger.WriteEntry("Loading Data from Cache", LogLevels.Info);
 
-            var keys = _RedisConnectorHelper.GetKeys(pattern: RedisKeyPattern.MAB_PARAMS);
-            var dataTable = _RedisConnectorHelper.StringGet<MAB_PARAMS_Str>(keys);
+            var keys = RedisUtils.GetKeys(pattern: RedisKeyPattern.MAB_PARAMS);
+            var dataTable = RedisUtils.StringGet<MAB_PARAMS_Str>(keys);
 
             foreach (MAB_PARAMS_Str row in dataTable)
             {

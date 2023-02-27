@@ -12,5 +12,6 @@ namespace OCP
         OCPScadaPoint GetOCPScadaPoint(Guid measurementId);
         OCPScadaPoint GetOCPScadaPoint(String name);
         IEnumerable<OCPScadaPoint> GetOCPScadaPoints();
+        bool ModifyOnHistoricalDB(string sql);
     }
 }

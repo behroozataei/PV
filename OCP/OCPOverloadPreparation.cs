@@ -1,4 +1,6 @@
-﻿using Irisa.Logger;
+﻿using Irisa.Common.Utils;
+using Irisa.Logger;
+using Oracle.ManagedDataAccess.Types;
 using System;
 using System.Collections.Generic;
 
@@ -26,6 +28,7 @@ namespace OCP
         {
             try
             {
+                Queue<OCPCheckPoint> Overloaded_Pointes = new Queue<OCPCheckPoint>();
                 //'KAJI CycVal
                 bool bOnetimeReset = true;
 
@@ -42,6 +45,7 @@ namespace OCP
                     {
                         if (checkPoint.OverloadFlag)
                         {
+                            Overloaded_Pointes.Enqueue(checkPoint);
                             //'KAJI CycVal
                             if (bOnetimeReset)
                             {
@@ -106,6 +110,7 @@ namespace OCP
                         {
                             if (checkPoint.OverloadFlag)
                             {
+                                Overloaded_Pointes.Enqueue(checkPoint);
                                 //'KAJI CycVal
                                 if (bOnetimeReset)
                                 {
@@ -287,7 +292,7 @@ namespace OCP
                     var overlcondA = _repository.GetOCPScadaPoint("OVERLCONDA");
                     //if (!_updateScadaPointOnServer.SendOverloadToLSP(overlcond, SinglePointStatus.Appear))
                     if ((!_updateScadaPointOnServer.SendAlarm(_repository.GetOCPScadaPoint("OVERLCOND"), SinglePointStatus.Appear,
-                            "OCP is in OVERLOAD, trying to trigger the LSP ... "))||
+                            "OCP is in OVERLOAD, trying to trigger the LSP ... ")) ||
                          (!_updateScadaPointOnServer.WriteOVERLCONDA(_repository.GetOCPScadaPoint("OVERLCONDA"), 2.0f)))
                     {
                         LSPTrigger = false;
@@ -302,6 +307,48 @@ namespace OCP
 
                         _logger.WriteEntry("OCP in OVERLOAD, but could not trigger the LSP.", LogLevels.Error);
                     }
+
+                    //1404-08-09 Preparing Data For HMI
+                    try
+                    {
+                        foreach (var _overloaded_point in Overloaded_Pointes)
+                        {
+                            //String Datatime = DateTime.Now.ToString(("yyyy-MMMM-dd HH:mm:ss"));
+                            String Datatime = DateTime.UtcNow.ToIranDateTime().ToString("yyyy/MM/dd HH:mm:ss");
+                            string Four_Five = " ";
+                            if (_overloaded_point.OverloadAlarmFiveCycle && CycleNo == 5)
+                                Four_Five = "Five";
+                            if (_overloaded_point.OverloadAlarmFourCycle && CycleNo == 2)
+                                Four_Five = "Four";
+                            
+                            string sql = $"INSERT INTO APP_OCP_OVERLOAD_POINTES (\"DATETIME\", \"NETWORKPATH\"," +
+                                             $"\"CYCLE1_TIME|VALUE\", \"CYCLE2_TIME|VALUE\", \"CYCLE3_TIME|VALUE\", \"CYCLE4_TIME|VALUE\", \"CYCLE5_TIME|VALUE\"," +
+                                             $"\"FOUR|FIVE\", \"NAMINAL\", \"AVARAGE\") VALUES(" +
+                                             $"'{Datatime}'" +
+                                             ",'" +
+                                             _overloaded_point.NetworkPath.Replace("Network/Substations/","")+ "', " +
+                                             $"CONCAT(CONCAT(TO_CHAR(TO_TIMESTAMP('{_overloaded_point.TCycle1.ToString($"yyyy-MM-dd{"T"}HH:mm:ss.ff")}', 'yyyy-mm-dd\"T\"HH24:mi:ss.ff3'),'HH24:mi:ss.ff3') , ' | ') , '{Math.Round(_overloaded_point.Value1,2).ToString()}')" + ", " +
+                                             $"CONCAT(CONCAT(TO_CHAR(TO_TIMESTAMP('{_overloaded_point.TCycle2.ToString($"yyyy-MM-dd{"T"}HH:mm:ss.ff")}', 'yyyy-mm-dd\"T\"HH24:mi:ss.ff3'),'HH24:mi:ss.ff3') , ' | ') , '{Math.Round(_overloaded_point.Value2,2).ToString()}')" + ", " +
+                                             $"CONCAT(CONCAT(TO_CHAR(TO_TIMESTAMP('{_overloaded_point.TCycle3.ToString($"yyyy-MM-dd{"T"}HH:mm:ss.ff")}', 'yyyy-mm-dd\"T\"HH24:mi:ss.ff3'),'HH24:mi:ss.ff3') , ' | ') , '{Math.Round(_overloaded_point.Value3,2).ToString()}')" + ", " +
+                                             $"CONCAT(CONCAT(TO_CHAR(TO_TIMESTAMP('{_overloaded_point.TCycle4.ToString($"yyyy-MM-dd{"T"}HH:mm:ss.ff")}', 'yyyy-mm-dd\"T\"HH24:mi:ss.ff3'),'HH24:mi:ss.ff3') , ' | ') , '{Math.Round(_overloaded_point.Value4,2).ToString()}')" + ", " +
+                                             $"CONCAT(CONCAT(TO_CHAR(TO_TIMESTAMP('{_overloaded_point.TCycle5.ToString($"yyyy-MM-dd{"T"}HH:mm:ss.ff")}', 'yyyy-mm-dd\"T\"HH24:mi:ss.ff3'),'HH24:mi:ss.ff3') , ' | ') , '{Math.Round(_overloaded_point.Value5,2).ToString()}')" + ", '" +                                             
+                                             Four_Five + "', '" +
+                                             _overloaded_point.NominalValue + "', '" +
+                                             _overloaded_point.Average.Value + "')";
+                            if (!_repository.ModifyOnHistoricalDB(sql))
+                            {
+                                _logger.WriteEntry($"Error in INSERT Into APP_OCP_OVERLOAD_POINT, Point " + _overloaded_point.NetworkPath.ToString(), LogLevels.Error);
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.WriteEntry(ex.Message, LogLevels.Error);
+
+                    }
+
+
+
                 }
                 return true;
             }
@@ -671,7 +718,7 @@ namespace OCP
             try
             {
                 var overlcond = _repository.GetOCPScadaPoint("OVERLCOND");
-                if ((!_updateScadaPointOnServer.SendOverloadToLSP(overlcond, SinglePointStatus.Disappear))|| (!_updateScadaPointOnServer.WriteOVERLCONDA(_repository.GetOCPScadaPoint("OVERLCONDA"), 1.0f)))
+                if ((!_updateScadaPointOnServer.SendOverloadToLSP(overlcond, SinglePointStatus.Disappear)) || (!_updateScadaPointOnServer.WriteOVERLCONDA(_repository.GetOCPScadaPoint("OVERLCONDA"), 1.0f)))
                 {
                     // Send Alarm
                     if (!_updateScadaPointOnServer.SendAlarm(_repository.GetOCPScadaPoint("Functionality"), SinglePointStatus.Disappear, "Sending disappear for OVERLCOND is failed."))

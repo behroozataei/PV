@@ -88,6 +88,30 @@ namespace EEC
         private EECScadaPoint _EPURCH_EC;
         private EECScadaPoint _EREAF_ECONEAF;
         private EECScadaPoint _APPLY;
+        private EECScadaPoint _E_CSM;
+        private EECScadaPoint _E_HSM;
+        private EECScadaPoint _E_GEN;
+        private EECScadaPoint _E_EFS;
+        private EECScadaPoint _E_MIS1_6_6;
+        private EECScadaPoint _E_MIS2_WRS;
+        private EECScadaPoint _E_LAD;
+        private EECScadaPoint _E_NEW_OXY;
+        private EECScadaPoint _E_MK1;
+        private EECScadaPoint _E_GEN1;
+        private EECScadaPoint _E_GEN2;
+        private EECScadaPoint _E_GEN3;
+        private EECScadaPoint _E_GEN4;
+        private EECScadaPoint _E_EXP914;
+        private EECScadaPoint _E_IMP914;
+        private EECScadaPoint _E_EXP915;
+        private EECScadaPoint _E_IMP915;
+        private EECScadaPoint _E_TOTAL;
+        private EECScadaPoint _ALARM_ENERGY;
+        private EECScadaPoint _PSend1;
+        private EECScadaPoint _PSend2;
+
+        private bool _FirstRead_MAB;
+        private bool _FirstRead_MAB_EEC;
 
         internal EECEnergyCalculator(IRepository repository, ILogger logger, UpdateScadaPointOnServer updateScadaPointOnServer)
         {
@@ -119,7 +143,7 @@ namespace EEC
 
             _EFSum = _repository.GetScadaPoint("EFSUM");
             _PMAXG = _repository.GetScadaPoint("PMAX");
-            _EBSum = _repository.GetScadaPoint("EB");
+            _EBSum = _repository.GetScadaPoint("EBSum");
             _EnergyResEnd = _repository.GetScadaPoint("EnergyResEnd");
 
             _PB = _repository.GetScadaPoint("PB");
@@ -161,6 +185,32 @@ namespace EEC
             _EPURCH_EC = _repository.GetScadaPoint("EPURCH_EC");
             _EREAF_ECONEAF = _repository.GetScadaPoint("EREAF_ECONEAF");
             _APPLY = _repository.GetScadaPoint("APPLY");
+            
+            _E_CSM = _repository.GetScadaPoint("E_CSM_Sum");
+            _E_HSM = _repository.GetScadaPoint("E_HSM_Sum");
+            _E_GEN = _repository.GetScadaPoint("E_GEN_Sum");
+            _E_EFS = _repository.GetScadaPoint("E_EFS_Sum");
+            _E_MIS1_6_6 = _repository.GetScadaPoint("E_MIS1_6_6_Sum");
+            _E_MIS2_WRS = _repository.GetScadaPoint("E_MIS2_WRS_Sum");
+            _E_LAD = _repository.GetScadaPoint("E_LAD_Sum");
+            _E_NEW_OXY = _repository.GetScadaPoint("E_OXY_Sum");
+            _E_MK1 = _repository.GetScadaPoint("E_MK1_Sum");
+            _E_GEN1 = _repository.GetScadaPoint("E_GEN1_Sum");
+            _E_GEN2 = _repository.GetScadaPoint("E_GEN2_Sum");
+            _E_GEN3 = _repository.GetScadaPoint("E_GEN3_Sum");
+            _E_GEN4 = _repository.GetScadaPoint("E_GEN4_Sum");
+            _E_EXP914 = _repository.GetScadaPoint("E_EXP914");
+            _E_IMP914 = _repository.GetScadaPoint("E_IMP914");
+            _E_EXP915 = _repository.GetScadaPoint("E_EXP915");
+            _E_IMP915 = _repository.GetScadaPoint("E_IMP915");
+            _E_TOTAL = _repository.GetScadaPoint("E_TOTAL");
+            _ALARM_ENERGY = _repository.GetScadaPoint("ALARM_ENERGY");
+            _PSend1 = _repository.GetScadaPoint("PSend1");
+            _PSend2 = _repository.GetScadaPoint("PSend2");
+
+            _FirstRead_MAB = true;
+            _FirstRead_MAB_EEC = true;
+
         }
 
         public void printInitialValues()
@@ -200,33 +250,7 @@ namespace EEC
 
             _logger.WriteEntry($"------------------------------------------------------", LogLevels.Info);
             _logger.WriteEntry($"------- Measurement Values ", LogLevels.Info);
-            // TODO:
-            //_logger.WriteEntry($"MAB = \"{_MAB.Value.ToString()}\" is read.", LogLevels.Info);
-            //_logger.WriteEntry($"_Ea_EAF_T1AN = \"{_Ea_EAF_T1AN.Value.ToString()}\" is read.", LogLevels.Info);
-            //_logger.WriteEntry($"_Ea_EAF_T2AN = \"{_Ea_EAF_T2AN.Value.ToString()}\" is read.", LogLevels.Info);
-            //_logger.WriteEntry($"_Ea_EAF_T3AN_MV3 = \"{_Ea_EAF_T3AN_MV3.Value.ToString()}\" is read.", LogLevels.Info);
-            //_logger.WriteEntry($"_Ea_EAF_T5AN = \"{_Ea_EAF_T5AN.Value.ToString()}\" is read.", LogLevels.Info);
-            //_logger.WriteEntry($"_Ea_EAF_T7AN = \"{_Ea_EAF_T7AN.Value.ToString()}\" is read.", LogLevels.Info);
-            //_logger.WriteEntry($"_Ea_EAF_T8AN = \"{_Ea_EAF_T8AN.Value.ToString()}\" is read.", LogLevels.Info);
-            //_logger.WriteEntry($"_CSM = \"{_CSM.Value.ToString()}\" is read.", LogLevels.Info);
-            //_logger.WriteEntry($"_HSM = \"{_HSM.Value.ToString()}\" is read.", LogLevels.Info);
-            //_logger.WriteEntry($"_PEL = \"{_PEL.Value.ToString()}\" is read.", LogLevels.Info);
-            //_logger.WriteEntry($"_RED = \"{_RED.Value.ToString()}\" is read.", LogLevels.Info);
-            //_logger.WriteEntry($"_GEN = \"{_GEN.Value.ToString()}\" is read.", LogLevels.Info);
-            //_logger.WriteEntry($"_EFS = \"{_EFS.Value.ToString()}\" is read.", LogLevels.Info);
-            //_logger.WriteEntry($"_MIS1_6_6 = \"{_MIS1_6_6.Value.ToString()}\" is read.", LogLevels.Info);
-            //_logger.WriteEntry($"_MIS2_WRS = \"{_MIS2_WRS.Value.ToString()}\" is read.", LogLevels.Info);
-            //_logger.WriteEntry($"_LAD = \"{_LAD.Value.ToString()}\" is read.", LogLevels.Info);
-            //_logger.WriteEntry($"_NEW_OXY = \"{_NEW_OXY.Value.ToString()}\" is read.", LogLevels.Info);
-            //_logger.WriteEntry($"_MK1 = \"{_MK1.Value.ToString()}\" is read.", LogLevels.Info);
-            //_logger.WriteEntry($"_EMIS2LF1 = \"{_EMIS2LF1.Value.ToString()}\" is read.", LogLevels.Info);
-            //_logger.WriteEntry($"_EMIS2LF2 = \"{_EMIS2LF2.Value.ToString()}\" is read.", LogLevels.Info);
-            //_logger.WriteEntry($"_EMIS2LF3 = \"{_EMIS2LF3.Value.ToString()}\" is read.", LogLevels.Info);
-            //_logger.WriteEntry($"_EMIS2LF4 = \"{_EMIS2LF4.Value.ToString()}\" is read.", LogLevels.Info);
-            //_logger.WriteEntry($"_EG1 = \"{_EG1.Value.ToString()}\" is read.", LogLevels.Info);
-            //_logger.WriteEntry($"_EG2 = \"{_EG2.Value.ToString()}\" is read.", LogLevels.Info);
-            //_logger.WriteEntry($"_EG3 = \"{_EG3.Value.ToString()}\" is read.", LogLevels.Info);
-            //_logger.WriteEntry($"_EG4 = \"{_EG4.Value.ToString()}\" is read.", LogLevels.Info);
+
         }
 
         public bool UpdateCurrentValuesFromLastNewValues()
@@ -319,10 +343,6 @@ namespace EEC
                                 _Ea_EAF_T7AN.Value +
                                 _Ea_EAF_T8AN.Value;
 
-
-                //		' This is only for TEST!!!!!!!!!!!!!!!!!!!!!
-                //'PEL = 0.5
-
                 var EMP = _CSM.Value +
                             _HSM.Value +
                             _PEL.Value +
@@ -336,6 +356,22 @@ namespace EEC
                             _MK1.Value;
 
 
+                // HMI
+                _E_CSM.Value += _CSM.Value;
+                _E_HSM.Value += _HSM.Value;
+                _E_GEN.Value += _GEN.Value;
+                _E_EFS.Value += _EFS.Value;
+                _E_MIS1_6_6.Value += _MIS1_6_6.Value;
+                _E_MIS2_WRS.Value += _MIS2_WRS.Value;
+                _E_LAD.Value += _LAD.Value;
+                _E_NEW_OXY.Value += _NEW_OXY.Value;
+                _E_MK1.Value += _MK1.Value;
+                _E_GEN1.Value += _EG1.Value;
+                _E_GEN2.Value += _EG2.Value;
+                _E_GEN3.Value += _EG3.Value;
+                _E_GEN4.Value += _EG4.Value;
+
+
                 //' This is commented in the last edition
                 //' E_Exp_Gen = MIS2 + MIS1
 
@@ -343,6 +379,7 @@ namespace EEC
                 // 'Calculating Energy of Generators
                 var EG = _EG1.Value + _EG2.Value + _EG3.Value + _EG4.Value;
                 var EB_Cycle = EMP - EG;
+
 
                 // Read the Sum EB, EF from table
                 _EFSum.Value += EF_Cycle;
@@ -356,6 +393,24 @@ namespace EEC
                 _logger.WriteEntry($"EBSum= {_EBSum.Value.ToString()}", LogLevels.Info);
                 _logger.WriteEntry($"EFSum= {_EFSum.Value.ToString()}", LogLevels.Info);
                 _logger.WriteEntry($"EAV_Sum= {EAV_Sum.ToString()}", LogLevels.Info);
+
+
+
+                // Calculat Total Consumed Energy 
+                _E_TOTAL.Value += _E_IMP914.Value + _E_IMP915.Value - _E_EXP914.Value - _E_EXP915.Value;
+                
+                if (_E_TOTAL.Value > _EC.Value)
+                {
+                    _logger.WriteEntry($"Imported energy is over than Contractual value,  E_Import = {_E_TOTAL.Value}  EC = {_EC.Value}", LogLevels.Warn);
+                    _updateScadaPointOnServer.SendAlarm(_ALARM_ENERGY, DigitalSingleStatus.Close, "");
+                    _updateScadaPointOnServer.SendAlarm(_ALARM_ENERGY, DigitalSingleStatus.Open,
+                   $"Allowed energy = {Math.Round(_EC.Value,2)} MWh " +
+                   $" ; Total imported energy =  { Math.Round(_E_TOTAL.Value,2)}Mwh" +
+                   $" ; Extra imported energy =  { Math.Round(_E_TOTAL.Value - _EC.Value,2)}Mwh"
+                   );
+                }
+
+
 
                 // Check First 15 min in the World, FULLZYCLUS
                 // If we have passed a complete period, we should calculate some values for this period,
@@ -376,6 +431,25 @@ namespace EEC
                     // Calculate and Store PMax15, based on previuos const params entered by operator in previous period
                     _PMAX15.Value = _PL.Value - (_PBMax.Value + _DeltaP.Value);
                     _updateScadaPointOnServer.WriteAnalog(_PMAX15, _PMAX15.Value);
+
+
+                    _updateScadaPointOnServer.WriteAnalog(_E_HSM, _E_HSM.Value);
+                    _updateScadaPointOnServer.WriteAnalog(_E_CSM, _E_CSM.Value);
+                    _updateScadaPointOnServer.WriteAnalog(_E_NEW_OXY, _E_NEW_OXY.Value);
+                    _updateScadaPointOnServer.WriteAnalog(_E_EFS, _E_EFS.Value);
+                    _updateScadaPointOnServer.WriteAnalog(_E_MK1, _E_MK1.Value);
+                    _updateScadaPointOnServer.WriteAnalog(_E_LAD, _E_LAD.Value);
+                    _updateScadaPointOnServer.WriteAnalog(_E_GEN, _E_GEN.Value);
+                    _updateScadaPointOnServer.WriteAnalog(_E_MIS1_6_6, _E_MIS1_6_6.Value);
+                    _updateScadaPointOnServer.WriteAnalog(_E_MIS2_WRS, _E_MIS2_WRS.Value);
+                    _updateScadaPointOnServer.WriteAnalog(_E_GEN1, _E_GEN1.Value);
+                    _updateScadaPointOnServer.WriteAnalog(_E_GEN2, _E_GEN2.Value);
+                    _updateScadaPointOnServer.WriteAnalog(_E_GEN3, _E_GEN3.Value);
+                    _updateScadaPointOnServer.WriteAnalog(_E_GEN4, _E_GEN1.Value);
+
+                    _updateScadaPointOnServer.WriteAnalog(_E_TOTAL, _E_TOTAL.Value);
+
+
 
 
                     // Calculate ECONEAF / EREAF
@@ -417,16 +491,7 @@ namespace EEC
                 //'    Exit Function
                 //'End If
 
-                // TODO: In the original code, these lines are avilable
-                _updateScadaPointOnServer.WriteAnalog(_EAV_Sum, 0);
-                _updateScadaPointOnServer.WriteAnalog(_ER_Cycle, 0);
-                _updateScadaPointOnServer.WriteAnalog(_EBSum, 0);
-                _updateScadaPointOnServer.WriteAnalog(_EFSum, 0);
 
-                _EAV_Sum.Value = 0;
-                _ER_Cycle.Value = 0;
-                _EBSum.Value = 0;
-                _EFSum.Value = 0;
 
                 //Send to CPS : EAV,_EFSum,_EBSum,ER_Cycle,ECONEAF_EREAF,EPURCH_EC,EREAF_ECONEAF,_EnergyResEnd
                 _updateScadaPointOnServer.Send15MinuteEnergy(_EAV_Sum,
@@ -443,6 +508,38 @@ namespace EEC
                 _logger.WriteEntry($"EPURCH/EC = {_EPURCH_EC.Value.ToString()}", LogLevels.Info);
                 _logger.WriteEntry($"EREAF-ECONEA F= {_EREAF_ECONEAF.Value.ToString()}", LogLevels.Info);
                 _logger.WriteEntry($"This value is used in calculations, PMAX15 = {_PMAX15.Value.ToString()}", LogLevels.Info);
+
+
+                System.Threading.Thread.Sleep(2000);
+
+                // Must Be check 1401-09-13
+                // TODO: In the original code, these lines are avilable
+                // _updateScadaPointOnServer.WriteAnalog(_EAV_Sum, 0);
+                //_updateScadaPointOnServer.WriteAnalog(_ER_Cycle, 0);
+                _updateScadaPointOnServer.WriteAnalog(_EBSum, 0);
+                _updateScadaPointOnServer.WriteAnalog(_EFSum, 0);
+
+                // Must Be check 1401-09-13
+                //_EAV_Sum.Value = 0;
+                //_ER_Cycle.Value = 0;
+                _EBSum.Value = 0;
+                _EFSum.Value = 0;
+                //------------------------------------------
+                _E_CSM.Value = 0;
+                _E_HSM.Value = 0;
+                _E_GEN.Value = 0;
+                _E_EFS.Value = 0;
+                _E_MIS1_6_6.Value = 0;
+                _E_MIS2_WRS.Value = 0;
+                _E_LAD.Value = 0;
+                _E_NEW_OXY.Value = 0;
+                _E_MK1.Value = 0;
+                _E_GEN1.Value = 0;
+                _E_GEN2.Value = 0;
+                _E_GEN3.Value = 0;
+                _E_GEN4.Value = 0;
+                //---------------------------------------------
+                _E_TOTAL.Value = 0;
 
                 _logger.WriteEntry("Calc15MinValue..Exit of method", LogLevels.Info);
                 return true;
@@ -494,10 +591,10 @@ namespace EEC
                 //'------------------------------------------------
                 // PCL = Max(PC, PL)
                 var PCL = 0.0f;
-                if (_PC.Value > _PL.Value)
-                    PCL = _PC.Value;
-                else
+                if (_PC.Value < _PL.Value)
                     PCL = _PL.Value;
+                else
+                    PCL = _PC.Value;
 
                 _logger.WriteEntry("===============================", LogLevels.Info);
                 _logger.WriteEntry($"PC= {_PC.Value.ToString()}", LogLevels.Info);
@@ -517,21 +614,10 @@ namespace EEC
                 _logger.WriteEntry($"PMAX15= {_PMAX15.Value.ToString()}", LogLevels.Info);
                 _logger.WriteEntry($"PMAXG= {_PMAXG.Value.ToString()}", LogLevels.Info);
 
-                //'------------------------------------------------
-                //Read Network Image to define switch status ---> OVERL1, OVERL2
-                // Not required following check!
-                //if (_MABStat.Value == 0)
-                //{
-                //	_logger.WriteEntry("ERROR: MAB Status is invalid ! ", LogLevels.Error);
-                //	return result;
-                //}
 
                 //'------------------------------------------------
                 //'Value Processing: Read substations, plant and generators energies and calculate EB
                 //'------------------------------------------------
-                //' PC is loaded from PPT every minute!
-                //' These values should be loaded from EECParams, as a SCADAPoint value
-                //'EF_Cycle = m_CEECParams.EF
                 var EF_Cycle = _Ea_EAF_T1AN.Value +
                                 _Ea_EAF_T2AN.Value +
                                 _Ea_EAF_T3AN_MV3.Value +
@@ -585,6 +671,57 @@ namespace EEC
                 _logger.WriteEntry("===============================", LogLevels.Info);
                 _logger.WriteEntry($"EMP( E Total PP )= {EMP.ToString()}", LogLevels.Info);
 
+                // HMI
+                if (CycleNo > 0)
+                {
+                    _E_CSM.Value += _CSM.Value;
+                    _E_HSM.Value += _HSM.Value;
+                    _E_GEN.Value += _GEN.Value;
+                    _E_EFS.Value += _EFS.Value;
+                    _E_MIS1_6_6.Value += _MIS1_6_6.Value;
+                    _E_MIS2_WRS.Value += _MIS2_WRS.Value;
+                    _E_LAD.Value += _LAD.Value;
+                    _E_NEW_OXY.Value += _NEW_OXY.Value;
+                    _E_MK1.Value += _MK1.Value;
+                    _E_GEN1.Value += _EG1.Value;
+                    _E_GEN2.Value += _EG2.Value;
+                    _E_GEN3.Value += _EG3.Value;
+                    _E_GEN4.Value += _EG4.Value;
+                }
+
+                //'------------------------------------------------
+                // Calculating Total of Consumed Energy from grid
+                if (CycleNo > 0)
+                    _E_TOTAL.Value += _E_IMP914.Value + _E_IMP915.Value - _E_EXP914.Value - _E_EXP915.Value;
+
+                //_logger.WriteEntry($"_E_IMP914 = {_E_IMP914.Value} ; _E_IMP915 = {_E_IMP915.Value} ; _E_EXP914 = {_E_EXP914.Value} ; _E_EXP915 = {_E_EXP915.Value} ; ", LogLevels.Warn);
+                //_logger.WriteEntry($"CycleNo = {CycleNo} ; _E_TOTAL = {_E_TOTAL.Value} ; _EC = {_EC.Value} ; ", LogLevels.Warn);
+
+                if (((CycleNo == 5) && ((_E_TOTAL.Value) > (_EC.Value / 3.0))) ||
+                    ((CycleNo == 10) && ((_E_TOTAL.Value) > (_EC.Value * 2.0) / 3.0)))
+                {
+                    _logger.WriteEntry($"Imported energy is going to over than Contractual value,  E = {_E_TOTAL.Value}", LogLevels.Warn);
+                    _updateScadaPointOnServer.SendAlarm(_ALARM_ENERGY, DigitalSingleStatus.Close, "");
+
+                    // In Minute 5, first Alarm for extra imported energy from Tavanir Lines
+                    if (CycleNo == 5)
+                        _updateScadaPointOnServer.SendAlarm(_ALARM_ENERGY, DigitalSingleStatus.Open,
+                        $"Max Allowed Power = {Math.Round((_EC.Value - _E_TOTAL.Value)*60.0/10.0,2)} MW " +
+                        " ; Extra used energy = " + Math.Round((_E_TOTAL.Value - (_EC.Value / 3.0)),2) + " Mwh" +
+                        " ; Total imported energy = " + Math.Round(_E_TOTAL.Value,2) + " Mwh" +
+                        " ; Allowed energy = "+ Math.Round(_EC.Value / 3.0,2) + "MWh"
+                        );
+
+                    // In Minute 10, second Alarm for extra imported energy from Tavanir Lines
+                    if (CycleNo == 10)
+                        _updateScadaPointOnServer.SendAlarm(_ALARM_ENERGY, DigitalSingleStatus.Open,
+                        $"Max Allowed Power = { Math.Round((_EC.Value - _E_TOTAL.Value)*60.0/5.0,2)} MW " +
+                        " ; Extra used energy = " + Math.Round((_E_TOTAL.Value - (_EC.Value * 2.0) / 3.0),2) + " Mwh" +
+                        " ; Total imported energy = " + Math.Round(_E_TOTAL.Value,2) + " Mwh" +
+                        " ; Allowed energy = "+ Math.Round(_EC.Value / 1.5,2) + "MWh" 
+                        );
+                }
+
                 //'------------------------------------------------
                 // Calculating Energy of Generators
                 var EG = _EG1.Value +
@@ -592,6 +729,7 @@ namespace EEC
                             _EG3.Value +
                             _EG4.Value;
                 var EB_Cycle = EMP - EG;
+
                 _logger.WriteEntry("===============================", LogLevels.Info);
                 _logger.WriteEntry($"EG1= {_EG1.Value.ToString()}", LogLevels.Info);
                 _logger.WriteEntry($"EG2= {_EG2.Value.ToString()}", LogLevels.Info);
@@ -602,6 +740,7 @@ namespace EEC
 
                 //'------------------------------------------------
                 //Calculate the new EB, EC (Total Consumed until now) and store it
+
                 if (CycleNo > 0)
                 {
                     _EBSum.Value += EB_Cycle;
@@ -634,6 +773,7 @@ namespace EEC
                 _EBMAX.Value = _PBMax.Value / ZFAC; // m_CEECParams.getValuebyName("EBMAX
 
                 PBISTM = _PBMax.Value + _DeltaP.Value;
+
 
                 //'------------------------------------------------
                 if (CycleNo == 0)
@@ -691,8 +831,26 @@ namespace EEC
                 //'' Store calculated values in Table
                 //''   PMAX15->PMAX15
 
+              
                 _updateScadaPointOnServer.WriteAnalog(_PMAX15, _PMAX15.Value);
                 _updateScadaPointOnServer.SendOneMinuteEnergyCALCValues(_PMAXG, _EBSum, _EFSum, _EAV_Sum, _ER_Cycle, _EBMAX, _RESTIME, _PC, _PB);
+
+                _updateScadaPointOnServer.WriteAnalog(_E_HSM, _E_HSM.Value);
+                _updateScadaPointOnServer.WriteAnalog(_E_CSM, _E_CSM.Value);
+                _updateScadaPointOnServer.WriteAnalog(_E_NEW_OXY, _E_NEW_OXY.Value);
+                _updateScadaPointOnServer.WriteAnalog(_E_EFS, _E_EFS.Value);
+                _updateScadaPointOnServer.WriteAnalog(_E_MK1, _E_MK1.Value);
+                _updateScadaPointOnServer.WriteAnalog(_E_LAD, _E_LAD.Value);
+                _updateScadaPointOnServer.WriteAnalog(_E_GEN, _E_GEN.Value);
+                _updateScadaPointOnServer.WriteAnalog(_E_MIS1_6_6, _E_MIS1_6_6.Value);
+                _updateScadaPointOnServer.WriteAnalog(_E_MIS2_WRS, _E_MIS2_WRS.Value);
+                _updateScadaPointOnServer.WriteAnalog(_E_GEN1, _E_GEN1.Value);
+                _updateScadaPointOnServer.WriteAnalog(_E_GEN2, _E_GEN2.Value);
+                _updateScadaPointOnServer.WriteAnalog(_E_GEN3, _E_GEN3.Value);
+                _updateScadaPointOnServer.WriteAnalog(_E_GEN4, _E_GEN1.Value);
+
+                _updateScadaPointOnServer.WriteAnalog(_E_TOTAL, _E_TOTAL.Value);
+
 
                 //'------------------------------------------------
                 // Send to CPS
@@ -711,8 +869,10 @@ namespace EEC
                 {
                     if (_OVERL1.Value <= CPS_ZERO_VALUE && _OVERL2.Value <= CPS_ZERO_VALUE)
                     {
-                        //Send PMAXG for EAF
-                        PSend = _PMAXG.Value;
+
+                        //Send Mimimum(PMAXG,PMAX1+PMAX2) for EAF
+                        //' ----------------------- Modification By: Ataei - Date: 08/01/2023 ----------------------
+                        PSend = (_PMAX1.Value + _PMAX2.Value > _PMAXG.Value) ? _PMAXG.Value : _PMAX1.Value + _PMAX2.Value;
                         //' ----------------------- Modification By: Akbari, Hematy, Ebrahimnejad - Date: 23/11/2008 ----------------------
                         PSend1 = PSend;
                         //' ---------------------------------------------------------------------------------------------------------------
@@ -845,6 +1005,9 @@ namespace EEC
                         _logger.WriteEntry(" Value of MAB_EEC is not valid!, MAB_EEC = " + _MAB_EEC.Value.ToString(), LogLevels.Error);
                     }
                 }
+                _updateScadaPointOnServer.WriteAnalog(_PSend1, PSend1);
+                _updateScadaPointOnServer.WriteAnalog(_PSend2, PSend2);
+
 
                 //        ' -----------------------------------------------------------------------
                 //        ' Psend, PSend1, PSend2, ...  should be sent to PCS
@@ -917,6 +1080,7 @@ namespace EEC
 
                 if (aTag.Name == "APPLY" && (aTag.Value == 1))
                 {
+
                     _logger.WriteEntry("..............Applied EEC User Constants.................", LogLevels.Info);
                     _logger.WriteEntry($"EC_User= {_EC_User.Value.ToString()}", LogLevels.Info);
                     _logger.WriteEntry($"EC= {_EC.Value.ToString()}", LogLevels.Info);
@@ -947,9 +1111,79 @@ namespace EEC
             catch (System.Exception excep)
             {
                 _logger.WriteEntry(excep.Message, LogLevels.Error, excep);
+                _updateScadaPointOnServer.WriteEECTelegram(_APPLY, (float)0);
             }
             isCompleted = true;
         }
 
+        public void Set_EEC_MAB_Status(EECScadaPoint scadaPoint)
+        {
+            EECScadaPoint _MAB;
+            EECScadaPoint _MAB_EEC;
+            _MAB = _repository.GetScadaPoint("MAB");
+            _MAB_EEC = _repository.GetScadaPoint("MAB_EEC");
+            if (_FirstRead_MAB_EEC && scadaPoint.Name == "MAB_EEC")
+            {
+                _FirstRead_MAB_EEC = false;
+                return;
+            }
+
+
+            if (_FirstRead_MAB && scadaPoint.Name == "MAB" && _MAB.Value == (float)DigitalDoubleStatus.Open)
+            {
+                _FirstRead_MAB = false;
+                return;
+            }
+
+            if (_FirstRead_MAB && scadaPoint.Name == "MAB" && _MAB.Value == (float)DigitalDoubleStatus.Close)
+                _FirstRead_MAB = false;
+
+
+            if ((scadaPoint.Name == "MAB" || scadaPoint.Name == "MAB_EEC") && _MAB.Value == (float)DigitalDoubleStatus.Close)
+            {
+                if (_MAB_EEC.Value != (float)DigitalSingleStatusOnOff.On)
+                {
+                    if (!_updateScadaPointOnServer.ApplyMarkerCommand(_MAB_EEC))
+                    {
+                        _logger.WriteEntry("Error in EEC in 'trying to remove Blocked Marker from _MAB_EEC!'", LogLevels.Error);
+                        return;
+                    }
+
+                    if (!_updateScadaPointOnServer.SendAlarm(_repository.GetScadaPoint("MAB_EEC"), (DigitalSingleStatus)DigitalSingleStatusOnOff.On, "MAB_EEC is Closed  . . . "))
+                    {
+                        _logger.WriteEntry("Fail to Close MAB_EEC", LogLevels.Error);
+                        return;
+                    }
+                }
+
+            }
+            if (scadaPoint.Name == "MAB" && _MAB.Value == (float)DigitalDoubleStatus.Open)
+            {
+                if (_MAB_EEC.Value == (float)DigitalSingleStatusOnOff.On)
+                {
+                    if (!_updateScadaPointOnServer.ApplyMarkerCommand(_MAB_EEC))
+                    {
+                        _logger.WriteEntry("Error in EEC in 'trying to remove Blocked Marker from _MAB_EEC!'", LogLevels.Error);
+                        return;
+                    }
+
+                    if (!_updateScadaPointOnServer.SendAlarm(_repository.GetScadaPoint("MAB_EEC"), (DigitalSingleStatus)DigitalSingleStatusOnOff.Off, "MAB_EEC is Opened  . . . "))
+                    {
+                        _logger.WriteEntry("Fail to Open MAB_EEC", LogLevels.Error);
+                        return;
+                    }
+                }
+            }
+        }
+
+        public void AlarmAcked_Processing(EECScadaPoint scadaPoint)
+        {
+            if (!_updateScadaPointOnServer.SendAlarm(_repository.GetScadaPoint(scadaPoint.Name), (DigitalSingleStatus)DigitalSingleStatusOnOff.Off, " "))
+            {
+                _logger.WriteEntry($"Fail to Disappear Alarm {scadaPoint.Name}", LogLevels.Error);
+                return;
+            }
+
+        }
     }
 }

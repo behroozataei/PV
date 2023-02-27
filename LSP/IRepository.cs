@@ -40,6 +40,7 @@ namespace LSP
         bool ModifyOnHistoricalDB(string sql);
         Guid GetGuid(String networkpath);
         public RedisUtils GetRedisUtiles();
+        public SFSC_EAFSPOWER_Str GetFromHistoricalCache();
 
 
 

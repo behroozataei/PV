@@ -29,9 +29,7 @@ namespace LSP
         public WorkerService(IServiceProvider serviceProvider)
         {
             _config = serviceProvider.GetService<IConfiguration>();
-
             _logger = serviceProvider.GetService<ILogger>();
-            _RedisConnectorHelper = new RedisUtils(0);
 
             _staticDataManager = new Irisa.DataLayer.Oracle.OracleDataManager(_config["OracleServicename"], _config["OracleDatabaseAddress"], _config["OracleStaticUser"], _config["OracleStaticPassword"]);
             _storeLogs = new StoreLogs(_staticDataManager, _logger, "SCADA.\"HIS_HisLogs_Insert\"");
@@ -44,6 +42,13 @@ namespace LSP
                 RequireEquipment = false,
                 RequireConnectivityNode = false,
             };
+
+            _RedisConnectorHelper = new RedisUtils(0, _config["RedisKeySentinel1"], _config["RedisKeySentinel2"], _config["RedisKeySentinel3"], _config["RedisKeySentinel4"], _config["RedisKeySentinel5"], _config["RedisPassword"], _config["RedisServiceName"],
+                                                      _config["RedisConName1"], _config["RedisConName2"], _config["RedisConName3"], _config["RedisConName4"], _config["RedisConName5"], _config["IsSentinel"]);
+            //_RedisConnectorHelper.ConnectionFailed += _mainRTDBmanager_ConnectionFailed;
+            //_RedisConnectorHelper.ConnectionRestored += _mainRTDBmanager_ConnectionRestored;
+            //_RedisConnectorHelper.ErrorMessage += _mainRTDBmanager_ErrorMessage;
+
             _cpsRuntimeDataBuffer = new BlockingCollection<CpsRuntimeData>();
             _rpcService = new CpsRpcService(_config["CpsIpAddress"], 10000, historyDataRequest, _cpsRuntimeDataBuffer);
             _repository = new Repository(_logger, _config, _RedisConnectorHelper);
@@ -51,8 +56,51 @@ namespace LSP
             _runtimeDataReceiver = new RuntimeDataReceiver(_logger, _repository, _lspManager, _rpcService, _cpsRuntimeDataBuffer);
         }
 
+        private void CallConnection()
+        {
+            try
+            {
+                RedisUtils.RedisUtils_Connect();
+            }
+            catch (Exception ex)
+            {
+                _logger.WriteEntry($"Redis Connection Error {ex}", LogLevels.Error);
+
+            }
+            
+        }
+
+        //private  void _mainRTDBmanager_ErrorMessage(object sender, StackExchange.Redis.RedisErrorEventArgs e)
+        //{
+        //    if (!RedisUtils.IsConnected)
+        //        _logger.WriteEntry($"Redis Error Message: {e.Message}, RedisConnection: {RedisUtils.IsConnected}", LogLevels.Warn);
+        //}
+
+        //private void _mainRTDBmanager_ConnectionRestored(object sender, StackExchange.Redis.ConnectionFailedEventArgs e)
+        //{
+        //    if (!RedisUtils.IsConnected)
+        //        _logger.WriteEntry($"Redis Connection Restored , RedisConnection: {RedisUtils.IsConnected}", LogLevels.Warn);
+        //}
+
+        //private void _mainRTDBmanager_ConnectionFailed(object sender, StackExchange.Redis.ConnectionFailedEventArgs e)
+        //{
+        //    if (!RedisUtils.IsConnected)
+        //    {
+        //        _logger.WriteEntry($"Redis Connection Failed, RedisConnection: {RedisUtils.IsConnected}", LogLevels.Error);
+        //        while (!RedisUtils.IsConnected)
+        //        {
+        //            _logger.WriteEntry(">>>>> Waiting for Redis Connection", LogLevels.Info);
+        //            CallConnection();
+        //            Thread.Sleep(5000);
+
+        //        };
+        //    }
+
+        //}
+
         public override Task StartAsync(CancellationToken cancellationToken)
         {
+            CallConnection();
             _logger.LogReceived += OnLogReceived;
             _storeLogs.Start();
             _logger.WriteEntry("Start of running LSP ... ***************************************", LogLevels.Info);
@@ -63,6 +111,15 @@ namespace LSP
                 Thread.Sleep(5000);
             }
             _logger.WriteEntry(">>>>> Connected to CPS", LogLevels.Info);
+
+            _logger.WriteEntry("Check Redis Connection", LogLevels.Info);
+            while (!RedisUtils.IsConnected)
+            {
+                _logger.WriteEntry(">>>>> Waiting for Redis Connection", LogLevels.Info);
+                CallConnection();
+                Thread.Sleep(5000);
+
+            }
 
             _logger.WriteEntry("Loading data from database/redis is started.", LogLevels.Info);
 

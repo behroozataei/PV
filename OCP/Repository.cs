@@ -13,6 +13,7 @@ namespace OCP
     {
         private readonly ILogger _logger;
         private readonly DataManager _dataManager;
+        private readonly DataManager _historicalDataManager;
         private readonly Dictionary<Guid, OCPCheckPoint> _checkPoints;
         private readonly Dictionary<string, OCPCheckPoint> _checkPointHelper;
 
@@ -23,10 +24,11 @@ namespace OCP
         private bool LoadfromCache = false;
         private bool isBuild = false;
 
-        public Repository(ILogger logger, DataManager staticDataManager, RedisUtils RedisConnectorHelper)
+        public Repository(ILogger logger, DataManager staticDataManager, DataManager historicalDataManager, RedisUtils RedisConnectorHelper)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _dataManager = staticDataManager ?? throw new ArgumentNullException(nameof(staticDataManager));
+            _historicalDataManager = historicalDataManager ?? throw new ArgumentNullException(nameof(historicalDataManager));
             _checkPoints = new Dictionary<Guid, OCPCheckPoint>();
             _checkPointHelper = new Dictionary<string, OCPCheckPoint>();
 
@@ -167,8 +169,8 @@ namespace OCP
         {
             _logger.WriteEntry("Loading OCP_Checkpoint Data from Cache", LogLevels.Info);
 
-            var keys = _RedisConnectorHelper.GetKeys(pattern: RedisKeyPattern.OCP_CheckPoints);
-            var dataTable_cache = _RedisConnectorHelper.StringGet<OCP_CHECKPOINTS_Str>(keys);
+            var keys = RedisUtils.GetKeys(pattern: RedisKeyPattern.OCP_CheckPoints);
+            var dataTable_cache = RedisUtils.StringGet<OCP_CHECKPOINTS_Str>(keys);
 
             try
             {
@@ -304,7 +306,7 @@ namespace OCP
                     ocp_param.SCADATYPE = scadaPoint.SCADAType;
                     ocp_param.ID = id.ToString();
                     if (RedisUtils.IsConnected)
-                        _RedisConnectorHelper.DataBase.StringSet(RedisKeyPattern.OCP_PARAMS + networkPath, JsonConvert.SerializeObject(ocp_param));
+                        RedisUtils.RedisConnection1.Set(RedisKeyPattern.OCP_PARAMS + networkPath, JsonConvert.SerializeObject(ocp_param));
                     else
                         _logger.WriteEntry("Redis Connection Error", LogLevels.Error);
 
@@ -341,8 +343,8 @@ namespace OCP
         {
             _logger.WriteEntry("Loading LSP_PARAMS Data from Cache", LogLevels.Info);
 
-            var keys = _RedisConnectorHelper.GetKeys(pattern: RedisKeyPattern.OCP_PARAMS);
-            var dataTable_cache = _RedisConnectorHelper.StringGet<OCP_PARAMS_Str>(keys);
+            var keys = RedisUtils.GetKeys(pattern: RedisKeyPattern.OCP_PARAMS);
+            var dataTable_cache = RedisUtils.StringGet<OCP_PARAMS_Str>(keys);
             try
             {
                 foreach (OCP_PARAMS_Str row in dataTable_cache)
@@ -381,6 +383,28 @@ namespace OCP
             }
 
             return true;
+        }
+
+        public bool ModifyOnHistoricalDB(string sql)
+        {
+            try
+            {
+                var RowAffected = _historicalDataManager.ExecuteNonQuery(sql);
+                if (RowAffected > 0)
+                    return true;
+                else
+                    return false;
+            }
+            catch (Irisa.DataLayer.DataException ex)
+            {
+                _logger.WriteEntry(ex.ToString(), LogLevels.Error);
+            }
+            catch (Exception ex)
+            {
+                _logger.WriteEntry(ex.Message, LogLevels.Error, ex);
+            }
+
+            return false;
         }
 
         Guid GetGuid(String networkpath)

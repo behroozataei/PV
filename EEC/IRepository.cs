@@ -14,5 +14,6 @@ namespace EEC
         DataTable GetFromHistoricalDB(string sql);
         public bool ModifyOnHistoricalCache(float[] _BusbarPowers, float[] _FurnacePowers);
         public RedisUtils GetRedisUtiles();
+        
     }
 }

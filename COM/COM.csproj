@@ -11,12 +11,16 @@
 
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
 		<OutputPath>..\..\build\Release\COM</OutputPath>
-	</PropertyGroup>	
+	</PropertyGroup>
+
+	<ItemGroup>
+	  <Compile Remove="Utils\RedisUtils1.cs" />
+	</ItemGroup>	
 
   <ItemGroup>
     <PackageReference Include="Google.Protobuf" Version="3.20.1" />
+    <PackageReference Include="NetPro.CsRedis" Version="6.0.15" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
-    <PackageReference Include="StackExchange.Redis" Version="2.2.79" />
   </ItemGroup>
 
 </Project>

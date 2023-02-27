@@ -150,6 +150,38 @@ namespace DCP
                             _logger.WriteEntry("1_LinkServer: INSERT INTO [PU10_PCS].[dbo].[T_EAFsPower]; "+sql, LogLevels.Error);
                     }
                 }
+
+                //1401_08_23 Preparing Data For HMI
+                try
+                {
+                    string sqlhis =
+                        "INSERT INTO APP_DCP_EAFSPOWER (DATETIME, SUMMATION, " +
+                        "POWER_GRP1, POWER_GRP2, FURNACE1, FURNACE2, FURNACE3, FURNACE4, FURNACE5, " +
+                        "FURNACE6, FURNACE7, FURNACE8) Values('" +
+                        sfsc_eafsp.TELDATETIME.ToString("yyyy/MM/dd HH:mm:ss") + "', '" +
+                        Math.Round(sfsc_eafsp.SUMATION, 2).ToString() + "', '" +
+                        Math.Round(sfsc_eafsp.POWERGRP1,2).ToString() + "', '" +
+                        Math.Round(sfsc_eafsp.POWERGRP2,2).ToString() + "', '" +
+                        Math.Round(sfsc_eafsp.FURNACE1, 2).ToString() + "', '" +
+                        Math.Round(sfsc_eafsp.FURNACE2, 2).ToString() + "', '" +
+                        Math.Round(sfsc_eafsp.FURNACE3, 2).ToString() + "', '" +
+                        Math.Round(sfsc_eafsp.FURNACE4, 2).ToString() + "', '" +
+                        Math.Round(sfsc_eafsp.FURNACE5, 2).ToString() + "', '" +
+                        Math.Round(sfsc_eafsp.FURNACE6, 2).ToString() + "', '" +
+                        Math.Round(sfsc_eafsp.FURNACE7, 2).ToString() + "', '" +
+                        Math.Round(sfsc_eafsp.FURNACE8, 2).ToString() + "' " +
+                        " )";
+                    if (!_repository.ModifyOnHistoricalDB(sqlhis))
+                    {
+                        _logger.WriteEntry($"Error: Insert into APP_DCP_EAFsPower", LogLevels.Error);
+
+                    }
+                }
+                catch (Exception excep)
+                {
+                    _logger.WriteEntry(excep.Message, LogLevels.Error, excep);
+
+                }
                 return true;
             }
             catch (Exception excep)

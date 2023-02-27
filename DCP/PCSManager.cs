@@ -2,7 +2,6 @@ using COM;
 using Irisa.Logger;
 using Irisa.Common.Utils;
 using Newtonsoft.Json;
-using StackExchange.Redis;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
@@ -58,7 +57,7 @@ namespace DCP
 
         private bool isWorking;
         private bool isWoring_timer_EAFGroupReq;
-        IDatabase _cache;
+       // IDatabase _cache;
 
 
         //==============================================================================
@@ -565,7 +564,7 @@ namespace DCP
                 //_EECTelegram.m_TelegramID = aRecSet("T_CEECTELEGRAM_ID")
                 _EECTelegram = new EECTelegram();
 
-                var keys = _repository.GetRedisUtiles().GetKeys(pattern: RedisKeyPattern.EEC_TELEGRAM);
+                var keys = RedisUtils.GetKeys(pattern: RedisKeyPattern.EEC_TELEGRAM);
                 if (keys.Length == 0)
                 {
 
@@ -574,7 +573,7 @@ namespace DCP
                     return;
                 }
 
-                var dataTable_cache = _repository.GetRedisUtiles().StringGet<EEC_TELEGRAM_Str>(keys);
+                var dataTable_cache = RedisUtils.StringGet<EEC_TELEGRAM_Str>(keys);
 
                 _eec_telegram = dataTable_cache.FirstOrDefault();
 
@@ -666,9 +665,9 @@ namespace DCP
                 //{
                 //	_logger.WriteEntry("Could not update T_EECTelegram Table", LogLevels.Error);
                 //}
-                _cache = _repository.GetRedisUtiles().DataBase;
+               
                 _eec_telegram.SENTTIME = DateTime.Now;
-                _cache.StringSet(RedisKeyPattern.EEC_TELEGRAM, JsonConvert.SerializeObject(_eec_telegram));
+                RedisUtils.RedisConnection1.Set(RedisKeyPattern.EEC_TELEGRAM, JsonConvert.SerializeObject(_eec_telegram));
 
             }
             catch (System.Exception excep)

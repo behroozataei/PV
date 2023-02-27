@@ -2,6 +2,8 @@
 using StackExchange.Redis;
 using System;
 using System.Timers;
+using Newtonsoft.Json.Linq;
+using System.IO;
 
 namespace CLR
 {
@@ -45,9 +47,20 @@ namespace CLR
             Console.WriteLine(" 8- Exit");
         }
 
+        
+
         bool run()
         {
-            _RedisConnectorHelper = new RedisUtils(0);
+            JObject _config = JObject.Parse(File.ReadAllText(@"appsettings.json"));
+            _RedisConnectorHelper = new RedisUtils();
+            _RedisConnectorHelper.RedisUtils_Connect(0, _config.GetValue("RedisKeySentinel1").ToString(),
+                                                        _config.GetValue("RedisKeySentinel2").ToString(),
+                                                        _config.GetValue("RedisKeySentinel3").ToString(),
+                                                        _config.GetValue("RedisKeySentinel4").ToString(),
+                                                        _config.GetValue("RedisKeySentinel5").ToString(),
+                                                        _config.GetValue("RedisPassword").ToString(),
+                                                        _config.GetValue("RedisServiceName").ToString());
+
             char sel;
             RedisKey[] appkeys = null;
             bool ret = false;

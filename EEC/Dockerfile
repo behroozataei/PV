@@ -16,7 +16,7 @@
 #WORKDIR /tools
 #COPY --from=buildTools /tools .
 #WORKDIR /app
-FROM dotnet_runtime:latest
+FROM func_runtime:latest
 WORKDIR /app
 COPY . . 
 
