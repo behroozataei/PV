@@ -68,6 +68,11 @@ namespace OPC
             try
             {
                 dataTable = dbQuery.GetRecord(sql);
+                if (dataTable != null)
+                {
+                    if (!RedisUtils.DelKeys(RedisKeyPattern.OPCMeasurement))
+                        _logger.WriteEntry("Error: Delete APP_OPC_MEASUREMENT from Redis", LogLevels.Error);
+                }
                 OPC_MEAS_Str opc_meas = new OPC_MEAS_Str();
 
                 foreach (DataRow row in dataTable.Rows)
@@ -81,7 +86,7 @@ namespace OPC
                     opc_meas.ID = GetGuid(row["NetworkPath"].ToString());
                     opc_meas.TagType = (int)(row["TagType"].ToString() == "DMODigitalMeasurement" ? Type.Digital : Type.Analog);
                     if (RedisUtils.IsConnected)
-                        RedisUtils.RedisConnection1.Set(RedisKeyPattern.OPCMeasurement + opc_meas.NetworkPath, JsonConvert.SerializeObject(opc_meas));
+                        RedisUtils.RedisConn.Set(RedisKeyPattern.OPCMeasurement + opc_meas.NetworkPath, JsonConvert.SerializeObject(opc_meas));
                     else
                         _logger.WriteEntry("Redis Connection Error", LogLevels.Error);
 
@@ -114,31 +119,40 @@ namespace OPC
         {
             _logger.WriteEntry("Loading Data from Cache", LogLevels.Info);
 
-            var keys = RedisUtils.GetKeys(pattern: RedisKeyPattern.OPCMeasurement);
-            var dataTable = RedisUtils.StringGet<OPC_MEAS_Str>(keys);
-
-            foreach (OPC_MEAS_Str row in dataTable)
+            try
             {
-                try
-                {
-                    Tag tag = new Tag();
-                    tag.ScadaName = row.ScadaTagName.ToString();
-                    tag.OPCName = row.KeepServerTagName.ToString();
-                    tag.Description = row.Description.ToString();
-                    tag.MessageConfiguration = (int)row.MessageConfiguration;
-                    tag.MeasurementId = Guid.Parse(row.ID.ToString());
-                    tag.Type = (OPC.Type)row.TagType;
+                var keys = RedisUtils.GetKeys(pattern: RedisKeyPattern.OPCMeasurement);
+                var dataTable = RedisUtils.StringGet<OPC_MEAS_Str>(keys);
 
-                    _OPCRepository.OPCTags.Add(tag);
-
-                    //_entityMapper.Add(row["KeepServerTagName"].ToString(), Guid.Parse(row["GUID"].ToString()));
-                    _entityMapper.Add(row.KeepServerTagName.ToString(), tag.MeasurementId);
-                }
-                catch (Exception ex)
+                foreach (OPC_MEAS_Str row in dataTable)
                 {
-                    _logger.WriteEntry(ex.Message, LogLevels.Error, ex);
-                    return false;
+                    try
+                    {
+                        Tag tag = new Tag();
+                        tag.ScadaName = row.ScadaTagName.ToString();
+                        tag.OPCName = row.KeepServerTagName.ToString();
+                        tag.Description = row.Description.ToString();
+                        tag.MessageConfiguration = (int)row.MessageConfiguration;
+                        tag.MeasurementId = Guid.Parse(row.ID.ToString());
+                        tag.Type = (OPC.Type)row.TagType;
+
+                        _OPCRepository.OPCTags.Add(tag);
+
+                        //_entityMapper.Add(row["KeepServerTagName"].ToString(), Guid.Parse(row["GUID"].ToString()));
+                        _entityMapper.Add(row.KeepServerTagName.ToString(), tag.MeasurementId);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.WriteEntry(ex.Message, LogLevels.Error, ex);
+                        return false;
+                    }
                 }
+            }
+            catch (Exception ex)
+            {
+                _logger.WriteEntry(ex.Message, LogLevels.Error, ex);
+                return false;
+
             }
             return true;
         }
@@ -151,6 +165,11 @@ namespace OPC
                 DataTable dataTable = new DataTable();
 
                 dataTable = dbQuery.GetRecord(sql);
+                if (dataTable != null)
+                {
+                    if (!RedisUtils.DelKeys(RedisKeyPattern.OPC_Params))
+                        _logger.WriteEntry("Error: Delete APP_OPC_PARAMS from Redis", LogLevels.Error);
+                }
 
                 DataRow row = dataTable.AsEnumerable().FirstOrDefault();
                 _OPCRepository.Connection.Name = row["Name"].ToString();
@@ -164,7 +183,7 @@ namespace OPC
                 opc_param.Description = row["Description"].ToString();
 
                 if (RedisUtils.IsConnected)
-                    RedisUtils.RedisConnection1.Set(RedisKeyPattern.OPC_Params, JsonConvert.SerializeObject(opc_param));
+                    RedisUtils.RedisConn.Set(RedisKeyPattern.OPC_Params, JsonConvert.SerializeObject(opc_param));
             }
             catch (Exception ex)
             {

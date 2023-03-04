@@ -141,7 +141,7 @@ namespace RPC
 			try
 			{
 				T_RPCCycles_Str _t_rpcCycles = new T_RPCCycles_Str();
-				_t_rpcCycles = JsonConvert.DeserializeObject<T_RPCCycles_Str>(RedisUtils.RedisConnection1.Get(RedisKeyPattern.T_RPCCycles.ToString()));
+				_t_rpcCycles = JsonConvert.DeserializeObject<T_RPCCycles_Str>(RedisUtils.RedisConn.Get(RedisKeyPattern.T_RPCCycles.ToString()));
 
 				for (int i = 1; i <= 15; i++)
 				{
@@ -162,13 +162,13 @@ namespace RPC
 			try
 			{
 				T_RPCCycles_Str _t_rpcCycles = new T_RPCCycles_Str();
-				_t_rpcCycles = JsonConvert.DeserializeObject<T_RPCCycles_Str>(RedisUtils.RedisConnection1.Get(RedisKeyPattern.T_RPCCycles.ToString()));
+				_t_rpcCycles = JsonConvert.DeserializeObject<T_RPCCycles_Str>(RedisUtils.RedisConn.Get(RedisKeyPattern.T_RPCCycles.ToString()));
 
 				for (int i = 1; i <= 15; i++)
 				{
 					_t_rpcCycles.CYCLE[i] = m_Cycles[i];
 				}
-				RedisUtils.RedisConnection1.Set(RedisKeyPattern.T_RPCCycles, JsonConvert.SerializeObject(_t_rpcCycles));
+				RedisUtils.RedisConn.Set(RedisKeyPattern.T_RPCCycles, JsonConvert.SerializeObject(_t_rpcCycles));
 				result = true;
 			}
 			catch (System.Exception excep)

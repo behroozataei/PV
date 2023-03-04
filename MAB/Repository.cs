@@ -65,6 +65,11 @@ namespace MAB
             try
             {
                 dataTable = dataManager.GetRecord(command);
+                if (dataTable != null)
+                {
+                    if (!RedisUtils.DelKeys(RedisKeyPattern.MAB_PARAMS))
+                        _logger.WriteEntry("Error: Delete APP_MAB_PARAMS from Redis", LogLevels.Error);
+                }
             }
             catch (Irisa.DataLayer.DataException ex)
             {
@@ -94,7 +99,7 @@ namespace MAB
                 try
                 {
                     if (RedisUtils.IsConnected)
-                        RedisUtils.RedisConnection1.Set(RedisKeyPattern.MAB_PARAMS + networkPath, JsonConvert.SerializeObject(mab_param));
+                        RedisUtils.RedisConn.Set(RedisKeyPattern.MAB_PARAMS + networkPath, JsonConvert.SerializeObject(mab_param));
                     else
                         _logger.WriteEntry("Redis Connection Error", LogLevels.Error);
 
@@ -126,20 +131,22 @@ namespace MAB
         private bool GetInputScadaPointsFromRedis()
         {
             _logger.WriteEntry("Loading Data from Cache", LogLevels.Info);
-
-            var keys = RedisUtils.GetKeys(pattern: RedisKeyPattern.MAB_PARAMS);
-            var dataTable = RedisUtils.StringGet<MAB_PARAMS_Str>(keys);
-
-            foreach (MAB_PARAMS_Str row in dataTable)
+            try
             {
-                var name = row.Name;
-                var networkPath = row.NetworkPath;
-                var pointDirectionType = row.DirectionType;
-                var scadaType = row.ScadaType;
-                var id = Guid.Parse(row.ID.ToString());
 
-                try
+                var keys = RedisUtils.GetKeys(pattern: RedisKeyPattern.MAB_PARAMS);
+                var dataTable = RedisUtils.StringGet<MAB_PARAMS_Str>(keys);
+
+
+                foreach (MAB_PARAMS_Str row in dataTable)
                 {
+                    var name = row.Name;
+                    var networkPath = row.NetworkPath;
+                    var pointDirectionType = row.DirectionType;
+                    var scadaType = row.ScadaType;
+                    var id = Guid.Parse(row.ID.ToString());
+
+
                     var scadaPoint = new MABScadaPoint(id, name, networkPath, (PointDirectionType)Enum.Parse(typeof(PointDirectionType), pointDirectionType), scadaType);
                     if (!_scadaPoints.ContainsKey(id))
                     {
@@ -147,16 +154,17 @@ namespace MAB
                         _scadaPointsHelper.Add(name, scadaPoint);
                     }
                 }
-                catch (Irisa.DataLayer.DataException ex)
-                {
-                    _logger.WriteEntry(ex.ToString(), LogLevels.Error, ex);
-                    return false;
-                }
-                catch (Exception ex)
-                {
-                    _logger.WriteEntry("Error in loading from Cache" + networkPath.ToString(), LogLevels.Error, ex);
-                    return false;
-                }
+
+            }
+            catch (Irisa.DataLayer.DataException ex)
+            {
+                _logger.WriteEntry(ex.ToString(), LogLevels.Error, ex);
+                return false;
+            }
+            catch (Exception ex)
+            {
+                _logger.WriteEntry("Error in loading from Cache", LogLevels.Error, ex);
+                return false;
             }
             return true;
         }

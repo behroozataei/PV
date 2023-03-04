@@ -79,7 +79,7 @@ namespace RPC
 
                     RPC_param.ID = id.ToString();
                     if (RedisUtils.IsConnected)
-                        RedisUtils.RedisConnection1.Set(RedisKeyPattern.RPC_PARAMS + networkPath, JsonConvert.SerializeObject(RPC_param));
+                        RedisUtils.RedisConn.Set(RedisKeyPattern.RPC_PARAMS + networkPath, JsonConvert.SerializeObject(RPC_param));
                     else
                         _logger.WriteEntry("Redis Connection Error", LogLevels.Error);
 
@@ -110,11 +110,12 @@ namespace RPC
         {
             _logger.WriteEntry("Loading RPC_PARAMS Data from Cache", LogLevels.Info);
 
-            var keys = RedisUtils.GetKeys(pattern: RedisKeyPattern.RPC_PARAMS);
-            var dataTable_cache = RedisUtils.StringGet<RPC_PARAMS_Str>(keys);
+            
 
             try
             {
+                var keys = RedisUtils.GetKeys(pattern: RedisKeyPattern.RPC_PARAMS);
+                var dataTable_cache = RedisUtils.StringGet<RPC_PARAMS_Str>(keys);
                 foreach (RPC_PARAMS_Str row in dataTable_cache)
                 {
                     var id = Guid.Parse((row.ID).ToString());

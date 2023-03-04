@@ -169,11 +169,12 @@ namespace OCP
         {
             _logger.WriteEntry("Loading OCP_Checkpoint Data from Cache", LogLevels.Info);
 
-            var keys = RedisUtils.GetKeys(pattern: RedisKeyPattern.OCP_CheckPoints);
-            var dataTable_cache = RedisUtils.StringGet<OCP_CHECKPOINTS_Str>(keys);
+            
 
             try
             {
+                var keys = RedisUtils.GetKeys(pattern: RedisKeyPattern.OCP_CheckPoints);
+                var dataTable_cache = RedisUtils.StringGet<OCP_CHECKPOINTS_Str>(keys);
                 foreach (var row in dataTable_cache)
                 {
                     var checkPoint = new OCPCheckPoint();
@@ -288,6 +289,11 @@ namespace OCP
 
                 OCP_PARAMS_Str ocp_param = new OCP_PARAMS_Str();
                 var dataTable = _dataManager.GetRecord($"SELECT * FROM APP_OCP_PARAMS");
+                if (dataTable != null)
+                {
+                    if (!RedisUtils.DelKeys(RedisKeyPattern.OCP_PARAMS))
+                        _logger.WriteEntry("Error: Delete APP_OCP_PARAMS from Redis", LogLevels.Error);
+                }
                 foreach (DataRow row in dataTable.Rows)
                 {
                     //var id = Guid.Parse(row["GUID"].ToString());
@@ -306,7 +312,7 @@ namespace OCP
                     ocp_param.SCADATYPE = scadaPoint.SCADAType;
                     ocp_param.ID = id.ToString();
                     if (RedisUtils.IsConnected)
-                        RedisUtils.RedisConnection1.Set(RedisKeyPattern.OCP_PARAMS + networkPath, JsonConvert.SerializeObject(ocp_param));
+                        RedisUtils.RedisConn.Set(RedisKeyPattern.OCP_PARAMS + networkPath, JsonConvert.SerializeObject(ocp_param));
                     else
                         _logger.WriteEntry("Redis Connection Error", LogLevels.Error);
 
@@ -342,11 +348,11 @@ namespace OCP
         private bool FetchScadaPointsfromRedis()
         {
             _logger.WriteEntry("Loading LSP_PARAMS Data from Cache", LogLevels.Info);
-
-            var keys = RedisUtils.GetKeys(pattern: RedisKeyPattern.OCP_PARAMS);
-            var dataTable_cache = RedisUtils.StringGet<OCP_PARAMS_Str>(keys);
+            
             try
             {
+                var keys = RedisUtils.GetKeys(pattern: RedisKeyPattern.OCP_PARAMS);
+                var dataTable_cache = RedisUtils.StringGet<OCP_PARAMS_Str>(keys);
                 foreach (OCP_PARAMS_Str row in dataTable_cache)
                 {
                     var id = Guid.Parse((row.ID).ToString());

@@ -378,21 +378,30 @@ namespace LSP
 
         private void ClearSFSCTrigger(SFSC_FURNACE_TO_SHED_Str sfsc_furnace_to_shed)
         {
-            _logger.WriteEntry("Clear SFSC Trigger", LogLevels.Info);
-            var scadapointLSPACTIVATED = _repository.GetLSPScadaPoint("LSPACTIVATED");
-            if (scadapointLSPACTIVATED is null)
+            try
             {
-                _logger.WriteEntry("Error in finding LSPACTIVATED", LogLevels.Error);
-            }
-            if ((SinglePointStatus)(int)scadapointLSPACTIVATED.Value == SinglePointStatus.Appear)
-                if (!_updateScadaPointOnServer.SendAlarm(scadapointLSPACTIVATED, SinglePointStatus.Disappear, " "))
-                {
-                    _logger.WriteEntry("Error in diappearing LSPACTIVATED ", LogLevels.Error);
-                }
 
-            sfsc_furnace_to_shed.SHEADCOMMAND = false;
-            RedisUtils.RedisConnection1.Set(RedisKeyPattern.SFSC_FURNACE_TO_SHED, JsonConvert.SerializeObject(sfsc_furnace_to_shed));
-            //_updateScadaPointOnServer.SendAlarm(_repository.GetLSPScadaPoint("SFSCACTIVATED"), SinglePointStatus.Disappear, "");
+
+                _logger.WriteEntry("Clear SFSC Trigger", LogLevels.Info);
+                var scadapointLSPACTIVATED = _repository.GetLSPScadaPoint("LSPACTIVATED");
+                if (scadapointLSPACTIVATED is null)
+                {
+                    _logger.WriteEntry("Error in finding LSPACTIVATED", LogLevels.Error);
+                }
+                if ((SinglePointStatus)(int)scadapointLSPACTIVATED.Value == SinglePointStatus.Appear)
+                    if (!_updateScadaPointOnServer.SendAlarm(scadapointLSPACTIVATED, SinglePointStatus.Disappear, " "))
+                    {
+                        _logger.WriteEntry("Error in diappearing LSPACTIVATED ", LogLevels.Error);
+                    }
+
+                sfsc_furnace_to_shed.SHEADCOMMAND = false;
+                RedisUtils.RedisConn.Set(RedisKeyPattern.SFSC_FURNACE_TO_SHED, JsonConvert.SerializeObject(sfsc_furnace_to_shed));
+                //_updateScadaPointOnServer.SendAlarm(_repository.GetLSPScadaPoint("SFSCACTIVATED"), SinglePointStatus.Disappear, "");
+            }
+            catch (Exception ex)
+            {
+                _logger.WriteEntry(ex.Message, LogLevels.Error, ex);
+            }
 
         }
 

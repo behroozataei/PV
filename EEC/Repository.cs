@@ -84,12 +84,12 @@ namespace EEC
                     if (RedisUtils.GetKeys(pattern: RedisKeyPattern.EEC_SFSCEAFSPRIORITY + (furnace + 1).ToString()).Length == 0)
                     {
 
-                        RedisUtils.RedisConnection1.Set(RedisKeyPattern.EEC_SFSCEAFSPRIORITY + $"{ furnace + 1}", JsonConvert.SerializeObject(eec_sfsceafsproi[furnace]));
+                        RedisUtils.RedisConn.Set(RedisKeyPattern.EEC_SFSCEAFSPRIORITY + $"{ furnace + 1}", JsonConvert.SerializeObject(eec_sfsceafsproi[furnace]));
                     }
                     else
                     {
                         
-                        var eec_sfsceafsproi_temp = JsonConvert.DeserializeObject<EEC_SFSCEAFSPRIORITY_Str>(RedisUtils.RedisConnection1.Get(RedisKeyPattern.EEC_SFSCEAFSPRIORITY + (furnace + 1).ToString()));
+                        var eec_sfsceafsproi_temp = JsonConvert.DeserializeObject<EEC_SFSCEAFSPRIORITY_Str>(RedisUtils.RedisConn.Get(RedisKeyPattern.EEC_SFSCEAFSPRIORITY + (furnace + 1).ToString()));
                         if (eec_sfsceafsproi_temp.FURNACE == null ||
                             eec_sfsceafsproi_temp.GROUPNUM == null ||
                             eec_sfsceafsproi_temp.GROUPNUM_EEC == null ||
@@ -97,7 +97,7 @@ namespace EEC
                             eec_sfsceafsproi_temp.REASON == null ||
                             eec_sfsceafsproi_temp.STATUS_OF_FURNACE == null 
                             )
-                            RedisUtils.RedisConnection1.Set(RedisKeyPattern.EEC_SFSCEAFSPRIORITY + $"{ furnace + 1}", JsonConvert.SerializeObject(eec_sfsceafsproi[furnace]));
+                            RedisUtils.RedisConn.Set(RedisKeyPattern.EEC_SFSCEAFSPRIORITY + $"{ furnace + 1}", JsonConvert.SerializeObject(eec_sfsceafsproi[furnace]));
                     }
                 }
             }
@@ -123,6 +123,11 @@ namespace EEC
 
                 EEC_PARAMS_Str eec_param = new EEC_PARAMS_Str();
                 var dataTable = sqlDataMnager.GetRecord($"SELECT * FROM APP_EEC_PARAMS");
+                if (dataTable != null)
+                {
+                    if (!RedisUtils.DelKeys(RedisKeyPattern.EEC_PARAMS))
+                        _logger.WriteEntry("Error: Delete APP_EEC_PARAMS from Redis", LogLevels.Error);
+                }
 
                 foreach (DataRow row in dataTable.Rows)
                 {
@@ -145,7 +150,7 @@ namespace EEC
 
                     eec_param.ID = id.ToString();
                     if (RedisUtils.IsConnected)
-                        RedisUtils.RedisConnection1.Set(RedisKeyPattern.EEC_PARAMS + networkPath, JsonConvert.SerializeObject(eec_param));
+                        RedisUtils.RedisConn.Set(RedisKeyPattern.EEC_PARAMS + networkPath, JsonConvert.SerializeObject(eec_param));
                     else
                         _logger.WriteEntry("Redis Connection Error", LogLevels.Error);
 
@@ -175,12 +180,12 @@ namespace EEC
         private bool GetInputScadaPointsfromRedis()
         {
             _logger.WriteEntry("Loading EEC_PARAMS Data from Cache", LogLevels.Info);
-
-            var keys = RedisUtils.GetKeys(pattern: RedisKeyPattern.EEC_PARAMS);
-            var dataTable_cache = RedisUtils.StringGet<EEC_PARAMS_Str>(keys);
-
             try
             {
+                var keys = RedisUtils.GetKeys(pattern: RedisKeyPattern.EEC_PARAMS);
+                var dataTable_cache = RedisUtils.StringGet<EEC_PARAMS_Str>(keys);
+
+           
                 foreach (EEC_PARAMS_Str row in dataTable_cache)
                 {
                     var id = Guid.Parse((row.ID).ToString());
@@ -264,7 +269,7 @@ namespace EEC
             try
             {
                 if (RedisUtils.IsConnected)
-                    RedisUtils.RedisConnection1.Set(RedisKeyPattern.EEC_TELEGRAM, JsonConvert.SerializeObject(eec_telegram));
+                    RedisUtils.RedisConn.Set(RedisKeyPattern.EEC_TELEGRAM, JsonConvert.SerializeObject(eec_telegram));
                 //var RowAffected = _historicalDataManager.ExecuteNonQuery(strSQL);
 
                 //if (RowAffected > 0)
@@ -341,7 +346,7 @@ namespace EEC
                 sfsc_eafpower.FURNACE7 = _FurnacePowers[6];
                 sfsc_eafpower.FURNACE8 = _FurnacePowers[7];
                 if (RedisUtils.IsConnected)
-                    RedisUtils.RedisConnection1.Set(RedisKeyPattern.SFSC_EAFSPOWER, JsonConvert.SerializeObject(sfsc_eafpower));
+                    RedisUtils.RedisConn.Set(RedisKeyPattern.SFSC_EAFSPOWER, JsonConvert.SerializeObject(sfsc_eafpower));
             }
             catch (Exception ex)
             {

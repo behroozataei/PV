@@ -61,6 +61,11 @@ namespace DCP
 
                 DCP_PARAMS_Str dcp_param = new DCP_PARAMS_Str();
                 var dataTable = _staticDataManager.GetRecord($"SELECT * from APP_DCP_PARAMS");
+                if(dataTable !=null)
+                {
+                   if(! RedisUtils.DelKeys(RedisKeyPattern.DCP_PARAMS))
+                        _logger.WriteEntry("Error: Delete APP_DCP_PARAMS from Redis", LogLevels.Error);
+                }
 
                 foreach (DataRow row in dataTable.Rows)
                 {
@@ -81,7 +86,7 @@ namespace DCP
 
                     dcp_param.ID = id.ToString();
                     if (RedisUtils.IsConnected)
-                        RedisUtils.RedisConnection1.Set(RedisKeyPattern.DCP_PARAMS + networkPath, JsonConvert.SerializeObject(dcp_param));
+                        RedisUtils.RedisConn.Set(RedisKeyPattern.DCP_PARAMS + networkPath, JsonConvert.SerializeObject(dcp_param));
 
                     var scadaPoint = new DCPScadaPoint(id, name, networkPath, (PointDirectionType)Enum.Parse(typeof(PointDirectionType), pointDirectionType));
 
@@ -109,11 +114,11 @@ namespace DCP
         private bool GetInputScadaPointsfromredis()
         {
             _logger.WriteEntry("Loading DCP_PARAMS Data from Cache", LogLevels.Info);
-
-            var keys = RedisUtils.GetKeys(pattern: RedisKeyPattern.DCP_PARAMS);
-            var dataTable_cache = RedisUtils.StringGet<DCP_PARAMS_Str>(keys);
+           
             try
             {
+                var keys = RedisUtils.GetKeys(pattern: RedisKeyPattern.DCP_PARAMS);
+                var dataTable_cache = RedisUtils.StringGet<DCP_PARAMS_Str>(keys);
 
                 foreach (DCP_PARAMS_Str row in dataTable_cache)
                 {
@@ -196,7 +201,7 @@ namespace DCP
                // if (_RedisConnectorHelper.GetKeys(pattern: RedisKeyPattern.SFSC_EAFSPOWER).Length == 0)
                //     return dataTable;
 
-                dataTable = JsonConvert.DeserializeObject<SFSC_EAFSPOWER_Str>(RedisUtils.RedisConnection1.Get(RedisKeyPattern.SFSC_EAFSPOWER));
+                dataTable = JsonConvert.DeserializeObject<SFSC_EAFSPOWER_Str>(RedisUtils.RedisConn.Get(RedisKeyPattern.SFSC_EAFSPOWER));
             }
             catch (Irisa.DataLayer.DataException ex)
             {

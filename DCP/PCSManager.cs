@@ -667,7 +667,7 @@ namespace DCP
                 //}
                
                 _eec_telegram.SENTTIME = DateTime.Now;
-                RedisUtils.RedisConnection1.Set(RedisKeyPattern.EEC_TELEGRAM, JsonConvert.SerializeObject(_eec_telegram));
+                RedisUtils.RedisConn.Set(RedisKeyPattern.EEC_TELEGRAM, JsonConvert.SerializeObject(_eec_telegram));
 
             }
             catch (System.Exception excep)

@@ -52,10 +52,7 @@ namespace COM
                 _redisConName5 = redisConName5;
 
                 hasSentinel = Convert.ToBoolean(isSentinel);
-                //RTDBConfigSentinel.Password = password;
-                //RTDBConfigSentinel.ServiceName = servicename;
-                //RTDBConfig.Password = password;
-
+                
             }
             catch (Exception ex)
             {
@@ -67,13 +64,13 @@ namespace COM
         //****************************************************
 
         //private static IConnectionMultiplexer RedisConnection;
-        public static CSRedisClient RedisConnection1;
+        public static CSRedisClient RedisConn;
 
         //public static IServer Server { get; set; }
         //public IDatabase DataBase { get; set; }
         //public static bool IsConnected => RedisConnection != null ? RedisConnection.IsConnected : false;
        // public static bool IsConnected => RedisConnection1!= null ? RedisConnection1.Ping() : false;
-        public static bool IsConnected => RedisConnection1 != null ? true : false;
+        public static bool IsConnected => RedisConn != null ? true : false;
         // public static string RTDBStatus => RedisConnection != null ? RedisConnection.GetStatus() : "";
 
         public static void CheckConnection()
@@ -90,74 +87,16 @@ namespace COM
         void Stop()
         {
             _isRunning = false;
-            RedisConnection1.Dispose();
+            RedisConn.Dispose();
         }
 
         string test(string redisKey)
         {
 
-            return RedisConnection1.Get(redisKey);
+            return RedisConn.Get(redisKey);
         }
 
-        [Obsolete]
-        //static ConfigurationOptions RTDBConfigCommon = new ConfigurationOptions
-        //{
-        //    AbortOnConnectFail = false,
-        //    AllowAdmin = true,
-        //    //CheckCertificateRevocation = false,
-        //    //ConfigCheckSeconds = 5000,
-        //    //ConnectRetry = 5,
-        //    ConnectTimeout = 100000,
-        //    //KeepAlive = 60,
-        //    SyncTimeout = 60000,
-        //    AsyncTimeout = 60000,
-        //    ResponseTimeout = 60000,
-        //    //ReconnectRetryPolicy = new LinearRetry(5000),
-        //    //DefaultVersion = new Version(2, 6, 90)
-        //    SocketManager = SocketManager.ThreadPool,
-        //    // Ssl = true 
-        //    HighPrioritySocketThreads = true
-
-
-        //};
-
-
-
-
-
-        //[Obsolete]
-        //private static ConfigurationOptions RTDBConfig { get; } = new ConfigurationOptions
-        //{
-        //    AbortOnConnectFail = RTDBConfigCommon.AbortOnConnectFail,
-        //    AllowAdmin = RTDBConfigCommon.AllowAdmin,
-        //    ConfigCheckSeconds = RTDBConfigCommon.ConfigCheckSeconds,
-        //    ConnectRetry = RTDBConfigCommon.ConnectRetry,
-        //    ConnectTimeout = RTDBConfigCommon.ConnectTimeout,
-        //    SyncTimeout = RTDBConfigCommon.SyncTimeout,
-        //    ResponseTimeout = RTDBConfigCommon.ResponseTimeout,
-        //    SocketManager = RTDBConfigCommon.SocketManager,
-        //    HighPrioritySocketThreads = RTDBConfigCommon.HighPrioritySocketThreads
-        //};
-
-        //[Obsolete]
-        //private static ConfigurationOptions RTDBConfigSentinel { get; } = new ConfigurationOptions
-        //{
-        //    CommandMap = CommandMap.Default,
-        //    AbortOnConnectFail = RTDBConfigCommon.AbortOnConnectFail,
-        //    AllowAdmin = RTDBConfigCommon.AllowAdmin,
-        //    ConfigCheckSeconds = RTDBConfigCommon.ConfigCheckSeconds,
-        //    ConnectRetry = RTDBConfigCommon.ConnectRetry,
-        //    ConnectTimeout = RTDBConfigCommon.ConnectTimeout,
-        //    KeepAlive = RTDBConfigCommon.KeepAlive,
-        //    SyncTimeout = RTDBConfigCommon.SyncTimeout,
-        //    AsyncTimeout = RTDBConfigCommon.AsyncTimeout,
-        //    ResponseTimeout = RTDBConfigCommon.ResponseTimeout,
-        //    ReconnectRetryPolicy = RTDBConfigCommon.ReconnectRetryPolicy,
-        //    DefaultVersion = RTDBConfig.DefaultVersion,
-        //    SocketManager = RTDBConfigCommon.SocketManager,
-        //    HighPrioritySocketThreads = RTDBConfigCommon.HighPrioritySocketThreads
-
-        //};
+       
 
 
 
@@ -197,7 +136,7 @@ namespace COM
             {
                 connect();
 
-                if (RedisConnection1 == null)
+                if (RedisConn == null)
                     return;
                 
             }
@@ -267,8 +206,8 @@ namespace COM
 
             try
             {
-                string _connectionstringSentinel = $"{_servicename},password={_password},defaultDatabase=0,poolsize=500,ssl=false";
-                string _connectionstring = $"{_redisConName1},password={_password},defaultDatabase=0,poolsize=500,ssl=false";
+                string _connectionstringSentinel = $"{_servicename},password={_password},defaultDatabase={_database},poolsize=500,ssl=false";
+                string _connectionstring = $"{_redisConName1},password={_password},defaultDatabase={_database},poolsize=500,ssl=false";
 
                 if (_isRunning)
                 {
@@ -277,16 +216,16 @@ namespace COM
 
                 if (hasSentinel)
                 {
-                    RedisConnection1 = new CSRedisClient(_connectionstringSentinel, GetEndPoints.ToArray());
+                    RedisConn = new CSRedisClient(_connectionstringSentinel, GetEndPoints.ToArray());
 
                 }
                 else
                 {
-                    RedisConnection1 = new CSRedisClient(_connectionstring);
+                    RedisConn = new CSRedisClient(_connectionstring);
                     
                 }
             }
-            catch
+            catch(Exception ex)
             {
                 waitForReconnecting();
             }
@@ -320,7 +259,7 @@ namespace COM
 
         public static IEnumerable<T> StringGet<T>(string[] redisKeys)
         {
-            var result = redisKeys.Select(n => RedisConnection1.Get(n));
+            var result = redisKeys.Select(n => RedisConn.Get(n));
             //var result = StringGet(redisKeys);
             return result.Select(n => JsonConvert.DeserializeObject<T>(n));
         }
@@ -333,7 +272,7 @@ namespace COM
             {
                 try
                 {
-                    value = JsonConvert.DeserializeObject<T>(RedisConnection1.Get(redisKey));
+                    value = JsonConvert.DeserializeObject<T>(RedisConn.Get(redisKey));
                     ret = true;
                     break;
 
@@ -342,7 +281,8 @@ namespace COM
                 {
                     tryCount++;
                     ret = false;
-                    Console.WriteLine(ex.Message);
+                    throw ex;                               
+                   
                 }
             }
             return ret;
@@ -350,12 +290,33 @@ namespace COM
 
         public static String[] GetKeys(String pattern)
         {
-            return RedisConnection1.KeysAsync(pattern + "*").Result;
-
-          // return RedisConnection1.HKeys(pattern);
-           // return Server.Keys(_database, pattern: pattern + "*").ToArray();
+            return  RedisConn.Keys(pattern + "*");
+           // return RedisConn.KeysAsync(pattern + "*").Result;
+                    
         }
 
+        public static bool DelKeys(string pattern)
+
+        {
+            bool ret = false;
+            try
+            {
+                var Keys = GetKeys(pattern);
+
+                foreach (var key in Keys)
+                    RedisConn.Del(key);
+                ret = true;
+            }
+            catch(Exception ex)
+            {
+                ret = false;
+                throw ex;
+            }
+
+            return ret;
+            
+
+        }
         
         
 
