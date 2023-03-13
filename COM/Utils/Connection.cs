@@ -1,6 +1,6 @@
 ﻿using System.Net.Sockets;
 
-namespace COM
+namespace COMMON
 {
     public static class Connection
     {

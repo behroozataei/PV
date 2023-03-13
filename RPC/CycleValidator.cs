@@ -5,7 +5,7 @@ using Newtonsoft.Json;
 
 using Irisa.Logger;
 using Irisa.Message.CPS;
-using COM;
+using COMMON;
 
 namespace RPC
 {

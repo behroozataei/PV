@@ -1,4 +1,4 @@
-﻿using COM;
+﻿using COMMON;
 using Irisa.Common.Utils;
 using Irisa.Logger;
 using Irisa.Message;

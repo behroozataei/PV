@@ -3,7 +3,7 @@ using Irisa.Logger;
 using Irisa.Message;
 using System;
 using System.Timers;
-using COM;
+using COMMON;
 
 
 namespace RPC

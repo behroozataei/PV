@@ -13,7 +13,7 @@ using CSRedis;
 //using ServiceStack.Redis;
 //using Microsoft.Extensions.Configuration;
 
-namespace COM
+namespace COMMON
 {
 
     public class RedisUtils

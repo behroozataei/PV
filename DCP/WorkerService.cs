@@ -1,4 +1,4 @@
-﻿using COM;
+﻿using COMMON;
 using Irisa.Common.Utils;
 using Irisa.DataLayer;
 using Irisa.DataLayer.SqlServer;
@@ -82,7 +82,7 @@ namespace DCP
             _logger.WriteEntry("Start of running DCP ... ***************************************", LogLevels.Info);
             //_logger.WriteEntry("Start of running DCP.", LogLevels.Info);
 
-            while (!COM.Connection.PingHost(_config["CpsIpAddress"], 10000))
+            while (!COMMON.Connection.PingHost(_config["CpsIpAddress"], 10000))
             {
                 _logger.WriteEntry(">>>>> Waiting for CPS Connection", LogLevels.Info);
                 Thread.Sleep(5000);

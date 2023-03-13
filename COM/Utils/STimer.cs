@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Timers;
 
-namespace COM
+namespace COMMON
 {
 
     public delegate void Tdelegate(object sender, ElapsedEventArgs e);

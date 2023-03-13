@@ -1,4 +1,3 @@
-﻿using COMMON;
 using Irisa.Common.Utils;
 using Irisa.DataLayer;
 using Irisa.Logger;
@@ -10,31 +9,38 @@ using System;
 using System.Collections.Concurrent;
 using System.Threading;
 using System.Threading.Tasks;
+using COMMON;
+using Irisa.DataLayer.SqlServer;
 
-namespace OCP
+namespace DCIS
 {
     public class WorkerService : BackgroundService
     {
         private readonly ILogger _logger;
-        private DataManager _dataManager;
+        private readonly SqlServerDataManager _linkDBpcsDataManager;
+        private readonly DataManager _staticDataManager;
         private readonly DataManager _historicalDataManager;
         private readonly StoreLogs _storeLogs;
         private readonly CpsRpcService _rpcService;
         private readonly Repository _repository;
         private readonly BlockingCollection<CpsRuntimeData> _cpsRuntimeDataBuffer;
         private readonly RuntimeDataReceiver _runtimeDataReceiver;
-        private readonly OCPManager _ocpManager;
-        private readonly RedisUtils _RedisConnectorHelper;
+        private readonly DCISManager _dcisManager;
         private readonly IConfiguration _config;
 
         public WorkerService(IServiceProvider serviceProvider)
         {
             _config = serviceProvider.GetService<IConfiguration>();
             _logger = serviceProvider.GetService<ILogger>();
-           
-            _dataManager = new Irisa.DataLayer.Oracle.OracleDataManager(_config["OracleServicename"], _config["OracleDatabaseAddress"], _config["OracleStaticUser"], _config["OracleStaticPassword"]);
-            _historicalDataManager = new Irisa.DataLayer.Oracle.OracleDataManager(_config["OracleServicename"], _config["OracleDatabaseAddress"], _config["OracleHISUser"], _config["OracleHISPassword"]);
-            _storeLogs = new StoreLogs(_dataManager, _logger, "SCADA.\"HIS_HisLogs_Insert\"");
+
+
+            _staticDataManager = new SqlServerDataManager(_config["SQLServerNameOfStaticDataDatabase"], _config["SQLServerDatabaseAddress"], _config["SQLServerUser"], _config["SQLServerPassword"]);
+            //_staticDataManager = new Irisa.DataLayer.Oracle.OracleDataManager(_config["OracleServicename"], _config["OracleDatabaseAddress"], _config["OracleStaticUser"], _config["OracleStaticPassword"]);
+            //_historicalDataManager = new SqlServerDataManager(_config["SQLServerNameOfHistoricalDatabase"], _config["SQLServerDatabaseAddress"], _config["SQLServerUser"], _config["SQLServerPassword"]);
+           _historicalDataManager = new Irisa.DataLayer.Oracle.OracleDataManager(_config["OracleServicename"], _config["OracleDatabaseAddress"], _config["OracleHISUser"], _config["OracleHISPassword"]);
+            _storeLogs = new StoreLogs(_staticDataManager, _logger, "[HIS].[HIS_LOGS_INSERT]");
+            //_storeLogs = new StoreLogs(_staticDataManager, _logger, "SCADA.\"HIS_HisLogs_Insert\"");
+            
 
             var historyDataRequest = new HistoryDataRequest
             {
@@ -45,38 +51,28 @@ namespace OCP
                 RequireConnectivityNode = false,
             };
 
-            _RedisConnectorHelper = new RedisUtils(0, _config["RedisKeySentinel1"], _config["RedisKeySentinel2"], _config["RedisKeySentinel3"], _config["RedisKeySentinel4"], _config["RedisKeySentinel5"], _config["RedisPassword"], _config["RedisServiceName"],
-                                                     _config["RedisConName1"], _config["RedisConName2"], _config["RedisConName3"], _config["RedisConName4"], _config["RedisConName5"], _config["IsSentinel"]);
-            
+         
+
 
             _cpsRuntimeDataBuffer = new BlockingCollection<CpsRuntimeData>();
             _rpcService = new CpsRpcService(_config["CpsIpAddress"], 10000, historyDataRequest, _cpsRuntimeDataBuffer);
 
-            _repository = new Repository(_logger, _dataManager, _historicalDataManager, _RedisConnectorHelper);
-            _ocpManager = new OCPManager(_logger, _repository, _rpcService.CommandService);
-            _runtimeDataReceiver = new RuntimeDataReceiver(_logger, _repository, (IProcessing)_ocpManager, _rpcService, _cpsRuntimeDataBuffer);
+            _repository = new Repository(_logger, _staticDataManager, _historicalDataManager);
+            _dcisManager = new DCISManager(_logger, _repository, _rpcService.CommandService);
+            _runtimeDataReceiver = new RuntimeDataReceiver(_logger, _repository, (IProcessing)_dcisManager, _rpcService, _cpsRuntimeDataBuffer);
+
         }
 
-        private void CallConnection()
-        {
-            try
-            {
-                RedisUtils.RedisUtils_Connect();
-            }
-            catch (Exception ex)
-            {
-                _logger.WriteEntry($"Redis Connection Error {ex}", LogLevels.Error);
-            }
-        }
 
-        
+
+
 
         public override Task StartAsync(CancellationToken cancellationToken)
         {
-            CallConnection();
+           
             _logger.LogReceived += OnLogReceived;
             _storeLogs.Start();
-            _logger.WriteEntry("Start of running OCP ... ***************************************", LogLevels.Info);
+            _logger.WriteEntry("Start of running DCIS ... ***************************************", LogLevels.Info);
 
             while (!COMMON.Connection.PingHost(_config["CpsIpAddress"], 10000))
             {
@@ -85,14 +81,9 @@ namespace OCP
             }
             _logger.WriteEntry(">>>>> Connected to CPS", LogLevels.Info);
 
-            _logger.WriteEntry("Check Redis Connection", LogLevels.Info);
-            while (!RedisUtils.IsConnected)
-            {
-                _logger.WriteEntry(">>>>> Waiting for Redis Connection", LogLevels.Info);
-                CallConnection();
-                Thread.Sleep(5000);
+                      
 
-            }
+
             _logger.WriteEntry("Loading data from database/redis is started.", LogLevels.Info);
 
             if (_repository.Build() == false)
@@ -100,13 +91,21 @@ namespace OCP
             else
                 _logger.WriteEntry("Loading data from database/redis is completed", LogLevels.Info);
 
+            _dcisManager.StartCyclicOperation();
+            //_rpcManager.Build();
 
             _rpcService.StateChanged += RpcStateChanged;
             _runtimeDataReceiver.Start();
-            _ocpManager.CheckCPSStatus();
+           // _rpcManager.CheckCPSStatus();
 
-            _ocpManager.StartTimeService();
-            _logger.WriteEntry("End of preparing data for OCP ... ***************************************", LogLevels.Info);
+
+            var taskWaiting = Task.Delay(3000, cancellationToken);
+            taskWaiting.ContinueWith((t) =>
+            {
+               // _rpcManager.InitializeRPC();
+
+            }, TaskContinuationOptions.OnlyOnRanToCompletion);
+            _logger.WriteEntry("End of preparing data for DCIS ... ***************************************", LogLevels.Info);
 
             return base.StartAsync(cancellationToken);
         }
@@ -115,9 +114,10 @@ namespace OCP
         {
             _runtimeDataReceiver.Stop();
 
-            _logger.WriteEntry("Stop OCP", LogLevels.Info);
+            _logger.WriteEntry("Stop DCIS", LogLevels.Info);
             _storeLogs.Stop();
-            _dataManager.Close();
+            _staticDataManager.Close();
+            _historicalDataManager.Close();
 
             return base.StopAsync(cancellationToken);
         }
@@ -146,34 +146,27 @@ namespace OCP
 
         private void RpcStateChanged(object sender, GrpcStateChangeEventArgs e)
         {
-            _logger.WriteEntry("RpcClientManager_StateChanged ... " + e.State.ToString(), LogLevels.Info);
-
             if (e.State == GrpcCommunicationState.Connect)
             {
                 _logger.WriteEntry("CPS is going to Connect", LogLevels.Info);
-
                 Task.Run(() =>
                 {
-                    System.Threading.Thread.Sleep(3000);
-                    GlobalData.CPSStatus = true;
+                    Thread.Sleep(3000);
+                   // GlobalData.CPSStatus = true;
                 });
-
             }
 
             if (e.State == GrpcCommunicationState.Disconnect)
             {
-                GlobalData.CPSStatus = false;
+              //  GlobalData.CPSStatus = false;
                 _logger.WriteEntry("CPS is going to Disconnect", LogLevels.Info);
             }
-
             if (e.State == GrpcCommunicationState.Connecting)
             {
-
-                GlobalData.CPSStatus = false;
+               // GlobalData.CPSStatus = false;
                 _logger.WriteEntry("CPS is going to Connecting", LogLevels.Info);
             }
+
         }
     }
-
-
 }

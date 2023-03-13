@@ -1,4 +1,4 @@
-﻿using COM;
+﻿using COMMON;
 using Irisa.DataLayer;
 using Irisa.DataLayer.SqlServer;
 using Irisa.Common.Utils;

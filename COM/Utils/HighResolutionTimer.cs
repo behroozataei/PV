@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace COM
+namespace COMMON
 {
     public class HighResolutionTimer
     {

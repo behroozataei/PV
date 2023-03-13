@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace COM
+namespace COMMON
 {
     public static class RedisKeyPattern
     {

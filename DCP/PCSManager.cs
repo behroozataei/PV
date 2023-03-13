@@ -1,4 +1,4 @@
-using COM;
+using COMMON;
 using Irisa.Logger;
 using Irisa.Common.Utils;
 using Newtonsoft.Json;
