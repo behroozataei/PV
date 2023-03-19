@@ -62,9 +62,13 @@ namespace DCIS
             //var dataTable = _staticDataManager.GetRecord(
             //    "SELECT METER_PROXY, METER_NAME, ACCUMULATOR_MEASUREMENT_ID, ACCUMULATOR_NETWORK_PATH, " +
             //    "ANALOG_MEASUREMENT_ID, ANALOG_NETWORK_PATH FROM SCADA.APP_DCIS_PARAMS");
+            //var dataTable = _staticDataManager.GetRecord(
+            //    "SELECT METER_PROXY, METER_NAME, ACCUMULATOR_MEASUREMENT_ID, ACCUMULATOR_NETWORK_PATH, " +
+            //    "ANALOG_MEASUREMENT_ID, ANALOG_NETWORK_PATH FROM APP.DCIS_PARAMS");
+
             var dataTable = _staticDataManager.GetRecord(
-                "SELECT METER_PROXY, METER_NAME, ACCUMULATOR_MEASUREMENT_ID, ACCUMULATOR_NETWORK_PATH, " +
-                "ANALOG_MEASUREMENT_ID, ANALOG_NETWORK_PATH FROM APP.DCIS_PARAMS");
+                "SELECT METER_PROXY, METER_NAME, ACCUMULATOR_NETWORK_PATH, " +
+                "ANALOG_NETWORK_PATH FROM APP.DCIS_PARAMS");
 
             foreach (DataRow row in dataTable.Rows)
             {
@@ -138,8 +142,8 @@ namespace DCIS
             try
             {
 
-                //var command = $"SELECT VALUE, TIMESTAMP, QUALITY FROM APP.HISANALOGS WHERE MEASUREMENTID = '{analogMeasurementId.ToString().ToUpper()}' AND TIMESTAMP >=  '{duration.ShiftStartTime.ToString("yyyy-MM-dd HH:mm:ss.ff")}' AND TIMESTAMP <=  '{duration.ShiftEndTime.ToString("yyyy-MM-dd HH:mm:ss.ff")}'";
-                var command = $"SELECT VALUE, TIMESTAMP, QUALITY FROM SCADAHIS.HISANALOGS WHERE MEASUREMENTID = '{analogMeasurementId.ToString().ToUpper()}' AND TIMESTAMP >=  timestamp'{duration.ShiftStartTime.ToString("yyyy-MM-dd HH:mm:ss.ff")}' AND TIMESTAMP <=  timestamp '{duration.ShiftEndTime.ToString("yyyy-MM-dd HH:mm:ss.ff")}'";
+                var command = $"SELECT VALUE, TIMESTAMP, QUALITY FROM HISANALOGS WHERE MEASUREMENTID = '{analogMeasurementId.ToString().ToUpper()}' AND TIMESTAMP >=  '{duration.ShiftStartTime.ToString("yyyy-MM-dd HH:mm:ss.ff")}' AND TIMESTAMP <=  '{duration.ShiftEndTime.ToString("yyyy-MM-dd HH:mm:ss.ff")}' ORDER BY  TIMESTAMP ASC ";
+                //var command = $"SELECT VALUE, TIMESTAMP, QUALITY FROM SCADAHIS.HISANALOGS WHERE MEASUREMENTID = '{analogMeasurementId.ToString().ToUpper()}' AND TIMESTAMP >=  timestamp'{duration.ShiftStartTime.ToString("yyyy-MM-dd HH:mm:ss.ff")}' AND TIMESTAMP <=  timestamp '{duration.ShiftEndTime.ToString("yyyy-MM-dd HH:mm:ss.ff")}'";
 
                 var archiveDataTable = _historicalDataManager.GetRecord(command);
 
@@ -172,8 +176,12 @@ namespace DCIS
         {
             try
             {
-                var command = $"SELECT VALUE, TIMESTAMP, QUALITY FROM SCADAHIS.HISANALOGS WHERE " +
-                              $"TIMESTAMP = (SELECT MAX(TIMESTAMP) FROM SCADAHIS.HISANALOGS  WHERE MEASUREMENTID = '{analogMeasurementId.ToString().ToUpper()}' AND TIMESTAMP <=  timestamp '{duration.ShiftStartTime.ToString("yyyy-MM-dd HH:mm:ss.ff")}') AND " +
+                //var command = $"SELECT VALUE, TIMESTAMP, QUALITY FROM SCADAHIS.HISANALOGS WHERE " +
+                //              $"TIMESTAMP = (SELECT MAX(TIMESTAMP) FROM SCADAHIS.HISANALOGS  WHERE MEASUREMENTID = '{analogMeasurementId.ToString().ToUpper()}' AND TIMESTAMP <=  timestamp '{duration.ShiftStartTime.ToString("yyyy-MM-dd HH:mm:ss.ff")}') AND " +
+                //              $"MEASUREMENTID = '{analogMeasurementId.ToString().ToUpper()}'";
+
+                var command = $"SELECT VALUE, TIMESTAMP, QUALITY FROM HISANALOGS WHERE " +
+                              $"TIMESTAMP = (SELECT MAX(TIMESTAMP) FROM HISANALOGS  WHERE MEASUREMENTID = '{analogMeasurementId.ToString().ToUpper()}' AND TIMESTAMP <=  '{duration.ShiftStartTime.ToString("yyyy-MM-dd HH:mm:ss.ff")}') AND " +
                               $"MEASUREMENTID = '{analogMeasurementId.ToString().ToUpper()}'";
 
                 var archiveDataTable = _historicalDataManager.GetRecord(command);
@@ -183,7 +191,7 @@ namespace DCIS
                 {
                     DataRow row = archiveDataTable.Rows[0];
                     value = Convert.ToSingle(row["VALUE"]);
-                    _logger.WriteEntry($"First Data: time = {Convert.ToDateTime(row["TIMESTAMP"])} Value = {value}", LogLevels.Info);
+                    //_logger.WriteEntry($"First Data: time = {Convert.ToDateTime(row["TIMESTAMP"])} Value = {value}", LogLevels.Info);
                     return true;
                 }
                 return false;

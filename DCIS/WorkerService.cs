@@ -36,8 +36,8 @@ namespace DCIS
 
             _staticDataManager = new SqlServerDataManager(_config["SQLServerNameOfStaticDataDatabase"], _config["SQLServerDatabaseAddress"], _config["SQLServerUser"], _config["SQLServerPassword"]);
             //_staticDataManager = new Irisa.DataLayer.Oracle.OracleDataManager(_config["OracleServicename"], _config["OracleDatabaseAddress"], _config["OracleStaticUser"], _config["OracleStaticPassword"]);
-            //_historicalDataManager = new SqlServerDataManager(_config["SQLServerNameOfHistoricalDatabase"], _config["SQLServerDatabaseAddress"], _config["SQLServerUser"], _config["SQLServerPassword"]);
-           _historicalDataManager = new Irisa.DataLayer.Oracle.OracleDataManager(_config["OracleServicename"], _config["OracleDatabaseAddress"], _config["OracleHISUser"], _config["OracleHISPassword"]);
+            _historicalDataManager = new SqlServerDataManager(_config["SQLServerNameOfHistoricalDatabase"], _config["SQLServerDatabaseAddress"], _config["SQLServerUser"], _config["SQLServerPassword"]);
+           //_historicalDataManager = new Irisa.DataLayer.Oracle.OracleDataManager(_config["OracleServicename"], _config["OracleDatabaseAddress"], _config["OracleHISUser"], _config["OracleHISPassword"]);
             _storeLogs = new StoreLogs(_staticDataManager, _logger, "[HIS].[HIS_LOGS_INSERT]");
             //_storeLogs = new StoreLogs(_staticDataManager, _logger, "SCADA.\"HIS_HisLogs_Insert\"");
             
@@ -84,12 +84,12 @@ namespace DCIS
                       
 
 
-            _logger.WriteEntry("Loading data from database/redis is started.", LogLevels.Info);
+            _logger.WriteEntry("Loading data from database is started.", LogLevels.Info);
 
             if (_repository.Build() == false)
                 return Task.FromException<Exception>(new Exception("Create repository is failed"));
             else
-                _logger.WriteEntry("Loading data from database/redis is completed", LogLevels.Info);
+                _logger.WriteEntry("Loading data from database is completed", LogLevels.Info);
 
             _dcisManager.StartCyclicOperation();
             //_rpcManager.Build();

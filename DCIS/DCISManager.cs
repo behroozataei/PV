@@ -13,13 +13,14 @@ namespace DCIS
 {
     internal class DCISManager:IProcessing
     {
-        private const int TIMER_TICKS = 60000;
+        private const int TIMER_TICKS =900000;
         private readonly IRepository _repository;
         private readonly ILogger _logger;
-        private readonly Timer _timer_1_Minute;
+        private readonly Timer _timer_15_Min;
         private UpdateScadaPointOnServer _updateScadaPointOnServer;
 
         private CalculationTimePerShift shiftTime;
+        private DateTime CalcTime;
         private bool Executed;
 
         internal DCISManager(ILogger logger, IRepository repository, ICpsCommandService commandService)
@@ -28,44 +29,38 @@ namespace DCIS
             _repository = repository ?? throw new ArgumentNullException(nameof(repository));
 
 
-            _timer_1_Minute = new Timer();
-            _timer_1_Minute.Interval = TIMER_TICKS;
-            _timer_1_Minute.Elapsed += RunCyclicOperation;
+            _timer_15_Min = new Timer();
+            _timer_15_Min.Interval = TIMER_TICKS;
+            _timer_15_Min.Elapsed += RunCyclicOperation;
 
             _updateScadaPointOnServer = new UpdateScadaPointOnServer(_logger, commandService);
-
-
+            CalcTime = new DateTime();
         }
 
         public void StartCyclicOperation()
         {
-            int aSec = DateTime.Now.Second;
-            int mSec = DateTime.Now.Millisecond;
-
-            //_logger.WriteEntry("StartTimeService(), Start of Timer", LogLevels.Info);
-
-            System.Threading.Thread.Sleep(60000 - ((60-aSec)*1000 + mSec));
-            _timer_1_Minute.Start();
+           
+            _timer_15_Min.Start();
 
         }
 
         private void RunCyclicOperation(object sender, ElapsedEventArgs e)
         {
-            //_timer_1_Minute.Stop();
-            shiftTime = DetectShift(DateTime.UtcNow);
+            shiftTime = DetectShift(DateTime.Now);
+            
             if (DateTime.UtcNow.Hour == shiftTime.ShiftEndTime.Hour && Executed == true)
             {
                 Executed = false;
 
             }
-           // if (DateTime.UtcNow >= shiftTime.CalculationStartTime && Executed == false)
+            if (DateTime.UtcNow >= shiftTime.CalculationStartTime && Executed == false)
             {
 
                 Queue<SampleData> _hisValuesInIntervalTime = new Queue<SampleData>();
 
 
-                shiftTime.ShiftStartTime = DateTime.UtcNow.AddSeconds(-120);
-                shiftTime.ShiftEndTime = DateTime.UtcNow.AddSeconds(-60);
+                //shiftTime.ShiftStartTime = DateTime.UtcNow.AddSeconds(-120);
+                //shiftTime.ShiftEndTime = DateTime.UtcNow.AddSeconds(-60);
 
                 foreach (var pointId in _repository.GetMeterIdList())
                 {
@@ -73,7 +68,7 @@ namespace DCIS
                     _hisValuesInIntervalTime.Enqueue(GetFirstSampleData(pointId, shiftTime));
                     if (!GetValuesInIntervalTime(pointId, shiftTime, _hisValuesInIntervalTime))
                     {
-                        _logger.WriteEntry($"No Sample Found in HIS in Interval Time: {shiftTime.ShiftStartTime}  Until {shiftTime.ShiftEndTime} for {_repository.GetHisPoint(pointId).AnalogNetworkPath}", LogLevels.Warn);
+                        //_logger.WriteEntry($"No Sample Found in HIS in Interval Time: {shiftTime.ShiftStartTime.ToLocalTime()}  Until {shiftTime.ShiftEndTime.ToLocalTime()} for {_repository.GetHisPoint(pointId).AnalogNetworkPath} ", LogLevels.Warn);
                         _hisValuesInIntervalTime.Enqueue(new SampleData { dateTime = shiftTime.ShiftEndTime, value = _hisValuesInIntervalTime.First().value, qualityCode = 0 });
 
                     }
@@ -83,13 +78,20 @@ namespace DCIS
                         LastValue.dateTime = shiftTime.ShiftEndTime;
                         _hisValuesInIntervalTime.Enqueue(LastValue);
                     }
-                    foreach (var value in _hisValuesInIntervalTime)
-                        _logger.WriteEntry($"{value.dateTime.ToString("yyyy-MM-dd HH:mm:ss.ff")} , {value.value}", LogLevels.Info);
+                    //foreach (var value in _hisValuesInIntervalTime)
+                    //    _logger.WriteEntry($"{value.dateTime.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss.ff")} , {value.value}", LogLevels.Info);
                     var total_Value = Totalizer(_hisValuesInIntervalTime);
-                    _logger.WriteEntry($"{_repository.GetHisPoint(pointId).AccumulatorNetworkPath} : {shiftTime.ShiftEndTime}  ,  {total_Value}", LogLevels.Info);
+                    _logger.WriteEntry($"{_repository.GetHisPoint(pointId).AccumulatorNetworkPath} : {shiftTime.ShiftEndTime.ToLocalTime()}  ,  {total_Value}", LogLevels.Info);
                     _updateScadaPointOnServer.WriteSCADAPoint(_repository.GetHisPoint(pointId), total_Value);
                 }
                 Executed = true;
+                CalcTime = DateTime.Now;
+
+            }
+            else
+            {
+                _logger.WriteEntry($"Calculation of Totalizer has been done at {CalcTime}", LogLevels.Info);
+
             }
 
         }
@@ -174,23 +176,23 @@ namespace DCIS
             if (timeOfDay >= shift2.ShiftStartTime && timeOfDay <= shift2.ShiftEndTime)
             {
                 //Shift1 must be calculated
-                var startShift = new DateTime(dateTime.Year, dateTime.Month, dateTime.Day, shift1.ShiftStartTime.Hours, shift1.ShiftStartTime.Minutes, 0).AddDays(-1);
-                var endShift = new DateTime(dateTime.Year, dateTime.Month, dateTime.Day, shift1.ShiftEndTime.Hours, shift1.ShiftEndTime.Minutes, 0);
-                var calcuationTime = new DateTime(dateTime.Year, dateTime.Month, dateTime.Day, shift1.CalculationStartTime.Hours, 0, 0);
+                var startShift = new DateTime(dateTime.Year, dateTime.Month, dateTime.Day, shift1.ShiftStartTime.Hours, shift1.ShiftStartTime.Minutes, 0).AddDays(-1).ToUniversalTime();
+                var endShift = new DateTime(dateTime.Year, dateTime.Month, dateTime.Day, shift1.ShiftEndTime.Hours, shift1.ShiftEndTime.Minutes, 0).ToUniversalTime();
+                var calcuationTime = new DateTime(dateTime.Year, dateTime.Month, dateTime.Day, shift1.CalculationStartTime.Hours, shift1.CalculationStartTime.Minutes, 0).ToUniversalTime();
                 currentShift = new CalculationTimePerShift(shift1.ShiftWorkId, startShift, endShift, calcuationTime);
             }
             else
             {
                 //Shift2 must be calculated
-                var startShift = new DateTime(dateTime.Year, dateTime.Month, dateTime.Day, shift2.ShiftStartTime.Hours, shift2.ShiftStartTime.Minutes, 0);
-                var endShift = new DateTime(dateTime.Year, dateTime.Month, dateTime.Day, shift2.ShiftEndTime.Hours, shift2.ShiftEndTime.Minutes, 0);
-                var calcuationTime = new DateTime(dateTime.Year, dateTime.Month, dateTime.Day, shift2.CalculationStartTime.Hours, 0, 0);
+                var startShift = new DateTime(dateTime.Year, dateTime.Month, dateTime.Day, shift2.ShiftStartTime.Hours, shift2.ShiftStartTime.Minutes, 0).ToUniversalTime();
+                var endShift = new DateTime(dateTime.Year, dateTime.Month, dateTime.Day, shift2.ShiftEndTime.Hours, shift2.ShiftEndTime.Minutes, 0).ToUniversalTime();
+                var calcuationTime = new DateTime(dateTime.Year, dateTime.Month, dateTime.Day, shift2.CalculationStartTime.Hours, shift2.CalculationStartTime.Minutes, 0).ToUniversalTime();
 
                 if (timeOfDay < shift2.ShiftStartTime)
                 {
-                    startShift = startShift.AddDays(-1);
-                    endShift = endShift.AddDays(-1);
-                    calcuationTime = calcuationTime.AddDays(-1);
+                    startShift = startShift.AddDays(-1).ToUniversalTime();
+                    endShift = endShift.AddDays(-1).ToUniversalTime();
+                    calcuationTime = calcuationTime.AddDays(-1).ToUniversalTime();
                 }
 
                 currentShift = new CalculationTimePerShift(shift1.ShiftWorkId, startShift, endShift, calcuationTime);
