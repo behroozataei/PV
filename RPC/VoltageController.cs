@@ -44,7 +44,10 @@ namespace RPC
 			TransT2AN,
 			TransT3AN,
 			TransT4AN,
-			TransT5AN
+			TransT5AN,
+			TransT6AN,
+			TransT7AN,
+			TransT8AN
 		}
 
 		//
@@ -114,7 +117,7 @@ namespace RPC
 					}
 
 					// For all the Transformers:
-					for (TransformerName Trans = TransformerName.TransT1AN; Trans <= TransformerName.TransT5AN; Trans = (TransformerName)(((int)Trans) + 1))
+					for (TransformerName Trans = TransformerName.TransT1AN; Trans <= TransformerName.TransT8AN; Trans = (TransformerName)(((int)Trans) + 1))
 					{
 
 						// Check if a Trans belongs to a bus bar:
@@ -127,19 +130,19 @@ namespace RPC
 						{
 							TransOnBusbar = true;
 							_logger.WriteEntry("Examining Busbar = " + ((int)Busbar).ToString() + ", Transformer = " + ((int)Trans).ToString(),LogLevels.Info);
-							// Read Actual TAP Position and Nominal Voltage (CRPCParams)
+							// Read Actual TAP Position and Nominal Voltage 
 							switch (Trans)
 							{
 								case TransformerName.TransT1AN:
-									//ActualTAP = _repository.GetRPCScadaPoint("T1AN_TAP 
+									ActualTAP = _repository.GetRPCScadaPoint("T1AN_TAP").Value; 
 									TransActVoltage = _repository.GetRPCScadaPoint("T1AN_PRIMEVOLT").Value;
 									break;
 								case TransformerName.TransT2AN:
-									//ActualTAP = _repository.GetRPCScadaPoint("T2AN_TAP 
+									ActualTAP = _repository.GetRPCScadaPoint("T2AN_TAP").Value; 
 									TransActVoltage = _repository.GetRPCScadaPoint("T2AN_PRIMEVOLT").Value;
 									break;
 								case TransformerName.TransT3AN:
-									//ActualTAP = _repository.GetRPCScadaPoint("T3AN_TAP 
+									ActualTAP = _repository.GetRPCScadaPoint("T3AN_TAP").Value; 
 									TransActVoltage = _repository.GetRPCScadaPoint("T3AN_PRIMEVOLT").Value;
 									break;
 								case TransformerName.TransT4AN:
@@ -149,7 +152,18 @@ namespace RPC
 								case TransformerName.TransT5AN:
 									ActualTAP = _repository.GetRPCScadaPoint("T5AN_TAP_NEW").Value;
 									TransActVoltage = _repository.GetRPCScadaPoint("T5AN_PRIMEVOLT").Value;
-
+									break;
+								case TransformerName.TransT6AN:
+									ActualTAP = _repository.GetRPCScadaPoint("T6AN_TAP_NEW").Value;
+									TransActVoltage = _repository.GetRPCScadaPoint("T6AN_PRIMEVOLT").Value;
+									break;
+								case TransformerName.TransT7AN:
+									ActualTAP = _repository.GetRPCScadaPoint("T7AN_TAP_NEW").Value;
+									TransActVoltage = _repository.GetRPCScadaPoint("T7AN_PRIMEVOLT").Value;
+									break;
+								case TransformerName.TransT8AN:
+									ActualTAP = _repository.GetRPCScadaPoint("T8AN_TAP_NEW").Value;
+									TransActVoltage = _repository.GetRPCScadaPoint("T8AN_PRIMEVOLT").Value;
 									break;
 							}
 
@@ -218,8 +232,8 @@ namespace RPC
 							if (TransActVoltage < RVOLT)
 							{
 								// Preset Counters
-								//Counter(1, Busbar) = 0
-								//Counter(2, Busbar) = 0
+								//Counter[1, (int)Busbar] = 0;
+								//Counter[2, (int)Busbar] = 0;
 
 								//If Not m_theSCADADataInterface.WriteData(_repository.GetRPCScadaPoint("FindGUID("C1_" & Trim(Str(Busbar))), Str(0)) Then
 								//    VoltageControl = False
@@ -255,7 +269,7 @@ namespace RPC
 									{
 										OverfluxAppear[(int)Busbar, (int)Trans] = false;
 
-										if (!_updateScadaPointOnServer.SendAlarm(_repository.GetRPCScadaPoint("RPCAlarm"),SinglePointStatus.Appear, "OVERFLUX disappeared for the Trans" + ((int)Trans).ToString()))
+										if (!_updateScadaPointOnServer.SendAlarm(_repository.GetRPCScadaPoint("RPCAlarm"),SinglePointStatus.Disappear, "OVERFLUX disappeared for the Trans" + ((int)Trans).ToString()))
 										{
 											_logger.WriteEntry( "Sending alarm failed.",LogLevels.Info);
 										}

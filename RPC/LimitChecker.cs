@@ -32,7 +32,7 @@ namespace RPC
 			bool result = false;
 			try
 			{
-				double[] VoltageValue = new double[7];
+				float[] VoltageValue = new float[7];
 				DateTime dtTo = new DateTime();
 				          
 				result = true;
@@ -48,7 +48,7 @@ namespace RPC
 				// Adjust the time to the begining of the period
 				//dtTo = dtTo.AddSeconds(-dtTo.Second);
 
-
+				IntervalTime intervaltime = new IntervalTime(DateTime.UtcNow.AddMinutes(-3), DateTime.UtcNow);
 
 				// Retreiving a value for the previous 3 minutes from HIS:
 				_logger.WriteEntry("Average Sampling Time=" + dtTo.ToString(),LogLevels.Trace);
@@ -61,6 +61,31 @@ namespace RPC
 				//VoltageValue[4] = m_theCSCADADataInterface.GetHISValue(m_theCRPCParameters.FindGUID("VEAF_B"), "HIS_ANALOG_3_Min_A", dtTo, dtTo);
 				//VoltageValue[5] = m_theCSCADADataInterface.GetHISValue(m_theCRPCParameters.FindGUID("VPP_E"), "HIS_ANALOG_3_Min_A", dtTo, dtTo);
 				//VoltageValue[6] = m_theCSCADADataInterface.GetHISValue(m_theCRPCParameters.FindGUID("VPP_F"), "HIS_ANALOG_3_Min_A", dtTo, dtTo);
+
+				if(!_repository.TryGetHISAverageinIntervalTime(_repository.GetRPCScadaPoint("V400_1"), intervaltime, out VoltageValue[1]))
+                {
+					_logger.WriteEntry("Could not read avarage value V400_1", LogLevels.Error);
+				}
+				if(!_repository.TryGetHISAverageinIntervalTime(_repository.GetRPCScadaPoint("V400_2"), intervaltime, out VoltageValue[2]))
+				{
+					_logger.WriteEntry("Could not read avarage value V400_2", LogLevels.Error);
+				}
+				if(!_repository.TryGetHISAverageinIntervalTime(_repository.GetRPCScadaPoint("VEAF_A"), intervaltime, out VoltageValue[3]))
+				{
+					_logger.WriteEntry("Could not read avarage value VEAF_A", LogLevels.Error);
+				}
+				if(!_repository.TryGetHISAverageinIntervalTime(_repository.GetRPCScadaPoint("VEAF_B"), intervaltime, out VoltageValue[4]))
+				{
+					_logger.WriteEntry("Could not read avarage value VEAF_B", LogLevels.Error);
+				}
+				if(!_repository.TryGetHISAverageinIntervalTime(_repository.GetRPCScadaPoint("VPP_E"), intervaltime, out VoltageValue[5]))
+				{
+					_logger.WriteEntry("Could not read avarage value VPP_E", LogLevels.Error);
+				}
+				if(!_repository.TryGetHISAverageinIntervalTime(_repository.GetRPCScadaPoint("VPP_F"), intervaltime, out VoltageValue[6]))
+				{
+					_logger.WriteEntry("Could not read avarage value VPP_F", LogLevels.Error);
+				}
 
 				// The Alarming in the Alarm List is done by the SCADA.
 

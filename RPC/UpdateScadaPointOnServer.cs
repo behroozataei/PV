@@ -89,18 +89,24 @@ namespace RPC
 
         public bool WriteAnalog(RPCScadaPoint scadaPoint, float value)
         {
-            var executed = false;
 
+            var executed = false;
+            if (scadaPoint is null)
+            {
+                _logger.WriteEntry("ScadaPoint is NULL", LogLevels.Warn);
+                return executed;
+            }
+           
             var applyCalculatedValue = new ApplyCalculatedValueRequest();
             applyCalculatedValue.Items.Add(
-                new CalculatedValueItem() { Console = "EEC", ElementId = scadaPoint.Id.ToString(), Value = value });
+                new CalculatedValueItem() { Console = "RPC", ElementId = scadaPoint.Id.ToString(), Value = value });
 
             try
             {
                 var reply = _commandService.ApplyCalculatedValue(applyCalculatedValue);
 
                 if (reply.Executed == false)
-                    _logger.WriteEntry("EEC", reply.Log, LogLevels.Warn);
+                    _logger.WriteEntry("RPC", reply.Log, LogLevels.Warn);
                 else
                     executed = true;
             }
@@ -127,12 +133,12 @@ namespace RPC
                 // TODO: alarmText where to go? Final check only
                 var applyCalculatedValue = new ApplyCalculatedValueRequest();
                 applyCalculatedValue.Items.Add(
-                    new CalculatedValueItem() { Console = "EEC", ElementId = ascadaPoint.Id.ToString(), Value = (float)ev, CauseOfStatusChange = alarmText });
+                    new CalculatedValueItem() { Console = "RPC", ElementId = ascadaPoint.Id.ToString(), Value = (float)ev, CauseOfStatusChange = alarmText });
 
                 var reply = _commandService.ApplyCalculatedValue(applyCalculatedValue);
 
                 if (reply.Executed == false)
-                    _logger.WriteEntry("EEC", reply.Log, LogLevels.Error);
+                    _logger.WriteEntry("RPC", reply.Log, LogLevels.Error);
                 else
                     executed = true;
             }

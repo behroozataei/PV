@@ -74,6 +74,11 @@ namespace DCIS
             _storeLogs.Start();
             _logger.WriteEntry("Start of running DCIS ... ***************************************", LogLevels.Info);
 
+
+            Report.test();
+
+
+
             while (!COMMON.Connection.PingHost(_config["CpsIpAddress"], 10000))
             {
                 _logger.WriteEntry(">>>>> Waiting for CPS Connection", LogLevels.Info);

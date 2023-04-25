@@ -112,6 +112,7 @@ namespace EEC
 
         private bool _FirstRead_MAB;
         private bool _FirstRead_MAB_EEC;
+        private float MAB_Saved_State;
 
         internal EECEnergyCalculator(IRepository repository, ILogger logger, UpdateScadaPointOnServer updateScadaPointOnServer)
         {
@@ -1138,7 +1139,8 @@ namespace EEC
             if (_FirstRead_MAB && scadaPoint.Name == "MAB" && _MAB.Value == (float)DigitalDoubleStatus.Close)
                 _FirstRead_MAB = false;
 
-
+            // force MAB-EEC to Close State if MAB Status is Closed
+            //if MAB is Closed and MAB-EEC is opened by marker it back to close again
             if ((scadaPoint.Name == "MAB" || scadaPoint.Name == "MAB_EEC") && _MAB.Value == (float)DigitalDoubleStatus.Close)
             {
                 if (_MAB_EEC.Value != (float)DigitalSingleStatusOnOff.On)
@@ -1155,9 +1157,10 @@ namespace EEC
                         return;
                     }
                 }
-
             }
-            if (scadaPoint.Name == "MAB" && _MAB.Value == (float)DigitalDoubleStatus.Open)
+
+            // Open MAB-EEC when MAB Status change from Close state to open State
+            if (scadaPoint.Name == "MAB" && _MAB.Value == (float)DigitalDoubleStatus.Open && MAB_Saved_State == (float)DigitalDoubleStatus.Close)
             {
                 if (_MAB_EEC.Value == (float)DigitalSingleStatusOnOff.On)
                 {
@@ -1174,6 +1177,8 @@ namespace EEC
                     }
                 }
             }
+
+             MAB_Saved_State = _MAB.Value;
         }
 
         public void AlarmAcked_Processing(EECScadaPoint scadaPoint)

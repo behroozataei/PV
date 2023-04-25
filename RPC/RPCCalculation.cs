@@ -317,10 +317,12 @@ namespace RPC
 				// Ea_EAF = Ea_EAF + _repository.GetRPCScadaPoint("Ea_EAF_T1AN + _repository.GetRPCScadaPoint("Ea_EAF_T2AN + _repository.GetRPCScadaPoint("Ea_EAF_T5AN
 				// Er_EAF = Er_EAF + _repository.GetRPCScadaPoint("Er_EAF_T1AN + _repository.GetRPCScadaPoint("Er_EAF_T2AN + _repository.GetRPCScadaPoint("Er_EAF_T5AN - Er_SVC
 
-				// Without T5 to compare with the old system
-				Ea_EAF = Ea_EAF + _repository.GetRPCScadaPoint("Ea_EAF_T1AN").Value + _repository.GetRPCScadaPoint("Ea_EAF_T2AN").Value + _repository.GetRPCScadaPoint("Ea_EAF_T5AN").Value + _repository.GetRPCScadaPoint("Ea_EAF_T7AN").Value;
-				Er_EAF = Er_EAF + _repository.GetRPCScadaPoint("Er_EAF_T1AN").Value + _repository.GetRPCScadaPoint("Er_EAF_T2AN").Value + _repository.GetRPCScadaPoint("Er_EAF_T5AN").Value + _repository.GetRPCScadaPoint("Er_EAF_T7AN").Value -
-					              _repository.GetRPCScadaPoint("Er_SVC1").Value - _repository.GetRPCScadaPoint("Er_SVC2").Value;
+				Ea_EAF = Ea_EAF + _repository.GetRPCScadaPoint("Ea_EAF_T1AN").Value + _repository.GetRPCScadaPoint("Ea_EAF_T2AN").Value + _repository.GetRPCScadaPoint("Ea_EAF_T5AN").Value 
+				                + _repository.GetRPCScadaPoint("Ea_EAF_T7AN").Value + _repository.GetRPCScadaPoint("Ea_EAF_T8AN").Value;
+
+				Er_EAF = Er_EAF + _repository.GetRPCScadaPoint("Er_EAF_T1AN").Value + _repository.GetRPCScadaPoint("Er_EAF_T2AN").Value + _repository.GetRPCScadaPoint("Er_EAF_T5AN").Value 
+					            + _repository.GetRPCScadaPoint("Er_EAF_T7AN").Value + _repository.GetRPCScadaPoint("Er_EAF_T8AN").Value
+								- _repository.GetRPCScadaPoint("Er_SVC1").Value - _repository.GetRPCScadaPoint("Er_SVC2").Value;
 
 				switch ((int)_repository.GetRPCScadaPoint("MV3_CB").Value)
 				{
@@ -579,6 +581,7 @@ namespace RPC
 				double T5AN_PRIMEVOLT = 0;
 				double T6AN_PRIMEVOLT = 0;
 				double T7AN_PRIMEVOLT = 0;
+				double T8AN_PRIMEVOLT = 0;
 
 				DigitalDoubleStatus C01A_CB = 0;
 				DigitalDoubleStatus C01A_DS1 = 0;
@@ -629,6 +632,7 @@ namespace RPC
 				DigitalDoubleStatus C05A_CB = 0;
 				DigitalDoubleStatus C05A_DS1 = 0;
 				DigitalDoubleStatus C05A_DS2 = 0;
+				DigitalDoubleStatus C05A_DS3 = 0; 
 				DigitalDoubleStatus C05B_CB = 0;
 				DigitalDoubleStatus C05B_DS1 = 0;
 				DigitalDoubleStatus C05B_DS2 = 0;
@@ -686,6 +690,7 @@ namespace RPC
 				C05A_CB  = (DigitalDoubleStatus)_repository.GetRPCScadaPoint("C05A_CB").Value;
 				C05A_DS1 = (DigitalDoubleStatus)_repository.GetRPCScadaPoint("C05A_DS1").Value;
 				C05A_DS2 = (DigitalDoubleStatus)_repository.GetRPCScadaPoint("C05A_DS2").Value;
+				C05A_DS3 = (DigitalDoubleStatus)_repository.GetRPCScadaPoint("C05A_DS3").Value;
 				C05B_CB  = (DigitalDoubleStatus)_repository.GetRPCScadaPoint("C05B_CB").Value;
 				C05B_DS1 = (DigitalDoubleStatus)_repository.GetRPCScadaPoint("C05B_DS1").Value;
 				C05B_DS2 = (DigitalDoubleStatus)_repository.GetRPCScadaPoint("C05B_DS2").Value;
@@ -706,6 +711,7 @@ namespace RPC
 				T5AN_PRIMEVOLT = 0;
 				T6AN_PRIMEVOLT = 0;
 				T7AN_PRIMEVOLT = 0;
+				T8AN_PRIMEVOLT = 0;
 
 				switch ((int)C01A_DS3)
 				{
@@ -881,6 +887,32 @@ namespace RPC
 
 				//END OF MODIFICATION
 
+				switch ((int)C05A_DS3)
+				{
+					case 0:
+					case 1:
+					case 3:
+						break;
+					case 2:
+
+						if ((C05A_CB == DigitalDoubleStatus.Close) && (C05A_DS1 == DigitalDoubleStatus.Close) && (C05A_DS2 == DigitalDoubleStatus.Close))
+						{
+							T7AN_PRIMEVOLT = V400_1;
+							_logger.WriteEntry("T8AN_PRIMEVOLT (In Logic) : " + V400_1.ToString(), LogLevels.Trace);
+						}
+						else
+						{
+							if ((C05B_CB == DigitalDoubleStatus.Close) && (C05B_DS1 == DigitalDoubleStatus.Close) && (C05B_DS2 == DigitalDoubleStatus.Close) &&
+								(C05C_CB == DigitalDoubleStatus.Close) && (C05C_DS1 == DigitalDoubleStatus.Close) && (C05C_DS2 == DigitalDoubleStatus.Close))
+							{
+								T7AN_PRIMEVOLT = V400_2;
+								_logger.WriteEntry("T8AN_PRIMEVOLT (In Logic) : " + V400_2.ToString(), LogLevels.Trace);
+							}
+						}
+						break;
+				}
+			
+
 				if (!_updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("T1AN_PRIMEVOLT"), (float)T1AN_PRIMEVOLT))
 				{
 					result = false;
@@ -931,7 +963,14 @@ namespace RPC
 					return result;
 				}
 
-				
+				if (!_updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("T8AN_PRIMEVOLT"), (float)T8AN_PRIMEVOLT))
+				{
+					result = false;
+					_logger.WriteEntry("Could not update value in SCADA: T8AN_PRIMEVOLT", LogLevels.Error);
+					return result;
+				}
+
+
 			}
 			catch (System.Exception excep)
 			{

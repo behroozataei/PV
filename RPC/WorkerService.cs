@@ -17,6 +17,7 @@ namespace RPC
     {
         private readonly ILogger _logger;
 
+        private readonly DataManager _historicalDataManager;
         private readonly DataManager _dataManager;
         private readonly BlockingCollection<CpsRuntimeData> _cpsRuntimeDataBuffer;
         private readonly StoreLogs _storeLogs;
@@ -34,6 +35,7 @@ namespace RPC
             _logger = serviceProvider.GetService<ILogger>();
 
             _dataManager = new Irisa.DataLayer.Oracle.OracleDataManager(_config["OracleServicename"], _config["OracleDatabaseAddress"], _config["OracleStaticUser"], _config["OracleStaticPassword"]);
+            _historicalDataManager = new Irisa.DataLayer.Oracle.OracleDataManager(_config["OracleServicename"], _config["OracleDatabaseAddress"], _config["OracleHISUser"], _config["OracleHISPassword"]);
             _storeLogs = new StoreLogs(_dataManager, _logger, "SCADA.\"HIS_HisLogs_Insert\"");
 
             var historyDataRequest = new HistoryDataRequest
@@ -51,7 +53,8 @@ namespace RPC
 
             _cpsRuntimeDataBuffer = new BlockingCollection<CpsRuntimeData>();
             _rpcService = new CpsRpcService(_config["CpsIpAddress"], 10000, historyDataRequest, _cpsRuntimeDataBuffer);
-            _repository = new Repository(_logger, _dataManager, _RedisConnectorHelper);
+            _historicalDataManager = new Irisa.DataLayer.Oracle.OracleDataManager(_config["OracleServicename"], _config["OracleDatabaseAddress"], _config["OracleHISUser"], _config["OracleHISPassword"]);
+            _repository = new Repository(_logger, _dataManager, _historicalDataManager, _RedisConnectorHelper);
             _rpcManager = new RPCManager(_logger, _repository, _rpcService.CommandService);
             _runtimeDataReceiver = new RuntimeDataReceiver(_logger, _repository, (IProcessing)_rpcManager, _rpcService, _cpsRuntimeDataBuffer);
         }
@@ -85,12 +88,21 @@ namespace RPC
             _logger.WriteEntry(">>>>> Connected to CPS", LogLevels.Info);
 
             _logger.WriteEntry("Check Redis Connection", LogLevels.Info);
-            while (!RedisUtils.IsConnected)
+            while (true)
             {
-                _logger.WriteEntry(">>>>> Waiting for Redis Connection", LogLevels.Info);
+                try
+                {
+                    if (RedisUtils.CheckConnection())
+                        break;
+                }
+                catch
+                {
+                    _logger.WriteEntry(">>>>> Waiting for Redis Connection", LogLevels.Info);
+                }
+                RedisUtils.RedisConn.Dispose();
+
                 CallConnection();
                 Thread.Sleep(5000);
-
             }
 
 

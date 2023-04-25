@@ -67,18 +67,19 @@ namespace RPC
         {
             foreach (var measurement in measurements)
             {
-                //if (measurement.MeasurementId == "3C1DB5EF-E08B-4861-8FAC-9C4041E2C857")
-                //    System.Diagnostics.Debugger.Break();
-
                 var scadaPoint = _repository.GetRPCScadaPoint(Guid.Parse(measurement.MeasurementId));
-
-
-
-                if (scadaPoint != null && scadaPoint.PointDirectionType == PointDirectionType.Input)
+                if (scadaPoint != null)
                 {
-                    var newValue = measurement.Value;
                     var newQuality = (int)measurement.QualityCodes;
+
+                    if (scadaPoint.Value != measurement.Value || scadaPoint.Quality != newQuality)
+                    {
+                        scadaPoint.Value = measurement.Value;
+                        scadaPoint.Quality = newQuality;
+                        //_dataProcessing.ScadaPointReceived(scadaPoint);
+                    }
                 }
+
             }
         }
     }

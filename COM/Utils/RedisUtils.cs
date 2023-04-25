@@ -70,13 +70,20 @@ namespace COMMON
         //public IDatabase DataBase { get; set; }
         //public static bool IsConnected => RedisConnection != null ? RedisConnection.IsConnected : false;
        // public static bool IsConnected => RedisConnection1!= null ? RedisConnection1.Ping() : false;
-        public static bool IsConnected => RedisConn != null ? true : false;
+        public static bool IsConnected => RedisConn!= null ? true : false;
         // public static string RTDBStatus => RedisConnection != null ? RedisConnection.GetStatus() : "";
 
-        public static void CheckConnection()
+        public static bool CheckConnection()
         {
-            if (!IsConnected)
-                throw new Exception("RTDB is not connected");
+            int Connectionstat = 1;
+            bool result = false;
+            if (!RedisConn.Set("APP:Connection", Connectionstat))
+            {
+                return false;
+                //throw new Exception("RTDB is not connected");
+            }
+            result = true;
+            return result;
         }
 
         ~RedisUtils()

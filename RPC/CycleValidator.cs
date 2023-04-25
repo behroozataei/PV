@@ -17,6 +17,7 @@ namespace RPC
 
 		private DateTime[] m_Cycles = new DateTime[16]; //Array for 15 minutes period
 		private int m_CycleNo = 0;
+		private bool InitRPCCycleNo = false;
 
 		internal CycleValidator(IRepository repository, ILogger logger, UpdateScadaPointOnServer updateScadaPointOnServer)
 		{
@@ -24,9 +25,6 @@ namespace RPC
 			_logger = logger ?? throw new ArgumentNullException(nameof(logger));
 			_updateScadaPointOnServer = updateScadaPointOnServer ?? throw new ArgumentNullException(nameof(updateScadaPointOnServer));
 		}
-
-		private RPCScadaPoint _FuncCycle;
-
 		public bool GetRPCCycleNo()
 		{
 			bool result = false;
@@ -35,12 +33,29 @@ namespace RPC
 				int FuncCycle = 0;
 				// Suppose everything is Ok.
 				result = true;
+				
 				// Load previous values into array
 				if (!LoadRPCCycles())
 				{
-					_logger.WriteEntry("Could not load data from T_CRPCCycles!", LogLevels.Warn);
-					return false;
+					_logger.WriteEntry("Could not load data from RPC_Cycles!", LogLevels.Warn);
+					if(InitRPCCycleNo ==false)
+						if(!InitRPCCycles())
+						{
+							_logger.WriteEntry("Could not initialize data for RPC_Cycles!", LogLevels.Warn);
+							return false;
+						}
+					    else
+                        {
+							InitRPCCycleNo = true;
+							return true;
+						}
+					else
+					{
+						return false;
+                    }
 				}
+				InitRPCCycleNo = true;
+
 				var vTime = DateTime.Now;
 				m_CycleNo = vTime.Minute % 15 + 1; // Cycles begin from 1 to 15
 
@@ -52,7 +67,7 @@ namespace RPC
 
 				if (!_updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("FuncCycle"), (float)FuncCycle))
 				{
-					result = false;
+					//result = false;
 					_logger.WriteEntry("Could not update value in SCADA: FuncCycle", LogLevels.Error);
 				}
 
@@ -60,26 +75,27 @@ namespace RPC
 				{
 					_logger.WriteEntry("In the first cycle (Cycle 1),   " + vTime.ToString("t"), LogLevels.Info);
 				}
+				m_Cycles[m_CycleNo] = vTime;
+
 				_logger.WriteEntry("   Cycle Number is:                   " + m_CycleNo.ToString(), LogLevels.Info);
 
-				if (m_CycleNo > 1)
+                if (m_CycleNo > 1)
+                {
+                    result = IsContiniuousCycles(m_CycleNo);
+                    if (!result)
+                    {
+                        if (!_updateScadaPointOnServer.SendAlarm(_repository.GetRPCScadaPoint("RPCAlarm"), SinglePointStatus.Appear, "RPC Function is not running continuously"))
+                        {
+                            _logger.WriteEntry("Sending RPCAlarm failed.", LogLevels.Error);
+                        }
+                        _logger.WriteEntry("Function is not running continuously!", LogLevels.Warn);
+                        return result;
+                    }
+                }
+                // Save the last values into array
+                if (!SaveRPCCycles())
 				{
-					result = IsContiniuousCycles(m_CycleNo);
-					if (!result)
-					{
-						if (!_updateScadaPointOnServer.SendAlarm(_repository.GetRPCScadaPoint("RPCAlarm"), SinglePointStatus.Appear, "RPC Function is not running continuouslyx"))
-						{
-							_logger.WriteEntry("Sending RPCAlarm failed.", LogLevels.Error);
-						}
-						_logger.WriteEntry("Function is not running continuously!", LogLevels.Warn);
-						return result;
-					}
-				}
-
-				// Save the last values into array
-				if (!SaveRPCCycles())
-				{
-					_logger.WriteEntry("Could not save data into T_CRPCCycles!", LogLevels.Error);
+					_logger.WriteEntry("Could not save data into RPC_Cycles!", LogLevels.Error);
 					return false;
 				}
 			}
@@ -94,9 +110,7 @@ namespace RPC
 		{
 			get
 			{
-
 				return m_CycleNo;
-
 			}
 		}
 
@@ -141,7 +155,7 @@ namespace RPC
 			try
 			{
 				T_RPCCycles_Str _t_rpcCycles = new T_RPCCycles_Str();
-				_t_rpcCycles = JsonConvert.DeserializeObject<T_RPCCycles_Str>(RedisUtils.RedisConn.Get(RedisKeyPattern.T_RPCCycles.ToString()));
+				_t_rpcCycles = JsonConvert.DeserializeObject<T_RPCCycles_Str>(RedisUtils.RedisConn.Get(RedisKeyPattern.RPC_Cycles.ToString()));
 
 				for (int i = 1; i <= 15; i++)
 				{
@@ -162,14 +176,36 @@ namespace RPC
 			try
 			{
 				T_RPCCycles_Str _t_rpcCycles = new T_RPCCycles_Str();
-				_t_rpcCycles = JsonConvert.DeserializeObject<T_RPCCycles_Str>(RedisUtils.RedisConn.Get(RedisKeyPattern.T_RPCCycles.ToString()));
+				_t_rpcCycles = JsonConvert.DeserializeObject<T_RPCCycles_Str>(RedisUtils.RedisConn.Get(RedisKeyPattern.RPC_Cycles.ToString()));
 
 				for (int i = 1; i <= 15; i++)
 				{
 					_t_rpcCycles.CYCLE[i] = m_Cycles[i];
 				}
-				RedisUtils.RedisConn.Set(RedisKeyPattern.T_RPCCycles, JsonConvert.SerializeObject(_t_rpcCycles));
-				result = true;
+				result =RedisUtils.RedisConn.Set(RedisKeyPattern.RPC_Cycles, JsonConvert.SerializeObject(_t_rpcCycles));
+				//result = true;
+			}
+			catch (System.Exception excep)
+			{
+				_logger.WriteEntry(excep.Message, LogLevels.Error);
+				result = false;
+			}
+			return result;
+		}
+		private bool InitRPCCycles()
+		{
+			bool result = false;
+			_logger.WriteEntry("Initialize data for RPC_Cycles!", LogLevels.Info);
+			try
+			{
+				T_RPCCycles_Str _t_rpcCycles = new T_RPCCycles_Str();
+
+				for (int i = 1; i <= 15; i++)
+				{
+					_t_rpcCycles.CYCLE[i] = DateTime.Now;
+				}
+				result=RedisUtils.RedisConn.Set(RedisKeyPattern.RPC_Cycles, JsonConvert.SerializeObject(_t_rpcCycles));
+				//result = true;
 			}
 			catch (System.Exception excep)
 			{
@@ -179,8 +215,5 @@ namespace RPC
 			return result;
 		}
 	}
-
-	//
-
 }
 

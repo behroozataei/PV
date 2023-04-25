@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Irisa.Common;
+
+using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -21,6 +23,19 @@ namespace RPC
         public PointDirectionType PointDirectionType { get; }
         public float Value { get; set; }
     }
+
+    public class IntervalTime
+    {
+        public IntervalTime(DateTime startTime, DateTime endTime)
+        {
+            StartTime = startTime;
+            EndTime = endTime;
+        }
+
+        public DateTime StartTime { get; set; }
+        public DateTime EndTime { get; set; }
+    }
+
 
     public enum PointDirectionType
     {
@@ -50,5 +65,12 @@ namespace RPC
     {
         Disappear = 0,
         Appear = 1
+    }
+
+    public struct SampleData
+    {
+        public DateTime dateTime { get; set; }
+        public float value { get; set; }
+        public QualityCodes qualityCode { get; set; }
     }
 }

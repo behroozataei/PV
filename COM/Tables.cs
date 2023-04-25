@@ -28,7 +28,7 @@ namespace COMMON
         public const string SFSC_FURNACE_TO_SHED = "APP:SFSC_FURNACE_TO_SHED:";
         public const string SDK_TEMPLATE = "APP:SDK_TEMPLATE:";
 
-        public const string T_RPCCycles = "APP:T_RPCCycles:";
+        public const string RPC_Cycles = "APP:RPC_Cycles:";
 
 
 

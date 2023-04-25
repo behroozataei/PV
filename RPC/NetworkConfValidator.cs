@@ -37,9 +37,14 @@ namespace RPC
                 _MBD_B = _repository.GetRPCScadaPoint("MBD_B");
                 _RPCAlarm = _repository.GetRPCScadaPoint("RPCAlarm");
 
-                if ((_MAB.Value == (float)DigitalSingleStatus.Open && ((_MAC_B.Value == (float)DigitalDoubleStatus.Open && _MBD_B.Value == (float)DigitalDoubleStatus.Close) ||
-                  (_MAC_B.Value == (float)DigitalDoubleStatus.Close && _MBD_B.Value == (float)DigitalDoubleStatus.Open))) ||
-                  (_MAC_B.Value == (float)DigitalDoubleStatus.Open && _MBD_B.Value == (float)DigitalDoubleStatus.Open))
+                if ((_MAB.Value == (float)DigitalSingleStatus.Open && (
+                    (_MAC_B.Value == (float)DigitalDoubleStatus.Open && _MBD_B.Value == (float)DigitalDoubleStatus.Close) ||
+                    (_MAC_B.Value == (float)DigitalDoubleStatus.Close && _MBD_B.Value == (float)DigitalDoubleStatus.Open))
+                    ) ||
+                    (_MAC_B.Value == (float)DigitalDoubleStatus.Open && _MBD_B.Value == (float)DigitalDoubleStatus.Open)||
+                    (_MAC_B.Value == (float)DigitalDoubleStatus.Close) 
+                    )
+
                 {
                     result = true;
                 }

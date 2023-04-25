@@ -10,6 +10,8 @@ namespace RPC
         RPCScadaPoint GetRPCScadaPoint(Guid measurementId);
         RPCScadaPoint GetRPCScadaPoint(String name);
         public RedisUtils GetRedisUtiles();
+        public bool TryGetHISAverageinIntervalTime(RPCScadaPoint scadaPoint, IntervalTime duration, out float value);
+        public void PrintRepository();
 
     }
 }

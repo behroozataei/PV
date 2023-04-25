@@ -362,14 +362,14 @@ namespace DCP
                 //	EAF8Group = dr["EAF8Group"].ToString();
                 //}
 
-                var EAF1Group = _repository.GetScadaPoint("GRPEAF1");
-                var EAF2Group = _repository.GetScadaPoint("GRPEAF2");
-                var EAF3Group = _repository.GetScadaPoint("GRPEAF3");
-                var EAF4Group = _repository.GetScadaPoint("GRPEAF4");
-                var EAF5Group = _repository.GetScadaPoint("GRPEAF5");
-                var EAF6Group = _repository.GetScadaPoint("GRPEAF6");
-                var EAF7Group = _repository.GetScadaPoint("GRPEAF7");
-                var EAF8Group = _repository.GetScadaPoint("GRPEAF8");
+                var EAF1Group = _repository.GetScadaPoint("EECGRPEAF1");
+                var EAF2Group = _repository.GetScadaPoint("EECGRPEAF2");
+                var EAF3Group = _repository.GetScadaPoint("EECGRPEAF3");
+                var EAF4Group = _repository.GetScadaPoint("EECGRPEAF4");
+                var EAF5Group = _repository.GetScadaPoint("EECGRPEAF5");
+                var EAF6Group = _repository.GetScadaPoint("EECGRPEAF6");
+                var EAF7Group = _repository.GetScadaPoint("EECGRPEAF7");
+                var EAF8Group = _repository.GetScadaPoint("EECGRPEAF8");
 
                 _logger.WriteEntry("EAF1Group = " + EAF1Group.Value, LogLevels.Info);
                 _logger.WriteEntry("EAF2Group = " + EAF2Group.Value, LogLevels.Info);

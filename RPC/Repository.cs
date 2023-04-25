@@ -9,6 +9,7 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using Irisa.Common;
 
 namespace RPC
 {
@@ -16,41 +17,44 @@ namespace RPC
     {
         private readonly ILogger _logger;
         private readonly DataManager _dataManager;
+        private readonly DataManager _historicalDataManager;
         private readonly Dictionary<Guid, RPCScadaPoint> _scadaPoints;
         private readonly Dictionary<string, RPCScadaPoint> _scadaPointsHelper;
         private readonly RedisUtils _RedisConnectorHelper;
 
         private bool isBuild = false;
 
-        public Repository(ILogger logger, DataManager staticDataManager, RedisUtils RedisConnectorHelper)
+        public Repository(ILogger logger, DataManager staticDataManager, DataManager historicalDataManager, RedisUtils RedisConnectorHelper)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _dataManager = staticDataManager ?? throw new ArgumentNullException(nameof(staticDataManager));
+            _historicalDataManager = historicalDataManager ?? throw new ArgumentNullException(nameof(historicalDataManager));
             _scadaPoints = new Dictionary<Guid, RPCScadaPoint>();
             _scadaPointsHelper = new Dictionary<string, RPCScadaPoint>();
             _RedisConnectorHelper = RedisConnectorHelper ?? throw new ArgumentNullException(nameof(RedisConnectorHelper));
         }
 
-        public bool Build()
+       public bool Build()
         {
-
             try
             {
                 if (GetInputScadaPoints())
-                {
                     isBuild = true;
-                }
-                else if (GetInputScadaPointsfromRedis())
-                {
+
+                else if (GetInputScadaPointsFromRedis())
                     isBuild = true;
-                }
+            }
+            catch (Irisa.DataLayer.DataException ex)
+            {
+                _logger.WriteEntry(ex.ToString(), LogLevels.Error, ex);
+                isBuild = false;
 
             }
             catch (Exception ex)
             {
                 _logger.WriteEntry(ex.Message, LogLevels.Error, ex);
+                isBuild = false;
             }
-
 
             return isBuild;
         }
@@ -60,9 +64,14 @@ namespace RPC
         {
             try
             {
-
+                _logger.WriteEntry("Loading Data from Database", LogLevels.Info);
                 RPC_PARAMS_Str RPC_param = new RPC_PARAMS_Str();
-                var dataTable = _dataManager.GetRecord($"SELECT * FROM APP_RPC_PARAMS");
+                var dataTable = _dataManager.GetRecord($"SELECT * from APP_RPC_PARAMS"); ;
+                if (dataTable != null)
+                {
+                    if (!RedisUtils.DelKeys(RedisKeyPattern.RPC_PARAMS))
+                        _logger.WriteEntry("Error: Delete APP_RPC_PARAMS from Redis", LogLevels.Error);
+                }
 
                 foreach (DataRow row in dataTable.Rows)
                 {
@@ -76,9 +85,9 @@ namespace RPC
                     RPC_param.DIRECTIONTYPE = row["DIRECTIONTYPE"].ToString();
                     RPC_param.NETWORKPATH = networkPath;
                     RPC_param.SCADATYPE = row["SCADATYPE"].ToString();
-
                     RPC_param.ID = id.ToString();
-                    if (RedisUtils.IsConnected)
+
+                    if (RedisUtils.CheckConnection())
                         RedisUtils.RedisConn.Set(RedisKeyPattern.RPC_PARAMS + networkPath, JsonConvert.SerializeObject(RPC_param));
                     else
                         _logger.WriteEntry("Redis Connection Error", LogLevels.Error);
@@ -91,8 +100,8 @@ namespace RPC
                         _scadaPointsHelper.Add(name, scadaPoint);
                     }
                 }
-
             }
+
             catch (Irisa.DataLayer.DataException ex)
             {
                 _logger.WriteEntry(ex.ToString(), LogLevels.Error, ex);
@@ -102,16 +111,13 @@ namespace RPC
             {
                 _logger.WriteEntry(ex.Message, LogLevels.Error, ex);
                 return false;
-            }
+            }           
             return true;
         }
 
-        private bool GetInputScadaPointsfromRedis()
+        private bool GetInputScadaPointsFromRedis()
         {
             _logger.WriteEntry("Loading RPC_PARAMS Data from Cache", LogLevels.Info);
-
-            
-
             try
             {
                 var keys = RedisUtils.GetKeys(pattern: RedisKeyPattern.RPC_PARAMS);
@@ -168,11 +174,88 @@ namespace RPC
                 return null;
         }
 
-       
+
         public RedisUtils GetRedisUtiles()
         {
             return _RedisConnectorHelper;
 
+        }
+
+        public bool TryGetHISAverageinIntervalTime(RPCScadaPoint scadaPoint, IntervalTime duration, out float value)
+        {
+            value = 0;
+            if (scadaPoint == null)
+            {
+                _logger.WriteEntry("scadaPoint is NULL to get average in intervalTime ", LogLevels.Error);
+                return false;
+            }
+            Guid analogMeasurementId = scadaPoint.Id;
+            try
+            {
+                Queue<SampleData> archData = new Queue<SampleData>();
+                float firstvalue = 0;
+                GetHISFirstDatainIntervalTime(analogMeasurementId, duration, out firstvalue);
+                archData.Enqueue(new SampleData { dateTime = duration.StartTime, qualityCode = Irisa.Common.QualityCodes.None, value = firstvalue });
+
+                var command = $"SELECT VALUE, TIMESTAMP, QUALITY FROM HISANALOGS WHERE MEASUREMENTID = '{analogMeasurementId.ToString().ToUpper()}' AND TIMESTAMP >=  '{duration.StartTime.ToString("yyyy-MM-dd HH:mm:ss.ff")}' AND TIMESTAMP <=  '{duration.EndTime.ToString("yyyy-MM-dd HH:mm:ss.ff")}' ORDER BY  TIMESTAMP ASC ";
+                var archiveDataTable = _historicalDataManager.GetRecord(command);
+
+                if (archiveDataTable.Rows.Count > 0)
+                {
+                    foreach (DataRow row in archiveDataTable.Rows)
+                    {
+                        archData.Enqueue(new SampleData
+                        {
+                            value = Convert.ToSingle(row["VALUE"]),
+                            qualityCode = (QualityCodes)Convert.ToInt16(row["QUALITY"]),
+                            dateTime = Convert.ToDateTime(row["TIMESTAMP"])
+                        });
+                    }
+                }
+                var preSampled = archData.Dequeue();
+                float sumvalue = 0;
+                while (archData.Count > 0)
+                {
+                    var NextSampled = archData.Dequeue();
+                    var deltatime = NextSampled.dateTime - preSampled.dateTime;
+                    sumvalue += preSampled.value * (float)deltatime.TotalMilliseconds;
+                    preSampled = NextSampled;
+                }
+                value = sumvalue/(float)(duration.EndTime - duration.StartTime).TotalMilliseconds;
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.WriteEntry(ex is Irisa.DataLayer.DataException ? ex.ToString() : ex.Message, LogLevels.Error);
+                return false;
+            }
+        }
+
+        public bool GetHISFirstDatainIntervalTime(Guid analogMeasurementId, IntervalTime duration, out float value)
+        {
+            try
+            {
+                var command = $"SELECT VALUE, TIMESTAMP, QUALITY FROM HISANALOGS WHERE " +
+                              $"TIMESTAMP = (SELECT MAX(TIMESTAMP) FROM HISANALOGS  WHERE MEASUREMENTID = '{analogMeasurementId.ToString().ToUpper()}' AND TIMESTAMP <=  '{duration.StartTime.ToString("yyyy-MM-dd HH:mm:ss.ff")}') AND " +
+                              $"MEASUREMENTID = '{analogMeasurementId.ToString().ToUpper()}'";
+
+                var archiveDataTable = _historicalDataManager.GetRecord(command);
+
+                value = 0;
+                if (archiveDataTable.Rows.Count > 0)
+                {
+                    DataRow row = archiveDataTable.Rows[0];
+                    value = Convert.ToSingle(row["VALUE"]);
+                    return true;
+                }
+                return false;
+            }
+            catch (Exception ex)
+            {
+                value = 0;
+                _logger.WriteEntry(ex is Irisa.DataLayer.DataException ? ex.ToString() : ex.Message, LogLevels.Error);
+                return false;
+            }
         }
 
         public Guid GetGuid(String networkpath)
@@ -215,6 +298,16 @@ namespace RPC
                 _logger.WriteEntry("Error in loading Guid for " + networkpath, LogLevels.Error, ex);
                 return Guid.Empty;
             }
+        }
+        public void  PrintRepository()
+        {
+           
+            foreach ( var SP1 in _scadaPointsHelper)
+            {
+                var RPC_SP = SP1.Value;
+                    Console.WriteLine(RPC_SP.Name +"\t\t...."+ RPC_SP.Id);
+            }
+
         }
     }
 

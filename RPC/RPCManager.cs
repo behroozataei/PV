@@ -80,7 +80,7 @@ namespace RPC
                 //_logger.WriteEntry(" Machine State is: " + GeneralModule.GetProcessState(GeneralModule.eRPCState));
 
                 // Stop the process if it is not Enable
-                if (_repository.GetRPCScadaPoint("RPCSTATUS").Value != 2)
+                if (_repository.GetRPCScadaPoint("RPCFSTATUS").Value == 0.0)
                 {
                     if (_updateScadaPointOnServer.SendAlarm(_repository.GetRPCScadaPoint("RPCAlarm"), SinglePointStatus.Appear, "RPC Function is Disabled"))
                     {
@@ -92,16 +92,17 @@ namespace RPC
 
                 // Network configuration should be checked here
                 if (!_theCNetworkConfValidator.isAdmittedNetConf())
-				{
-					_logger.WriteEntry("Network Configuration is Not Admitted!",LogLevels.Info);
-					return;
-				}
+                {
+                    _logger.WriteEntry("Network Configuration is Not Admitted!", LogLevels.Info);
+                    return;
+                }
 
-				// Get right CycleNo to start of 1-minute processing:
-				if (!_theCCycleValidator.GetRPCCycleNo())
+
+                // Get right CycleNo to start of 1-minute processing:
+                if (!_theCCycleValidator.GetRPCCycleNo())
 				{
 					_logger.WriteEntry("Error in Cyclic Operation!",LogLevels.Warn);
-					return;
+                    return;
 				}
 				else
 				{
@@ -112,7 +113,8 @@ namespace RPC
                 {
                     //if (!m_theCRPCParameters.ReadGMTDiff())
                     {
-                        _logger.WriteEntry("Reading GMT Difference Parameters is not successful", LogLevels.Error);
+                        ;
+                        //_logger.WriteEntry("Reading GMT Difference Parameters is not successful", LogLevels.Error);
                     }
                 }
 

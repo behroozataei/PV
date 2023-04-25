@@ -13,7 +13,7 @@ namespace DCIS
 {
     internal class DCISManager:IProcessing
     {
-        private const int TIMER_TICKS =900000;
+        private const int TIMER_TICKS =90000;
         private readonly IRepository _repository;
         private readonly ILogger _logger;
         private readonly Timer _timer_15_Min;
@@ -68,7 +68,7 @@ namespace DCIS
                     _hisValuesInIntervalTime.Enqueue(GetFirstSampleData(pointId, shiftTime));
                     if (!GetValuesInIntervalTime(pointId, shiftTime, _hisValuesInIntervalTime))
                     {
-                        //_logger.WriteEntry($"No Sample Found in HIS in Interval Time: {shiftTime.ShiftStartTime.ToLocalTime()}  Until {shiftTime.ShiftEndTime.ToLocalTime()} for {_repository.GetHisPoint(pointId).AnalogNetworkPath} ", LogLevels.Warn);
+                       // _logger.WriteEntry($"No Sample Found in HIS in Interval Time: {shiftTime.ShiftStartTime.ToLocalTime()}  Until {shiftTime.ShiftEndTime.ToLocalTime()} for {_repository.GetHisPoint(pointId).AnalogNetworkPath} ", LogLevels.Warn);
                         _hisValuesInIntervalTime.Enqueue(new SampleData { dateTime = shiftTime.ShiftEndTime, value = _hisValuesInIntervalTime.First().value, qualityCode = 0 });
 
                     }
