@@ -1160,23 +1160,23 @@ namespace EEC
             }
 
             // Open MAB-EEC when MAB Status change from Close state to open State
-            if (scadaPoint.Name == "MAB" && _MAB.Value == (float)DigitalDoubleStatus.Open && MAB_Saved_State == (float)DigitalDoubleStatus.Close)
-            {
-                if (_MAB_EEC.Value == (float)DigitalSingleStatusOnOff.On)
-                {
-                    if (!_updateScadaPointOnServer.ApplyMarkerCommand(_MAB_EEC))
-                    {
-                        _logger.WriteEntry("Error in EEC in 'trying to remove Blocked Marker from _MAB_EEC!'", LogLevels.Error);
-                        return;
-                    }
+            //if (scadaPoint.Name == "MAB" && _MAB.Value == (float)DigitalDoubleStatus.Open && MAB_Saved_State == (float)DigitalDoubleStatus.Close)
+            //{
+            //    if (_MAB_EEC.Value == (float)DigitalSingleStatusOnOff.On)
+            //    {
+            //        if (!_updateScadaPointOnServer.ApplyMarkerCommand(_MAB_EEC))
+            //        {
+            //            _logger.WriteEntry("Error in EEC in 'trying to remove Blocked Marker from _MAB_EEC!'", LogLevels.Error);
+            //            return;
+            //        }
 
-                    if (!_updateScadaPointOnServer.SendAlarm(_repository.GetScadaPoint("MAB_EEC"), (DigitalSingleStatus)DigitalSingleStatusOnOff.Off, "MAB_EEC is Opened  . . . "))
-                    {
-                        _logger.WriteEntry("Fail to Open MAB_EEC", LogLevels.Error);
-                        return;
-                    }
-                }
-            }
+            //        if (!_updateScadaPointOnServer.SendAlarm(_repository.GetScadaPoint("MAB_EEC"), (DigitalSingleStatus)DigitalSingleStatusOnOff.Off, "MAB_EEC is Opened  . . . "))
+            //        {
+            //            _logger.WriteEntry("Fail to Open MAB_EEC", LogLevels.Error);
+            //            return;
+            //        }
+            //    }
+            //}
 
              MAB_Saved_State = _MAB.Value;
         }

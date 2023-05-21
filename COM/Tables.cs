@@ -30,6 +30,9 @@ namespace COMMON
 
         public const string RPC_Cycles = "APP:RPC_Cycles:";
 
+        public const string HVLOPCMeasurement = "APP:HVLOPCMeasurement:";
+        public const string HVLOPC_Params = "APP:HVLOPC_Params:";
+
 
 
     }
@@ -85,6 +88,25 @@ namespace COMMON
         public Guid ID;
     };
     public class OPC_PARAM_Str
+    {
+        public string Name;
+        public string IP;
+        public string Port;
+        public string Description;
+    };
+
+    public class HVLOPC_MEAS_Str
+    {
+        public string ScadaTagName;
+        public string KepServerTagName;
+        public string Description;
+        public int MessageConfiguration;
+        public int TagType;
+        public string NetworkPath;
+        public Guid ID;
+        public string Direction;
+    };
+    public class HVLOPC_PARAM_Str
     {
         public string Name;
         public string IP;
