@@ -27,6 +27,8 @@ namespace DCP
         public int GetNRecord(string sql);
         bool ModifyOnStaticDB(string sql);
         bool ModifyOnHistoricalDB(string sql);
+        public bool ModifyOnHistoricalDB(string StoredProcedure, IDbDataParameter[] dbDataParameter);
+
         //DataTable GetFromHistoricalDB(string sql);
         SFSC_EAFSPOWER_Str GetFromHistoricalCache();
         public RedisUtils GetRedisUtiles();

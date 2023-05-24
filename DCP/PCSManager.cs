@@ -6,6 +6,9 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Timers;
+using System.Data;
+using Irisa.DataLayer;
+
 
 namespace DCP
 {
@@ -63,13 +66,14 @@ namespace DCP
         //==============================================================================
         //MEMBER FUNCTIONS
         //==============================================================================
-        public PCSManager(ILogger logger, IRepository repository, UpdateScadaPointOnServer updateScadaPointOnServer)
+        public PCSManager(ILogger logger, IRepository repository, UpdateScadaPointOnServer updateScadaPointOnServer, DataManager historicalDataManager)
         {
             try
             {
                 _logger = logger ?? throw new ArgumentNullException(nameof(logger));
                 _repository = repository ?? throw new ArgumentNullException(nameof(repository));
                 _updateScadaPointOnServer = updateScadaPointOnServer ?? throw new ArgumentNullException(nameof(updateScadaPointOnServer));
+                
 
                 //-----------------------------------------------------------------------------------
                 // An array for Tag of all Digital Points in SCADA may be changed
@@ -83,7 +87,7 @@ namespace DCP
                 //
                 m_EECTelergramIsUpdated = false;
 
-                _CPCSInterface = new PCSInterface(_logger, _repository, _updateScadaPointOnServer);
+                _CPCSInterface = new PCSInterface(_logger, _repository, _updateScadaPointOnServer, historicalDataManager);
 
                 PCSManager_start();
 

@@ -618,6 +618,27 @@ namespace DCP
 
             return false;
         }
+        public bool ModifyOnHistoricalDB(string StoredProcedure, IDbDataParameter[] dbDataParameter)
+        {
+            try
+            {
+                var RowAffected = _historicalDataManager.ExecuteNonQuery(StoredProcedure, CommandType.StoredProcedure, dbDataParameter);
+               // if (RowAffected > 0)
+                    return true;
+               // else
+               //     return false;
+            }
+            catch (Irisa.DataLayer.DataException ex)
+            {
+                _logger.WriteEntry(ex.ToString(), LogLevels.Error);
+            }
+            catch (Exception ex)
+            {
+                _logger.WriteEntry(ex.Message, LogLevels.Error, ex);
+            }
+
+            return false;
+        }
 
 
         public RedisUtils GetRedisUtiles()

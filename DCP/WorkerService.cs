@@ -56,7 +56,7 @@ namespace DCP
             _rpcService = new CpsRpcService(_config["CpsIpAddress"], 10000, historyDataRequest, _cpsRuntimeDataBuffer);
 
             _repository = new Repository(_logger, _staticDataManager, _historicalDataManager, _linkDBpcsDataManager, _RedisConnectorHelper);
-            _dcpManager = new DCPManager(_logger, _repository, _rpcService.CommandService);
+            _dcpManager = new DCPManager(_logger, _repository, _rpcService.CommandService, _historicalDataManager);
             _runtimeDataReceiver = new RuntimeDataReceiver(_logger, _repository, (IProcessing)_dcpManager, _rpcService, _cpsRuntimeDataBuffer);
            
         }

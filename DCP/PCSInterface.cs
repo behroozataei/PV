@@ -2,6 +2,8 @@ using Irisa.Logger;
 using Irisa.Common.Utils;
 using System;
 using System.Data;
+using System.Data;
+using Irisa.DataLayer;
 
 namespace DCP
 {
@@ -13,14 +15,16 @@ namespace DCP
         private readonly IRepository _repository;
         private readonly ILogger _logger;
         private readonly UpdateScadaPointOnServer _updateScadaPointOnServer;
+        private readonly DataManager _staticDataManager;
 
-        public PCSInterface(ILogger logger, IRepository repository, UpdateScadaPointOnServer updateScadaPointOnServer)
+        public PCSInterface(ILogger logger, IRepository repository, UpdateScadaPointOnServer updateScadaPointOnServer, DataManager historicalDataManager)
         {
             try
             {
                 _logger = logger ?? throw new ArgumentNullException(nameof(logger));
                 _repository = repository ?? throw new ArgumentNullException(nameof(repository));
                 _updateScadaPointOnServer = updateScadaPointOnServer ?? throw new ArgumentNullException(nameof(updateScadaPointOnServer));
+                _staticDataManager = historicalDataManager;
             }
             catch (System.Exception excep)
             {
@@ -87,8 +91,8 @@ namespace DCP
                 //  //1401_08_23 Preparing Data For HMI
                 try
                 {
-                    string strSQLHIS = "Insert Into APP_DCP_EECTelegram (\"TELDATETIME\", \"RESIDUALTIME[Min]\"," +
-                         " \"RESIDUALENERGY[Mwh]\", \"POWERLIMIT1[MW]\", \"POWERLIMIT2[MW]\", \"RESIDUALENERGYEND[Mwh]\") " +
+                    string strSQLHIS = "Insert Into APP_DCP_EECTelegram (\"TELDATETIME\", \"RESIDUALTIME_MIN\"," +
+                         " \"RESIDUALENERGY_MWH\", \"POWERLIMIT1_MW\", \"POWERLIMIT2_MW\", \"RESIDUALENERGYEND_MWH\") " +
                          "VALUES('" +
                          aEECTelegram.m_Date.ToString("yyyy/MM/dd HH:mm:ss") + "', '" +
                          aEECTelegram.m_ResidualTime.Trim() + "', " +
@@ -97,7 +101,17 @@ namespace DCP
                          Math.Round((Double.Parse(aEECTelegram.m_OverLoad2)), 2).ToString().Trim() + ", " +
                          Math.Round((Double.Parse(aEECTelegram.m_ResidualEnergyEnd)), 2).ToString().Trim() + ")";
 
-                    if (!_repository.ModifyOnHistoricalDB(strSQLHIS))
+                    var parameters = new IDbDataParameter[6];
+                    parameters[0] = _staticDataManager.CreateParameter("p_DateTime", aEECTelegram.m_Date.ToString("yyyy/MM/dd HH:mm:ss"));
+                    parameters[1] = _staticDataManager.CreateParameter("p_Summation", aEECTelegram.m_ResidualTime.Trim());
+                    parameters[2] = _staticDataManager.CreateParameter("p_Power_Grp1", Math.Round((Double.Parse(aEECTelegram.m_ResidualEnergy)), 2).ToString().Trim());
+                    parameters[3] = _staticDataManager.CreateParameter("p_Power_Grp2", Math.Round((Double.Parse(aEECTelegram.m_OverLoad1)), 2).ToString().Trim());
+                    parameters[4] = _staticDataManager.CreateParameter("p_Func1", Math.Round((Double.Parse(aEECTelegram.m_OverLoad2)), 2).ToString().Trim());
+                    parameters[5] = _staticDataManager.CreateParameter("p_Func2", Math.Round((Double.Parse(aEECTelegram.m_ResidualEnergyEnd)), 2).ToString().Trim());
+
+
+                    // if (!_repository.ModifyOnHistoricalDB(strSQLHIS))
+                    if (!_repository.ModifyOnHistoricalDB("APP_DCP_EECTELEGRAM_INSERT",parameters))
 
                         _logger.WriteEntry("Archive: Could not insert into APP_DCP_EECTelegram Table in the HIS DB", LogLevels.Error);
                 }
