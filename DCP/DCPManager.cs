@@ -20,7 +20,7 @@ namespace DCP
         private readonly IRepository _repository;
         private readonly ILogger _logger;
         private readonly UpdateScadaPointOnServer _updateScadaPointOnServer;
-        private readonly DataManager _staticDataManager;
+        private readonly DataManager _historicalDataManager;
 
         // In second
         private int TIMER_CYCLE_LoadPowerForEAFS = 4000;
@@ -44,7 +44,7 @@ namespace DCP
             _repository = repository ?? throw new ArgumentNullException(nameof(repository));
             _updateScadaPointOnServer = new UpdateScadaPointOnServer(_logger, cpsCommandService);
             _cpsCommandService = cpsCommandService;
-            _staticDataManager = historicalDataManager;
+            _historicalDataManager = historicalDataManager;
 
 
 
@@ -71,7 +71,7 @@ namespace DCP
 
             //--------------------------------------------------------
             // Step 2: For DC-PCS:
-            _pcsManager = new PCSManager(_logger, _repository, _updateScadaPointOnServer, _staticDataManager);
+            _pcsManager = new PCSManager(_logger, _repository, _updateScadaPointOnServer, _historicalDataManager);
 
 
             try
@@ -177,20 +177,20 @@ namespace DCP
                         Math.Round(sfsc_eafsp.FURNACE8, 2).ToString() + "' " +
                         " )";
                     var parameters = new IDbDataParameter[12];
-                    parameters[0] = _staticDataManager.CreateParameter("p_DateTime", sfsc_eafsp.TELDATETIME.ToString("yyyy/MM/dd HH:mm:ss"));
-                    parameters[1] = _staticDataManager.CreateParameter("p_Summation", Math.Round(sfsc_eafsp.SUMATION, 2));
-                    parameters[2] = _staticDataManager.CreateParameter("p_Power_Grp1", Math.Round(sfsc_eafsp.POWERGRP1, 2));
-                    parameters[3] = _staticDataManager.CreateParameter("p_Power_Grp2", Math.Round(sfsc_eafsp.POWERGRP2, 2));
-                    parameters[4] = _staticDataManager.CreateParameter("p_Func1", Math.Round(sfsc_eafsp.FURNACE1, 2));
-                    parameters[5] = _staticDataManager.CreateParameter("p_Func2", Math.Round(sfsc_eafsp.FURNACE2, 2));
-                    parameters[6] = _staticDataManager.CreateParameter("p_Func3", Math.Round(sfsc_eafsp.FURNACE3, 2));
-                    parameters[7] = _staticDataManager.CreateParameter("p_Func4", Math.Round(sfsc_eafsp.FURNACE4, 2));
-                    parameters[8] = _staticDataManager.CreateParameter("p_Func5", Math.Round(sfsc_eafsp.FURNACE5, 2));
-                    parameters[9] = _staticDataManager.CreateParameter("p_Func6", Math.Round(sfsc_eafsp.FURNACE6, 2));
-                    parameters[10] = _staticDataManager.CreateParameter("p_Func7", Math.Round(sfsc_eafsp.FURNACE7, 2));
-                    parameters[11] = _staticDataManager.CreateParameter("p_Func8", Math.Round(sfsc_eafsp.FURNACE8, 2));
+                    parameters[0] = _historicalDataManager.CreateParameter("p_DateTime", sfsc_eafsp.TELDATETIME.ToString("yyyy/MM/dd HH:mm:ss"));
+                    parameters[1] = _historicalDataManager.CreateParameter("p_Summation", Math.Round(sfsc_eafsp.SUMATION, 2));
+                    parameters[2] = _historicalDataManager.CreateParameter("p_Power_Grp1", Math.Round(sfsc_eafsp.POWERGRP1, 2));
+                    parameters[3] = _historicalDataManager.CreateParameter("p_Power_Grp2", Math.Round(sfsc_eafsp.POWERGRP2, 2));
+                    parameters[4] = _historicalDataManager.CreateParameter("p_Func1", Math.Round(sfsc_eafsp.FURNACE1, 2));
+                    parameters[5] = _historicalDataManager.CreateParameter("p_Func2", Math.Round(sfsc_eafsp.FURNACE2, 2));
+                    parameters[6] = _historicalDataManager.CreateParameter("p_Func3", Math.Round(sfsc_eafsp.FURNACE3, 2));
+                    parameters[7] = _historicalDataManager.CreateParameter("p_Func4", Math.Round(sfsc_eafsp.FURNACE4, 2));
+                    parameters[8] = _historicalDataManager.CreateParameter("p_Func5", Math.Round(sfsc_eafsp.FURNACE5, 2));
+                    parameters[9] = _historicalDataManager.CreateParameter("p_Func6", Math.Round(sfsc_eafsp.FURNACE6, 2));
+                    parameters[10] = _historicalDataManager.CreateParameter("p_Func7", Math.Round(sfsc_eafsp.FURNACE7, 2));
+                    parameters[11] = _historicalDataManager.CreateParameter("p_Func8", Math.Round(sfsc_eafsp.FURNACE8, 2));
                     //if (!_repository.ModifyOnHistoricalDB(sqlhis))
-                    if (!_repository.ModifyOnHistoricalDB("APP_DCP_EAFSPOWER_INSERT ", parameters))
+                    if (!_repository.ModifyOnHistoricalDB("APP_DCP_EAFSPOWER_INSERT", parameters))
                     {
                         _logger.WriteEntry($"Error: Insert into HIS_APP_DCP_EAFsPower", LogLevels.Error);
 

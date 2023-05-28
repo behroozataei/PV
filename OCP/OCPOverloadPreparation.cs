@@ -3,6 +3,7 @@ using Irisa.Logger;
 using Oracle.ManagedDataAccess.Types;
 using System;
 using System.Collections.Generic;
+using System.Data;
 
 namespace OCP
 {
@@ -335,7 +336,24 @@ namespace OCP
                                              Four_Five + "', '" +
                                              _overloaded_point.NominalValue + "', '" +
                                              _overloaded_point.Average.Value + "')";
-                            if (!_repository.ModifyOnHistoricalDB(sql))
+                            var parameters = new IDbDataParameter[15];
+                            parameters[0] = _repository.Get_historicalDataManager().CreateParameter("p_DateTime", Datatime);
+                            parameters[1] = _repository.Get_historicalDataManager().CreateParameter("p_Networkpath", _overloaded_point.NetworkPath.Replace("Network/Substations/", ""));
+                            parameters[2] = _repository.Get_historicalDataManager().CreateParameter("p_Cycle1", _overloaded_point.TCycle1.ToString($"yyyy-MM-dd HH:mm:ss.ff"));
+                            parameters[3] = _repository.Get_historicalDataManager().CreateParameter("p_Cycle2", _overloaded_point.TCycle2.ToString($"yyyy-MM-dd HH:mm:ss.ff"));
+                            parameters[4] = _repository.Get_historicalDataManager().CreateParameter("p_Cycle3", _overloaded_point.TCycle3.ToString($"yyyy-MM-dd HH:mm:ss.ff"));
+                            parameters[5] = _repository.Get_historicalDataManager().CreateParameter("p_Cycle4", _overloaded_point.TCycle4.ToString($"yyyy-MM-dd HH:mm:ss.ff"));
+                            parameters[6] = _repository.Get_historicalDataManager().CreateParameter("p_Cycle5", _overloaded_point.TCycle5.ToString($"yyyy-MM-dd HH:mm:ss.ff"));
+                            parameters[7] = _repository.Get_historicalDataManager().CreateParameter("p_Value1", Math.Round(_overloaded_point.Value1, 2).ToString());
+                            parameters[8] = _repository.Get_historicalDataManager().CreateParameter("p_Value2", Math.Round(_overloaded_point.Value2, 2).ToString());
+                            parameters[9] = _repository.Get_historicalDataManager().CreateParameter("p_Value3", Math.Round(_overloaded_point.Value3, 2).ToString());
+                            parameters[10] = _repository.Get_historicalDataManager().CreateParameter("p_Value4", Math.Round(_overloaded_point.Value4, 2).ToString());
+                            parameters[11] = _repository.Get_historicalDataManager().CreateParameter("p_Value5", Math.Round(_overloaded_point.Value5, 2).ToString());
+                            parameters[12] = _repository.Get_historicalDataManager().CreateParameter("p_Four_or_Five", Four_Five);
+                            parameters[13] = _repository.Get_historicalDataManager().CreateParameter("p_Naminal", _overloaded_point.NominalValue);
+                            parameters[14] = _repository.Get_historicalDataManager().CreateParameter("p_Avarage", _overloaded_point.Average.Value);
+                            //    if (!_repository.ModifyOnHistoricalDB(sql))
+                            if (!_repository.ModifyOnHistoricalDB("APP_OCP_OVERLOADED_POINTS_INSERT", parameters))                            
                             {
                                 _logger.WriteEntry($"Error in INSERT Into APP_OCP_OVERLOAD_POINT, Point " + _overloaded_point.NetworkPath.ToString(), LogLevels.Error);
                             }

@@ -1,5 +1,8 @@
-﻿using System;
+﻿using Irisa.DataLayer;
+using System;
 using System.Collections.Generic;
+using System.Data;
+
 
 namespace OCP
 {
@@ -13,5 +16,7 @@ namespace OCP
         OCPScadaPoint GetOCPScadaPoint(String name);
         IEnumerable<OCPScadaPoint> GetOCPScadaPoints();
         bool ModifyOnHistoricalDB(string sql);
+        public bool ModifyOnHistoricalDB(string StoredProcedure, IDbDataParameter[] dbDataParameter);
+        public DataManager Get_historicalDataManager();
     }
 }

@@ -418,10 +418,10 @@ namespace OCP
             try
             {
                 var RowAffected =  _historicalDataManager.ExecuteNonQuery(StoredProcedure, CommandType.StoredProcedure, dbDataParameter);
-                if (RowAffected > 0)
+               // if (RowAffected > 0)
                     return true;
-                else
-                    return false;
+              //  else
+              //      return false;
             }
             catch (Irisa.DataLayer.DataException ex)
             {
@@ -433,6 +433,10 @@ namespace OCP
             }
 
             return false;
+        }
+        public DataManager Get_historicalDataManager()
+        {
+            return _historicalDataManager;
         }
 
         Guid GetGuid(String networkpath)

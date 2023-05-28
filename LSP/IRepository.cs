@@ -3,6 +3,8 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 
+using Irisa.DataLayer;
+
 namespace LSP
 {
     internal interface IRepository
@@ -38,9 +40,11 @@ namespace LSP
         DataTable GetFromHistoricalDB(string sql);
         DataTable GetFromMasterDB(string sql);
         bool ModifyOnHistoricalDB(string sql);
+        public bool ModifyOnHistoricalDB(string StoredProcedure, IDbDataParameter[] dbDataParameter);
         Guid GetGuid(String networkpath);
         public RedisUtils GetRedisUtiles();
         public SFSC_EAFSPOWER_Str GetFromHistoricalCache();
+        public DataManager Get_historicalDataManager();
 
 
 

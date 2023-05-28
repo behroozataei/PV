@@ -15,7 +15,7 @@ namespace DCP
         private readonly IRepository _repository;
         private readonly ILogger _logger;
         private readonly UpdateScadaPointOnServer _updateScadaPointOnServer;
-        private readonly DataManager _staticDataManager;
+        private readonly DataManager _historicalDataManager;
 
         public PCSInterface(ILogger logger, IRepository repository, UpdateScadaPointOnServer updateScadaPointOnServer, DataManager historicalDataManager)
         {
@@ -24,7 +24,7 @@ namespace DCP
                 _logger = logger ?? throw new ArgumentNullException(nameof(logger));
                 _repository = repository ?? throw new ArgumentNullException(nameof(repository));
                 _updateScadaPointOnServer = updateScadaPointOnServer ?? throw new ArgumentNullException(nameof(updateScadaPointOnServer));
-                _staticDataManager = historicalDataManager;
+                _historicalDataManager = historicalDataManager;
             }
             catch (System.Exception excep)
             {
@@ -102,12 +102,12 @@ namespace DCP
                          Math.Round((Double.Parse(aEECTelegram.m_ResidualEnergyEnd)), 2).ToString().Trim() + ")";
 
                     var parameters = new IDbDataParameter[6];
-                    parameters[0] = _staticDataManager.CreateParameter("p_DateTime", aEECTelegram.m_Date.ToString("yyyy/MM/dd HH:mm:ss"));
-                    parameters[1] = _staticDataManager.CreateParameter("p_Summation", aEECTelegram.m_ResidualTime.Trim());
-                    parameters[2] = _staticDataManager.CreateParameter("p_Power_Grp1", Math.Round((Double.Parse(aEECTelegram.m_ResidualEnergy)), 2).ToString().Trim());
-                    parameters[3] = _staticDataManager.CreateParameter("p_Power_Grp2", Math.Round((Double.Parse(aEECTelegram.m_OverLoad1)), 2).ToString().Trim());
-                    parameters[4] = _staticDataManager.CreateParameter("p_Func1", Math.Round((Double.Parse(aEECTelegram.m_OverLoad2)), 2).ToString().Trim());
-                    parameters[5] = _staticDataManager.CreateParameter("p_Func2", Math.Round((Double.Parse(aEECTelegram.m_ResidualEnergyEnd)), 2).ToString().Trim());
+                    parameters[0] = _historicalDataManager.CreateParameter("p_DateTime", aEECTelegram.m_Date.ToString("yyyy/MM/dd HH:mm:ss"));
+                    parameters[1] = _historicalDataManager.CreateParameter("p_Summation", aEECTelegram.m_ResidualTime.Trim());
+                    parameters[2] = _historicalDataManager.CreateParameter("p_Power_Grp1", Math.Round((Double.Parse(aEECTelegram.m_ResidualEnergy)), 2).ToString().Trim());
+                    parameters[3] = _historicalDataManager.CreateParameter("p_Power_Grp2", Math.Round((Double.Parse(aEECTelegram.m_OverLoad1)), 2).ToString().Trim());
+                    parameters[4] = _historicalDataManager.CreateParameter("p_Func1", Math.Round((Double.Parse(aEECTelegram.m_OverLoad2)), 2).ToString().Trim());
+                    parameters[5] = _historicalDataManager.CreateParameter("p_Func2", Math.Round((Double.Parse(aEECTelegram.m_ResidualEnergyEnd)), 2).ToString().Trim());
 
 
                     // if (!_repository.ModifyOnHistoricalDB(strSQLHIS))

@@ -327,6 +327,28 @@ namespace EEC
             return false;
         }
 
+        public bool ModifyOnHistoricalDB(string StoredProcedure, IDbDataParameter[] dbDataParameter)
+        {
+            try
+            {
+                var RowAffected = _historicalDataManager.ExecuteNonQuery(StoredProcedure, CommandType.StoredProcedure, dbDataParameter);
+                // if (RowAffected > 0)
+                return true;
+                // else
+                //     return false;
+            }
+            catch (Irisa.DataLayer.DataException ex)
+            {
+                _logger.WriteEntry(ex.ToString(), LogLevels.Error);
+            }
+            catch (Exception ex)
+            {
+                _logger.WriteEntry(ex.Message, LogLevels.Error, ex);
+            }
+
+            return false;
+        }
+
         public bool ModifyOnHistoricalCache(float[] _BusbarPowers, float[] _FurnacePowers)
         {
             try
@@ -354,6 +376,11 @@ namespace EEC
             }
 
             return true;
+        }
+
+        public DataManager Get_historicalDataManager()
+        {
+            return _historicalDataManager;
         }
         public RedisUtils GetRedisUtiles()
         {

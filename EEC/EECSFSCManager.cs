@@ -516,8 +516,17 @@ namespace EEC
                                                 Math.Round(_MaxBusbarPowers[busbar],2) + "', '" +
                                                 Math.Round(_BusbarPowers[busbar],2) + "', '" +
                                                 (busbar+1) + "')";
-                                        
-                                if (!_repository.ModifyOnHistoricalDB(sql))
+
+                                var parameters = new IDbDataParameter[6];
+                                parameters[0] = _repository.Get_historicalDataManager().CreateParameter("p_DateTime", Datatime);
+                                parameters[1] = _repository.Get_historicalDataManager().CreateParameter("p_Furnace", furnace);
+                                parameters[2] = _repository.Get_historicalDataManager().CreateParameter("p_Energy", Math.Round(energy, 2));
+                                parameters[3] = _repository.Get_historicalDataManager().CreateParameter("p_EEC_Power_Limit", Math.Round(_MaxBusbarPowers[busbar], 2));
+                                parameters[4] = _repository.Get_historicalDataManager().CreateParameter("p_Consumed_Power", Math.Round(_BusbarPowers[busbar], 2));
+                                parameters[5] = _repository.Get_historicalDataManager().CreateParameter("p_Furnace_Bus_Num", (busbar + 1));
+
+                                //     if (!_repository.ModifyOnHistoricalDB(sql))
+                                if (!_repository.ModifyOnHistoricalDB("APP_SFSC_FURNACE_SHEDDED_INSERT ", parameters))
                                 {
                                     _logger.WriteEntry($"Error in INSERT Into APP_SFSC_FURNACE_SHEDDED, Furnace " + furnace, LogLevels.Error);
                                 }
