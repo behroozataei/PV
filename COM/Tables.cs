@@ -286,6 +286,7 @@ namespace COMMON
         public string DIRECTIONTYPE;
         public string NETWORKPATH;
         public string SCADATYPE;
+        public string SNAME;
     }
 
     public class T_RPCCycles_Str

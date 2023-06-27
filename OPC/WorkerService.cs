@@ -8,6 +8,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using System;
 using System.Collections.Concurrent;
+using System.Data;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -47,7 +48,7 @@ namespace OPC
             
 
             _cpsRuntimeDataBuffer = new BlockingCollection<CpsRuntimeData>();
-            _rpcService = new CpsRpcService(_config["CpsIpAddress"], 10000, historyDataRequest, _cpsRuntimeDataBuffer);
+            _rpcService = new CpsRpcService(_config["CpsIpAddress"], 10000, historyDataRequest, _cpsRuntimeDataBuffer, GetRpcSslCredentials());
             _repository = new Repository(_logger, _staticDataManager, _RedisConnectorHelper);
             _opcManager = new OPCManager(_logger, _repository, _rpcService.CommandService);
             _runtimeDataReceiver = new RuntimeDataReceiver(_logger, _repository, _opcManager, _rpcService, _cpsRuntimeDataBuffer);
@@ -139,6 +140,20 @@ namespace OPC
                 Console.WriteLine($"{e.TimeStamp.ToIranStandardTime()} ==>   \n\tCall site: {e.CallSite} \n\t{e.Message}");
 
             Console.ResetColor();
+        }
+        private RpcSslCredentials? GetRpcSslCredentials()
+        {
+            var dataTable = _staticDataManager.GetRecord("APP_GRPC_CERTIFICATION_SELECT", CommandType.StoredProcedure);
+
+            if (dataTable.Rows.Count > 0)
+            {
+                var rootCertificate = Convert.ToString(dataTable.Rows[0]["ROOT_CERTIFICATE"]);
+                var clientCertificateChain = Convert.ToString(dataTable.Rows[0]["CLIENT_CERTIFICATE_CHAIN"]);
+                var clientPrivateKey = Convert.ToString(dataTable.Rows[0]["CLIENT_PRIVATE_KEY"]);
+
+                return new RpcSslCredentials(rootCertificate, clientCertificateChain, clientPrivateKey);
+            }
+            return null;
         }
     }
 }

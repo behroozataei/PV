@@ -41,14 +41,14 @@ namespace RPC
 
 				//TODO: 1401-11-02
 				// The difference is for Greenwich Mean Time (GMT) differential
-				dtTo = DateTime.Now;
+				dtTo = DateTime.UtcNow;
 				//dtTo = DateTime.Now.AddHours(GeneralModule.GMTHourDiff);
 				//dtTo = dtTo.AddMinutes(GeneralModule.GMTMinuteDiff);
 				//dtTo = dtTo.AddSeconds(GeneralModule.GMTSecondDiff);
 				// Adjust the time to the begining of the period
 				//dtTo = dtTo.AddSeconds(-dtTo.Second);
 
-				IntervalTime intervaltime = new IntervalTime(DateTime.UtcNow.AddMinutes(-3), DateTime.UtcNow);
+				IntervalTime intervaltime = new IntervalTime(DateTime.UtcNow.AddMinutes(-3.0), DateTime.UtcNow);
 
 				// Retreiving a value for the previous 3 minutes from HIS:
 				_logger.WriteEntry("Average Sampling Time=" + dtTo.ToString(),LogLevels.Trace);
@@ -153,8 +153,8 @@ namespace RPC
 
 				result = true;
 
-				Er_EAF = _repository.GetRPCScadaPoint("Er_EAF").Value; 
-				Er_SVC = _repository.GetRPCScadaPoint("Er_SVC").Value; ;
+				Er_EAF = _repository.GetRPCScadaPoint("Er_EAF_3Min").Value; 
+				Er_SVC = _repository.GetRPCScadaPoint("Er_SVC_3Min").Value; ;
 				K = _repository.GetRPCScadaPoint("K").Value; ;
 
 				if (Er_SVC > Er_EAF + K)
@@ -178,8 +178,8 @@ namespace RPC
 
 				// In the documents ther's a section that checks Capacitor Bank with LFS,
 				// but in the perl codes there's not such a section.
-				Er_BANK = _repository.GetRPCScadaPoint("Er_BANK").Value;
-				Er_LF = _repository.GetRPCScadaPoint("Er_LF").Value;
+				Er_BANK = _repository.GetRPCScadaPoint("Er_BANK_3Min").Value;
+				Er_LF = _repository.GetRPCScadaPoint("Er_LF_3Min").Value;
 				M = Er_LF = _repository.GetRPCScadaPoint("M").Value; ;
 
 				if (Er_BANK > Er_LF + M)

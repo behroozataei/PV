@@ -94,7 +94,7 @@ namespace SDK_Template
                 try
                 {
                     if (RedisUtils.IsConnected)
-                        _RedisConnectorHelper.DataBase.StringSet(RedisKeyPattern.SDK_TEMPLATE + networkPath, JsonConvert.SerializeObject(sdk_temp_params));
+                        RedisUtils.RedisConn.Set(RedisKeyPattern.SDK_TEMPLATE + networkPath, JsonConvert.SerializeObject(sdk_temp_params));
                     else
                         _logger.WriteEntry("Redis Connection Error", LogLevels.Error);
 
@@ -130,9 +130,9 @@ namespace SDK_Template
             IEnumerable<SDK_TEMP_PARAMS_Str> dataTable = null;
             try
             {
-                var keys = _RedisConnectorHelper.GetKeys(pattern: RedisKeyPattern.SDK_TEMPLATE);
+                var keys = RedisUtils.GetKeys(pattern: RedisKeyPattern.SDK_TEMPLATE);
                 if (keys.Length!=0)
-                    dataTable = _RedisConnectorHelper.StringGet<SDK_TEMP_PARAMS_Str>(keys);
+                    dataTable = RedisUtils.StringGet<SDK_TEMP_PARAMS_Str>(keys);
             }
             catch
             {
@@ -142,7 +142,7 @@ namespace SDK_Template
             }
            
 
-
+             
             foreach (SDK_TEMP_PARAMS_Str row in dataTable)
             {
                 var name = row.Name;

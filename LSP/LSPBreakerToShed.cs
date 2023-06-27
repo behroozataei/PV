@@ -1,3 +1,4 @@
+using Irisa.Common.Utils;
 using Irisa.Logger;
 using System;
 
@@ -32,7 +33,7 @@ namespace LSP
         //private byte m_CurrentQuality = 0;
 
         // Last time of shedding this breaker
-        public System.DateTime LastShedTime = DateTime.FromOADate(0);
+        public System.DateTime LastShedTime = DateTime.UtcNow;
         //Modification By Mr.Hematy For GIS Key
         public string HasPartner { get; set; }
         public string AddressPartner { get; set; }
@@ -57,7 +58,7 @@ namespace LSP
                 NetworkPath_Cur = "";
                 //m_Current = 0;
                 //m_CurrentQuality = 0;
-                LastShedTime = DateTime.Now.AddSeconds(-1000);
+                LastShedTime = DateTime.UtcNow.AddSeconds(-1000);
             }
             catch (System.Exception excep)
             {

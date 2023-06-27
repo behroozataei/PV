@@ -49,6 +49,7 @@ namespace RPC
 				GenAuto[1] = _repository.GetRPCScadaPoint("GEN1_AUTO").Value != 0;
 				GenAuto[2] = _repository.GetRPCScadaPoint("GEN2_AUTO").Value != 0;
 				GenAuto[3] = _repository.GetRPCScadaPoint("GEN3_AUTO").Value != 0;
+				//GenAuto[3] = _repository.GetRPCScadaPoint("GEN3_AUTO").Value != 0;
 
 				QGen[1] = _repository.GetRPCScadaPoint("QGEN1").Value;
 				QGen[2] = _repository.GetRPCScadaPoint("QGEN2").Value;
@@ -115,17 +116,17 @@ namespace RPC
 						return result;
 					}
 
-					if (!_updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("MARK9"), 1))
+					if (!_updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("MARK9"), 0))
 					{
 						_logger.WriteEntry( "Could not update value in SCADA: " + "MARK9", LogLevels.Error);
 					}
 
-					if (!_updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("MARK9_1"), 1))
+					if (!_updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("MARK9_1"), 0))
 					{
 						_logger.WriteEntry( "Could not update value in SCADA: " + "MARK9_1", LogLevels.Error);
 					}
 
-					if (!_updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("MARK10"), 1))
+					if (!_updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("MARK10"), 0))
 					{
 						_logger.WriteEntry( "Could not update value in SCADA: " + "MARK10", LogLevels.Error);
 					}
@@ -155,7 +156,8 @@ namespace RPC
 				K1 = _repository.GetRPCScadaPoint("K1").Value;
 				K2 = _repository.GetRPCScadaPoint("K2").Value;
 
-				QMILL = _repository.GetRPCScadaPoint("QFIN").Value + _repository.GetRPCScadaPoint("QROUGH").Value + _repository.GetRPCScadaPoint("QTANDEM").Value;
+				QMILL = _repository.GetRPCScadaPoint("QFIN").Value + _repository.GetRPCScadaPoint("QROUGH").Value +
+						_repository.GetRPCScadaPoint("QTANDEM").Value;
 
 				if (!_updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("QMILL"), (float)QMILL))
 				{
@@ -165,6 +167,7 @@ namespace RPC
 				_logger.WriteEntry("Q Fin = " + _repository.GetRPCScadaPoint("QFIN").Value.ToString(),LogLevels.Trace);
 				_logger.WriteEntry("Q Rough = " + _repository.GetRPCScadaPoint("QROUGH").Value.ToString(), LogLevels.Trace);
 				_logger.WriteEntry("Q Tandem = " + _repository.GetRPCScadaPoint("QTANDEM").Value.ToString(), LogLevels.Trace);
+				
 
 
 				if (QGenAuto < NGAuto * K1 + QMILL)
@@ -184,7 +187,7 @@ namespace RPC
 						return;
 					}
 
-					if (!_updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("MARK10"), 1))
+					if (!_updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("MARK10"), 0))
 					{
 						_logger.WriteEntry("Could not update value in SCADA: " + "MARK10", LogLevels.Error);
 					}
@@ -195,11 +198,11 @@ namespace RPC
 						{
 							_logger.WriteEntry("Sending alarm failed.",LogLevels.Error);
 						}
-						if (!_updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("MARK9"), 2))
+						if (!_updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("MARK9"), 1))
 						{
 							_logger.WriteEntry("Could not update value in SCADA: " + "MARK9",LogLevels.Error);
 						}
-						if (!_updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("MARK9_1"), 2))
+						if (!_updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("MARK9_1"), 1))
 						{
 							_logger.WriteEntry("Could not update value in SCADA: " + "MARK9_1",LogLevels.Error);
 						}
@@ -234,16 +237,16 @@ namespace RPC
 						}
 
 						// The suggestions should be deleted.
-						if (!_updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("MARK9"), 1))
+						if (!_updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("MARK9"), 0))
 						{
 							_logger.WriteEntry("Could not update value in SCADA: " + "MARK9",LogLevels.Error);
 						}
-						if (!_updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("MARK9_1"), 1))
+						if (!_updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("MARK9_1"), 0))
 						{
 							_logger.WriteEntry("Could not update value in SCADA: " + "MARK9_1",LogLevels.Error);
 						}
 
-						if (!_updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("MARK10"), 1))
+						if (!_updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("MARK10"), 0))
 						{
 							_logger.WriteEntry("Could not update value in SCADA: " + "MARK10",LogLevels.Error);
 						}
@@ -268,11 +271,11 @@ namespace RPC
 							return;
 						}
 
-						if (!_updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("MARK9"), 1))
+						if (!_updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("MARK9"), 0))
 						{
 							_logger.WriteEntry("Could not update value in SCADA: " + "MARK9",LogLevels.Error);
 						}
-						if (!_updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("MARK9_1"), 1))
+						if (!_updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("MARK9_1"), 0))
 						{
 							_logger.WriteEntry("Could not update value in SCADA: " + "MARK9_1", LogLevels.Error);
 						}
@@ -283,7 +286,7 @@ namespace RPC
 							{
 								_logger.WriteEntry("Sending alarm failed.",LogLevels.Info);
 							}
-							if (!_updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("MARK10"), 2))
+							if (!_updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("MARK10"), 1))
 							{
 								_logger.WriteEntry("Could not update value in SCADA: " + "MARK10",LogLevels.Error);
 							}

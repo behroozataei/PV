@@ -8,12 +8,13 @@ namespace RPC
 {
     public sealed class RPCScadaPoint
     {
-        public RPCScadaPoint(Guid id, string name, string networkPath, PointDirectionType pointDirectionType)
+        public RPCScadaPoint(Guid id, string name, string networkPath, PointDirectionType pointDirectionType, string scadaType)
         {
             Id = id;
             Name = name;
             NetworkPath = networkPath;
             PointDirectionType = pointDirectionType;
+            ScadaType = scadaType;
         }
 
         public string Name { get; }
@@ -22,6 +23,17 @@ namespace RPC
         public int Quality { get; set; }
         public PointDirectionType PointDirectionType { get; }
         public float Value { get; set; }
+        public string ScadaType { get; }
+
+    }
+    public class ACCScadaPoint
+    {
+        public RPCScadaPoint sPCScadaPoint { get; set; }
+        public RPCScadaPoint aPCScadaPoint { get; set; }
+        public double Energy = 0.0;
+        public double Value_t1, Value_t2;
+        public DateTime t1 = new DateTime(1900, 1, 1), t2 = new DateTime(1900, 1, 1);
+
     }
 
     public class IntervalTime

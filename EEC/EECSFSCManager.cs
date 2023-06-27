@@ -104,7 +104,7 @@ namespace EEC
                     for (int cycle = 0; cycle < NUMBER_OF_CYCLES_OVERLAD_CHECK; cycle++)
                     {
                         _IsOverloadAppear[busbar, cycle] = false;
-                        _cycles[busbar, cycle] = DateTime.Now;
+                        _cycles[busbar, cycle] = DateTime.UtcNow;
                     }
 
                 return true;
@@ -243,10 +243,10 @@ namespace EEC
                     _MaxBusbarPowers[0] = _eec_tel.MAXOVERLOAD1;
                     _MaxBusbarPowers[1] = _eec_tel.MAXOVERLOAD2;
                     dTime = _eec_tel.TELDATETIME;
-                    var deltatime = DateTime.Now.Subtract(dTime).TotalSeconds;
+                    var deltatime = DateTime.UtcNow.Subtract(dTime).TotalSeconds;
                     if (deltatime > 65)
                     {
-                        _logger.WriteEntry("Error: Date and Time  of MAXOVERLOAD1, MAXOVERLOAD2 is not correct! " + "EEC TELDATEtime = " + dTime + "  Delta Second = " + deltatime, LogLevels.Warn);
+                        _logger.WriteEntry("Error: Date and Time  of MAXOVERLOAD1, MAXOVERLOAD2 is not correct! " + "EEC TELDATEtime = " + dTime.ToIranStandardTime() + "  Delta Second = " + deltatime, LogLevels.Warn);
                         return false;
                     }
                 }
@@ -385,7 +385,7 @@ namespace EEC
                     if (_BusbarPowers[busbar] > _BusbarPowers_Limit[busbar])
                     {
                         _IsOverloadAppear[busbar, cycle] = true;
-                        _cycles[busbar, cycle] = DateTime.Now;
+                        _cycles[busbar, cycle] = DateTime.UtcNow;
                         _logger.WriteEntry($"Warning: BusbarPowers[{(busbar + 1)}] = {_BusbarPowers[busbar]} ; MaxBusbarPowers[{(busbar + 1)}] = {_MaxBusbarPowers[busbar]} ; CycleNumber = {cycle} ;  CycleTime = {_cycles[busbar, cycle]} "
                                                , LogLevels.Warn);
 
@@ -405,7 +405,7 @@ namespace EEC
                     }
 
                     // Check and clearance of irrelated overload flags
-                    var timeDiff = (DateTime.Now - _cycles[busbar, cycle]).TotalMilliseconds;
+                    var timeDiff = (DateTime.UtcNow - _cycles[busbar, cycle]).TotalMilliseconds;
                     if ((timeDiff >= (NUMBER_OF_CYCLES_OVERLAD_CHECK - 1) * TIMER_TICKS_SFSC) && _IsOverloadAppear[busbar, cycle])
                         _IsOverloadAppear[busbar, cycle] = false;
                 }
@@ -495,7 +495,7 @@ namespace EEC
                                 }
 
                                 SFSC_FURNACE_TO_SHED_Str sfsc_furnace_to_shed = new SFSC_FURNACE_TO_SHED_Str();
-                                sfsc_furnace_to_shed.TELDATETIME = DateTime.Now;
+                                sfsc_furnace_to_shed.TELDATETIME = DateTime.UtcNow;
                                 sfsc_furnace_to_shed.FURNACE = furnace.ToString();
                                 sfsc_furnace_to_shed.GROUPPOWER = _BusbarPowers[busbar].ToString();
                                 sfsc_furnace_to_shed.SHEADTIME = DateTime.Parse("1900-01-01 00:00:00");
@@ -505,7 +505,7 @@ namespace EEC
                                 //_updateScadaPointOnServer.SendAlarm(_repository.GetScadaPoint("SFSCACTIVATED"), DigitalSingleStatus.Open, " ");
 
                                 //1401_08_08 Preparing Data For HMI
-                                String Datatime = DateTime.UtcNow.ToIranDateTime().ToString("yyyy/MM/dd HH:mm:ss");
+                                String Datatime = DateTime.UtcNow.ToIranStandardTime();
 
 
                                 string sql = $"INSERT INTO APP_SFSC_FURNACE_SHEDDED (DATETIME, FURNACE, ENERGY, EEC_POWER_LIMIT, CONSUMED_POWER, FURNACE_BUS_NUMBER) VALUES(" +

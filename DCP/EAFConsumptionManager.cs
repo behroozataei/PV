@@ -1,6 +1,7 @@
 using COMMON;
 using Irisa.Logger;
 using Irisa.Message;
+using Irisa.Common.Utils;
 using Newtonsoft.Json;
 using System;
 using System.Data;
@@ -50,7 +51,7 @@ namespace DCP
                 // Insert new rows for furnaces into T_Furnace with current time as Start
                 for (int furnace = 1; furnace <= 8; furnace++)
                 {
-                    sql = "INSERT INTO T_Furnace(Start, FurnaceNumber) values('" + DateTime.Now.ToString() + "', " + furnace.ToString() + ")";
+                    sql = "INSERT INTO T_Furnace(Start, FurnaceNumber) values('" + DateTime.UtcNow.ToIranTime() + "', " + furnace.ToString() + ")";
                     if (!_repository.ModifyOnLinkDB(sql))
                     {
                         System.Threading.Thread.Sleep(100);
@@ -150,7 +151,7 @@ namespace DCP
                             else
                             {
                                 sql = "INSERT INTO PU10_PCS.dbo.T_FURNACE(FurnaceNumber, EndTime, ConsumedEnergy)" +
-                                        "VALUES(" + furnace.ToString() + ", '" + DateTime.Now.ToString() + "', '" + SumEAFConsumptionPerHeat[furnace - 1].ToString() + "');";
+                                        "VALUES(" + furnace.ToString() + ", '" + DateTime.UtcNow.ToIranTime() + "', '" + SumEAFConsumptionPerHeat[furnace - 1].ToString() + "');";
 
                                 //sql = "UPDATE dbo.T_FURNACE SET EndTime='" + DateTime.Now.ToString() +
                                 //		"',ConsumedEnergy='" + scadaPointEAFSConsumption.Value.ToString() +
@@ -169,7 +170,7 @@ namespace DCP
                                 //Module1.ArrayEAFsCurrent[J - 1, 1] = "Standby";
                                 //WriteData(ArrayEAFsConsumption[J - 1], "0");
                                 //EAFCONSUMPTION[J - 1] = 0;
-                                _repository.UpdateFurnace(furnace, DateTime.Now.ToString(), SumEAFConsumptionPerHeat[furnace - 1].ToString());
+                                _repository.UpdateFurnace(furnace, DateTime.UtcNow.ToIranStandardTime(), SumEAFConsumptionPerHeat[furnace - 1].ToString());
                                 SumEAFConsumptionPerHeat[furnace - 1] = 0;
                                 // TODO: check if we have put 0 for this furnace for 'ConsEnergy_EAF'
 

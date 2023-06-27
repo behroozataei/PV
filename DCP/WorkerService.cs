@@ -9,6 +9,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using System;
 using System.Collections.Concurrent;
+using System.Data;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -53,7 +54,7 @@ namespace DCP
             
 
             _cpsRuntimeDataBuffer = new BlockingCollection<CpsRuntimeData>();
-            _rpcService = new CpsRpcService(_config["CpsIpAddress"], 10000, historyDataRequest, _cpsRuntimeDataBuffer);
+            _rpcService = new CpsRpcService(_config["CpsIpAddress"], 10000, historyDataRequest, _cpsRuntimeDataBuffer, GetRpcSslCredentials());
 
             _repository = new Repository(_logger, _staticDataManager, _historicalDataManager, _linkDBpcsDataManager, _RedisConnectorHelper);
             _dcpManager = new DCPManager(_logger, _repository, _rpcService.CommandService, _historicalDataManager);
@@ -177,6 +178,20 @@ namespace DCP
                 GlobalData.CPSStatus = false;
                 _logger.WriteEntry("CPS is going to Connecting", LogLevels.Info);
             }
+        }
+        private RpcSslCredentials? GetRpcSslCredentials()
+        {
+            var dataTable = _staticDataManager.GetRecord("APP_GRPC_CERTIFICATION_SELECT", CommandType.StoredProcedure);
+
+            if (dataTable.Rows.Count > 0)
+            {
+                var rootCertificate = Convert.ToString(dataTable.Rows[0]["ROOT_CERTIFICATE"]);
+                var clientCertificateChain = Convert.ToString(dataTable.Rows[0]["CLIENT_CERTIFICATE_CHAIN"]);
+                var clientPrivateKey = Convert.ToString(dataTable.Rows[0]["CLIENT_PRIVATE_KEY"]);
+
+                return new RpcSslCredentials(rootCertificate, clientCertificateChain, clientPrivateKey);
+            }
+            return null;
         }
     }
 }

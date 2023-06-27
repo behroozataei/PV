@@ -28,14 +28,17 @@ namespace SDK_Template
         private readonly RuntimeDataReceiver _runtimeDataReceiver;
         private readonly SDK_Template_Manager _sdk_template_manager;
         private readonly RedisUtils _RedisConnectorHelper;
+        private readonly IConfiguration _config;
 
         public WorkerService(IServiceProvider serviceProvider)
         {
             var config = serviceProvider.GetService<IConfiguration>();
             _logger = serviceProvider.GetService<ILogger>();
 
-            _RedisConnectorHelper.ConnectionFailed += _RedisConnectorHelper_ConnectionFailed;
-            _RedisConnectorHelper.RedisUtils_Connect(0, config["RedisKeySentinel1"], config["RedisKeySentinel2"], config["RedisKeySentinel3"], config["RedisKeySentinel4"], config["RedisKeySentinel5"], config["RedisPassword"], config["RedisServiceName"]);
+            
+            _RedisConnectorHelper = new RedisUtils(0, _config["RedisKeySentinel1"], _config["RedisKeySentinel2"], _config["RedisKeySentinel3"], _config["RedisKeySentinel4"], _config["RedisKeySentinel5"], _config["RedisPassword"], _config["RedisServiceName"],
+                                                       _config["RedisConName1"], _config["RedisConName2"], _config["RedisConName3"], _config["RedisConName4"], _config["RedisConName5"], _config["IsSentinel"]);
+
 
             //if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             //{

@@ -37,7 +37,7 @@ namespace OCP
             //"IMANIAN 96-11-07  ADD CYCLTIME FOR EACH POINT
 
             //"IMANIAN 96-11-07  ADD CYCLTIME FOR EACH POINT
-            cycletime = DateTime.Now;
+            cycletime = DateTime.UtcNow;
             //"IMANIAN 96-11-07  ADD CYCLTIME FOR EACH POINT
             foreach (var checkPoint in _repository.GetCheckPoints())
             {

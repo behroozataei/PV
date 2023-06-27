@@ -1,6 +1,8 @@
 using COMMON;
 using Irisa.Logger;
 using Irisa.Message;
+using Irisa.Common.Utils;
+
 using System;
 using System.Timers;
 using System.Data;
@@ -135,7 +137,7 @@ namespace DCP
                     sql = "INSERT INTO [PU10_PCS].[dbo].[T_EAFsPower](TelDateTime, Sumation, " +
                         "PowerGrp1, PowerGrp2, Furnace1, Furnace2, Furnace3, Furnace4, Furnace5, " +
                         "Furnace6, Furnace7, Furnace8) Values('" +
-                        sfsc_eafsp.TELDATETIME.ToString() + "', " +
+                        sfsc_eafsp.TELDATETIME.ToIranTime() + "', " +
                         sfsc_eafsp.SUMATION.ToString() + ", " +
                         sfsc_eafsp.POWERGRP1.ToString() + ", " +
                         sfsc_eafsp.POWERGRP2.ToString() + ", " +
@@ -163,7 +165,7 @@ namespace DCP
                         "INSERT INTO APP_DCP_EAFSPOWER (DATETIME, SUMMATION, " +
                         "POWER_GRP1, POWER_GRP2, FURNACE1, FURNACE2, FURNACE3, FURNACE4, FURNACE5, " +
                         "FURNACE6, FURNACE7, FURNACE8) Values('" +
-                        sfsc_eafsp.TELDATETIME.ToString("yyyy/MM/dd HH:mm:ss") + "', '" +
+                        sfsc_eafsp.TELDATETIME.ToIranStandardTime() + "', '" +
                         Math.Round(sfsc_eafsp.SUMATION, 2).ToString() + "', '" +
                         Math.Round(sfsc_eafsp.POWERGRP1,2).ToString() + "', '" +
                         Math.Round(sfsc_eafsp.POWERGRP2,2).ToString() + "', '" +
@@ -177,7 +179,7 @@ namespace DCP
                         Math.Round(sfsc_eafsp.FURNACE8, 2).ToString() + "' " +
                         " )";
                     var parameters = new IDbDataParameter[12];
-                    parameters[0] = _historicalDataManager.CreateParameter("p_DateTime", sfsc_eafsp.TELDATETIME.ToString("yyyy/MM/dd HH:mm:ss"));
+                    parameters[0] = _historicalDataManager.CreateParameter("p_DateTime", sfsc_eafsp.TELDATETIME.ToIranStandardTime());
                     parameters[1] = _historicalDataManager.CreateParameter("p_Summation", Math.Round(sfsc_eafsp.SUMATION, 2));
                     parameters[2] = _historicalDataManager.CreateParameter("p_Power_Grp1", Math.Round(sfsc_eafsp.POWERGRP1, 2));
                     parameters[3] = _historicalDataManager.CreateParameter("p_Power_Grp2", Math.Round(sfsc_eafsp.POWERGRP2, 2));

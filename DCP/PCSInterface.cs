@@ -72,7 +72,7 @@ namespace DCP
                 strSQL = "Insert Into dbo.T_EECTelegram (TELDATETIME, RESIDUALTIME," +
                          " RESIDUALENERGY, OVERLOAD1, OVERLOAD2, RESIDUALENERGYEND) " +
                          "VALUES('" +
-                         aEECTelegram.m_Date.ToString() + "', '" +
+                         aEECTelegram.m_Date.ToIranTime() + "', '" +
                          aEECTelegram.m_ResidualTime.Trim() + "', " +
                          (Double.Parse(aEECTelegram.m_ResidualEnergy) * CORRECT_FACTOR).ToString().Trim() + ", " +
                          (Double.Parse(aEECTelegram.m_OverLoad1) * CORRECT_FACTOR).ToString().Trim() + ", " +
@@ -82,7 +82,7 @@ namespace DCP
 
                 // -------------- Modification: Akbari, 2008-11-24 -------------------
                 // Trace if we are loosing cycles
-                _logger.WriteEntry("Time: " + aEECTelegram.m_Date, LogLevels.Info);
+                _logger.WriteEntry("Time: " + aEECTelegram.m_Date.ToIranStandardTime(), LogLevels.Info);
 
                 // -------------------------------------------------------------------
                 // 5.
@@ -94,7 +94,7 @@ namespace DCP
                     string strSQLHIS = "Insert Into APP_DCP_EECTelegram (\"TELDATETIME\", \"RESIDUALTIME_MIN\"," +
                          " \"RESIDUALENERGY_MWH\", \"POWERLIMIT1_MW\", \"POWERLIMIT2_MW\", \"RESIDUALENERGYEND_MWH\") " +
                          "VALUES('" +
-                         aEECTelegram.m_Date.ToString("yyyy/MM/dd HH:mm:ss") + "', '" +
+                         aEECTelegram.m_Date.ToIranStandardTime() + "', '" +
                          aEECTelegram.m_ResidualTime.Trim() + "', " +
                          Math.Round((Double.Parse(aEECTelegram.m_ResidualEnergy)), 2).ToString().Trim() + ", " +
                          Math.Round((Double.Parse(aEECTelegram.m_OverLoad1)),2).ToString().Trim() + ", " +
@@ -102,7 +102,7 @@ namespace DCP
                          Math.Round((Double.Parse(aEECTelegram.m_ResidualEnergyEnd)), 2).ToString().Trim() + ")";
 
                     var parameters = new IDbDataParameter[6];
-                    parameters[0] = _historicalDataManager.CreateParameter("p_DateTime", aEECTelegram.m_Date.ToString("yyyy/MM/dd HH:mm:ss"));
+                    parameters[0] = _historicalDataManager.CreateParameter("p_DateTime", aEECTelegram.m_Date.ToIranStandardTime());
                     parameters[1] = _historicalDataManager.CreateParameter("p_Summation", aEECTelegram.m_ResidualTime.Trim());
                     parameters[2] = _historicalDataManager.CreateParameter("p_Power_Grp1", Math.Round((Double.Parse(aEECTelegram.m_ResidualEnergy)), 2).ToString().Trim());
                     parameters[3] = _historicalDataManager.CreateParameter("p_Power_Grp2", Math.Round((Double.Parse(aEECTelegram.m_OverLoad1)), 2).ToString().Trim());
@@ -235,7 +235,7 @@ namespace DCP
                 strSQL = "Insert Into T_EAFGroup (TelDateTime, EAF1Group, EAF2Group, EAF3Group, EAF4Group," +
                          " EAF5Group, EAF6Group, EAF7Group, EAF8Group) " +
                          "VALUES('" +
-                         aEAFGroupTelegram.TelDate + "', " +
+                         aEAFGroupTelegram.TelDate.ToIranTime() + "', " +
                          EAF1Group + ", " +
                          EAF2Group + ", " +
                          EAF3Group + ", " +
@@ -291,7 +291,7 @@ namespace DCP
                 // -------------------------------------------------------------------------
                 // 3.
                 // On first Link Server
-                strSQL = "Update T_EAFGroupRequest Set ResponseDateTime = '" + DateTime.Now.ToString() + "' Where RequestDateTime = (Select MAX(RequestDateTime) From T_EAFGROUPREQUEST)";
+                strSQL = "Update T_EAFGroupRequest Set ResponseDateTime = '" + DateTime.UtcNow.ToIranTime() + "' Where RequestDateTime = (Select MAX(RequestDateTime) From T_EAFGROUPREQUEST)";
                 if (!_repository.UpdateEAFGroupRequest())
                 {
                     SetAlarmForLinkServer("1_LinkServer: Could not update T_EAFGroupRequest Table in the SQLServer->PU10_PCS DB");
@@ -300,11 +300,11 @@ namespace DCP
                 }
                 else
                 {
-                    ClearAlarmForLinkServer("1_LinkServer: Update EAFGroupRequest was accomlished successfully, ResponseDateTime = " + String.Format("{0:d}", DateTime.Now));
+                    ClearAlarmForLinkServer("1_LinkServer: Update EAFGroupRequest was accomlished successfully, ResponseDateTime = " +  DateTime.UtcNow.ToIranTime());
                 }
 
                 // On second Link Server
-                strSQL = "Update T_EAFGroupRequest Set ResponseDateTime = '" + DateTime.Now.ToString() + "' Where RequestDateTime = (Select MAX(RequestDateTime) From T_EAFGROUPREQUEST)";
+                strSQL = "Update T_EAFGroupRequest Set ResponseDateTime = '" + DateTime.UtcNow.ToIranTime() + "' Where RequestDateTime = (Select MAX(RequestDateTime) From T_EAFGROUPREQUEST)";
 
                 // -------------------------------------------------------------------------
                 // 4.
@@ -324,14 +324,14 @@ namespace DCP
             bool result = false;
             try
             {
-                string strDate;
+                DateTime strDate;
                 string strSQL = "";
 
                 result = false;
 
                 // -------------------------------------------------------------------------
                 // 1.
-                _logger.WriteEntry("Sending LSP telegram for PCS: " + DateTime.Now.ToString(), LogLevels.Info);
+                _logger.WriteEntry("Sending LSP telegram for PCS: " + DateTime.UtcNow.ToIranStandardTime(), LogLevels.Info);
 
                 // -------------------------------------------------------------------------
                 // 2.
@@ -342,7 +342,7 @@ namespace DCP
                 //End If
 
                 //1401.03.24 IranTime
-                strDate = DateTime.UtcNow.ToIranDateTime().ToString();
+                strDate = DateTime.UtcNow.ToIranTime();
 
                 // -------------------------------------------------------------------------
                 // 3. Put in the Database, T_LSPTelegram Table

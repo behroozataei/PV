@@ -59,7 +59,7 @@ namespace OCP
             var callme = true;
             while (true)
             {
-                DateTime vTime = DateTime.Now;
+                DateTime vTime = DateTime.UtcNow;
                 if (callme && ((vTime.Second % 3) == 0) && (vTime.Millisecond < 500))
                 {
                     //_logger.WriteEntry(" --------------- OnOCPTimer :     " + vTime.ToString(), LogLevels.Info);
@@ -99,7 +99,7 @@ namespace OCP
 
                 //' 1394.05.05 Start
                 System.DateTime vTimeStart = DateTime.FromOADate(0);
-                vTimeStart = DateTime.Now;
+                vTimeStart = DateTime.UtcNow;
                 //Call theCTraceLogger.WriteLog(TraceInfo1, "COCPManager.RunCyclicOperation", "")
                 //Call theCTraceLogger.WriteLog(TraceInfo1, "COCPManager.RunCyclicOperation", "Start: " & Time)
                 //' 1394.05.05 End
@@ -164,7 +164,7 @@ namespace OCP
                 //' 1394.05.05 Start
                 // Check duration of running OCP.
                 int iDiffSec;
-                System.DateTime vtime = DateTime.Now;
+                System.DateTime vtime = DateTime.UtcNow;
                 iDiffSec = (vtime.Minute * 60 + vtime.Second) - (vTimeStart.Minute * 60 + vTimeStart.Second);
                 if (iDiffSec > 2)
                 {
@@ -200,8 +200,8 @@ namespace OCP
             _overloadPreparation.FillBigTransSides();
 
             // 
-            int aSec = DateTime.Now.Second;
-            int mSec = DateTime.Now.Millisecond;
+            int aSec = DateTime.UtcNow.Second;
+            int mSec = DateTime.UtcNow.Millisecond;
 
             // Start from the next 3 seconds
             // Sampling is done in the seconds 0, 3, 6, 9, ...

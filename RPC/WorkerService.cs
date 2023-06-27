@@ -8,6 +8,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using System;
 using System.Collections.Concurrent;
+using System.Data;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -52,7 +53,7 @@ namespace RPC
             
 
             _cpsRuntimeDataBuffer = new BlockingCollection<CpsRuntimeData>();
-            _rpcService = new CpsRpcService(_config["CpsIpAddress"], 10000, historyDataRequest, _cpsRuntimeDataBuffer);
+            _rpcService = new CpsRpcService(_config["CpsIpAddress"], 10000, historyDataRequest, _cpsRuntimeDataBuffer, GetRpcSslCredentials());
             _historicalDataManager = new Irisa.DataLayer.Oracle.OracleDataManager(_config["OracleServicename"], _config["OracleDatabaseAddress"], _config["OracleHISUser"], _config["OracleHISPassword"]);
             _repository = new Repository(_logger, _dataManager, _historicalDataManager, _RedisConnectorHelper);
             _rpcManager = new RPCManager(_logger, _repository, _rpcService.CommandService);
@@ -113,12 +114,18 @@ namespace RPC
             else
                 _logger.WriteEntry("Loading data from database/redis is completed", LogLevels.Info);
 
-            _rpcManager.Start();
+
+           
             //_rpcManager.Build();
 
             _rpcService.StateChanged += RpcStateChanged;
+
+          
             _runtimeDataReceiver.Start();
-           // _rpcManager.CheckCPSStatus();
+            // _rpcManager.CheckCPSStatus();
+
+            _rpcManager.init();
+            _rpcManager.Start();
 
 
             var taskWaiting = Task.Delay(3000, cancellationToken);
@@ -188,6 +195,20 @@ namespace RPC
                 _logger.WriteEntry("CPS is going to Connecting", LogLevels.Info);
             }
 
+        }
+        private RpcSslCredentials? GetRpcSslCredentials()
+        {
+            var dataTable = _dataManager.GetRecord("APP_GRPC_CERTIFICATION_SELECT", CommandType.StoredProcedure);
+
+            if (dataTable.Rows.Count > 0)
+            {
+                var rootCertificate = Convert.ToString(dataTable.Rows[0]["ROOT_CERTIFICATE"]);
+                var clientCertificateChain = Convert.ToString(dataTable.Rows[0]["CLIENT_CERTIFICATE_CHAIN"]);
+                var clientPrivateKey = Convert.ToString(dataTable.Rows[0]["CLIENT_PRIVATE_KEY"]);
+
+                return new RpcSslCredentials(rootCertificate, clientCertificateChain, clientPrivateKey);
+            }
+            return null;
         }
     }
 }

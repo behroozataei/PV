@@ -10,6 +10,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using Newtonsoft.Json.Schema;
+using System.Globalization;
 
 namespace EEC
 {
@@ -241,7 +242,7 @@ namespace EEC
 
         public bool SendEECTelegramToDC(float RESTIME, float ER_Cycle, float PSend, float PSend1, float PSend2, float m_EnergyResEnd)
         {
-            String Datatime = DateTime.Now.ToString("yyyy-MMMM-dd HH:mm:ss");
+            String Datatime = DateTime.UtcNow.ToString("yyyy-MMMM-dd HH:mm:ss");
             String strSQL = $"INSERT INTO APP_EEC_TELEGRAMS" +
                 "(TelDateTime, SentTime, ResidualTime, ResidualEnergy, MaxOverload1, MaxOverload2, ResidualEnergyEnd) " +
                 "VALUES (" +
@@ -256,7 +257,8 @@ namespace EEC
 
             EEC_TELEGRAM_Str eec_telegram = new EEC_TELEGRAM_Str();
             //1401.03.24 IranTime
-            eec_telegram.TELDATETIME = DateTime.UtcNow.ToIranDateTime();
+           
+            eec_telegram.TELDATETIME = DateTime.UtcNow;
             eec_telegram.SENTTIME = DateTime.Parse("1900-01-01 00:00:00");
             eec_telegram.RESIDUALTIME = RESTIME;
             eec_telegram.RESIDUALENERGY = ER_Cycle;
@@ -355,7 +357,7 @@ namespace EEC
             {
                 SFSC_EAFPOWER_Str sfsc_eafpower = new SFSC_EAFPOWER_Str();
                 //1401.03.24 IranTime
-                sfsc_eafpower.TELDATETIME = DateTime.UtcNow.ToIranDateTime();
+                sfsc_eafpower.TELDATETIME = DateTime.UtcNow;
                 sfsc_eafpower.SUMATION = _BusbarPowers[0] + _BusbarPowers[1];
                 sfsc_eafpower.POWERGRP1 = _BusbarPowers[0];
                 sfsc_eafpower.POWERGRP2 = _BusbarPowers[1];

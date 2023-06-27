@@ -72,13 +72,21 @@ namespace RPC
                 {
                     var newQuality = (int)measurement.QualityCodes;
 
-                    if (scadaPoint.Value != measurement.Value || scadaPoint.Quality != newQuality)
+                   // if (scadaPoint.Value != measurement.Value || scadaPoint.Quality != newQuality)
                     {
                         scadaPoint.Value = measurement.Value;
                         scadaPoint.Quality = newQuality;
-                        //_dataProcessing.ScadaPointReceived(scadaPoint);
+
+
+                        if(scadaPoint.ScadaType== "AnalogMeasurement_acc")
+                            _dataProcessing.Integrator(scadaPoint);
+                    }
+                    if (measurement.Acknowledged && (scadaPoint.Name == "RPCAlarm" || scadaPoint.Name == "RPCSuggestion"))
+                    {
+                        _dataProcessing.AlarmAcked_Processing(scadaPoint);
                     }
                 }
+               
 
             }
         }

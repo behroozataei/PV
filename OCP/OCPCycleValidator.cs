@@ -1,4 +1,6 @@
 ﻿using Irisa.Logger;
+using Irisa.Common.Utils;
+
 using System;
 using System.Collections.Generic;
 
@@ -30,7 +32,7 @@ namespace OCP
 
             int cycleDiff;
             int missedCycleNo;
-            var vTime = DateTime.Now;
+            var vTime = DateTime.UtcNow;
             var substitutionQuality = OCPCheckPointQuality.Invalid;
             var substitutionValue = 0.0f;
 
@@ -69,7 +71,7 @@ namespace OCP
 
                 _logger.WriteEntry("GetOCPCycleNo..First running : CycleNo = " +
                                     LastTrueCycleNo.ToString() + " ; Time = " +
-                                    LastTrueTime.ToString()
+                                    LastTrueTime.ToIranStandardTime()
                                     , LogLevels.Info);
             }
 
@@ -317,7 +319,7 @@ namespace OCP
 
             foreach (KeyValuePair<DateTime, Tuple<int, float>> kvp in dict)
             {
-                _logger.WriteEntry($"Cycle({kvp.Value.Item1}) = " + kvp.Key.ToString("yyyy-MM-dd HH:mm:ss.fff") + " ; " + kvp.Value.Item2.ToString(), LogLevels.Info);
+                _logger.WriteEntry($"Cycle({kvp.Value.Item1}) = " + kvp.Key.ToIranStandardTime() + " ; " + kvp.Value.Item2.ToString(), LogLevels.Info);
             }
 
             //_logger.WriteEntry("Cycle (1)  = " + _cycles[1].ToString() + " ; " + ocpCheckPoint.Value1.ToString(), LogLevels.Info);

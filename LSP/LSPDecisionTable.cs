@@ -97,7 +97,7 @@ namespace LSP
 
             try
             {
-                List<SqlParameter> listNull = new List<SqlParameter>();
+               // List<SqlParameter> listNull = new List<SqlParameter>();
 
                 var dtbMeasurements = _repository.FetchItems(m_DectNo);
                 var rows = dtbMeasurements.Where(n => n.DECTNO.ToString() == m_DectNo.ToString())

@@ -8,6 +8,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using System;
 using System.Collections.Concurrent;
+using System.Data;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -49,7 +50,7 @@ namespace MAB
                                                      _config["RedisConName1"], _config["RedisConName2"], _config["RedisConName3"], _config["RedisConName4"], _config["RedisConName5"], _config["IsSentinel"]);
            
             _cpsRuntimeDataBuffer = new BlockingCollection<CpsRuntimeData>();
-            _rpcService = new CpsRpcService(_config["CpsIpAddress"], 10000, historyDataRequest, _cpsRuntimeDataBuffer);
+            _rpcService = new CpsRpcService(_config["CpsIpAddress"], 10000, historyDataRequest, _cpsRuntimeDataBuffer, GetRpcSslCredentials());
             _repository = new Repository(_logger, _dataManager, _RedisConnectorHelper);
             _mabManager = new MABManager(_logger, _repository, _rpcService.CommandService);
             _runtimeDataReceiver = new RuntimeDataReceiver(_logger, _repository, (IProcessing)_mabManager, _rpcService, _cpsRuntimeDataBuffer);
@@ -179,5 +180,21 @@ namespace MAB
             }
 
         }
+
+        private RpcSslCredentials? GetRpcSslCredentials()
+        {
+            var dataTable = _dataManager.GetRecord("APP_GRPC_CERTIFICATION_SELECT", CommandType.StoredProcedure);
+
+            if (dataTable.Rows.Count > 0)
+            {
+                var rootCertificate = Convert.ToString(dataTable.Rows[0]["ROOT_CERTIFICATE"]);
+                var clientCertificateChain = Convert.ToString(dataTable.Rows[0]["CLIENT_CERTIFICATE_CHAIN"]);
+                var clientPrivateKey = Convert.ToString(dataTable.Rows[0]["CLIENT_PRIVATE_KEY"]);
+
+                return new RpcSslCredentials(rootCertificate, clientCertificateChain, clientPrivateKey);
+            }
+            return null;
+        }
+
     }
 }

@@ -323,7 +323,7 @@ namespace DCP
                 _EAFGroupTelegram.EAF8Group = (int)EAF8Group.Value;
 
                 //1401.3.24 IranTime to PCS
-                _EAFGroupTelegram.TelDate = DateTime.UtcNow.ToIranDateTime();
+                _EAFGroupTelegram.TelDate = DateTime.UtcNow;
             }
             catch (System.Exception excep)
             {
@@ -589,7 +589,7 @@ namespace DCP
                 }
                 else
                 {
-                    _logger.WriteEntry("TELDATETIME= " + _eec_telegram.TELDATETIME.ToString(), LogLevels.Info);
+                    _logger.WriteEntry("TELDATETIME= " + _eec_telegram.TELDATETIME.ToIranStandardTime(), LogLevels.Info);
                 }
 
                 _EECTelegram.m_Date = _eec_telegram.TELDATETIME;
@@ -670,7 +670,7 @@ namespace DCP
                 //	_logger.WriteEntry("Could not update T_EECTelegram Table", LogLevels.Error);
                 //}
                
-                _eec_telegram.SENTTIME = DateTime.Now;
+                _eec_telegram.SENTTIME = DateTime.UtcNow;
                 RedisUtils.RedisConn.Set(RedisKeyPattern.EEC_TELEGRAM, JsonConvert.SerializeObject(_eec_telegram));
 
             }

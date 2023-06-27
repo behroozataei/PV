@@ -4,7 +4,7 @@ using Irisa.Message;
 using System;
 using System.Timers;
 using COMMON;
-
+using Irisa.Message.CPS;
 
 namespace RPC
 {
@@ -24,12 +24,13 @@ namespace RPC
 		private VoltageController _theCVoltageController;
         private QController _theCQController;
         private CosPHIController _theCCosPhiController;
+        public EnergyCalc _energyCalc;
 
 
 
 
 
-		public RPCManager(ILogger logger, IRepository repository, ICpsCommandService scadaCommand)
+        public RPCManager(ILogger logger, IRepository repository, ICpsCommandService scadaCommand)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _updateScadaPointOnServer = new UpdateScadaPointOnServer(logger, scadaCommand);
@@ -45,6 +46,8 @@ namespace RPC
             _theCVoltageController = new VoltageController(repository, _logger, _updateScadaPointOnServer);
             _theCQController = new QController(repository, _logger, _updateScadaPointOnServer);
             _theCCosPhiController = new CosPHIController(repository, _logger, _updateScadaPointOnServer);
+            _energyCalc = new EnergyCalc(_logger, _repository, _updateScadaPointOnServer);
+
 
 
         }
@@ -65,9 +68,12 @@ namespace RPC
         public void Start()
         {
             _timer.Start();
+            _energyCalc.Start();
+
         }
 
-        
+       
+
 		public void RunCyclicOperation(object sender, ElapsedEventArgs e)
 		{
 			try
@@ -78,6 +84,24 @@ namespace RPC
 				_logger.WriteEntry("-----------------------------------------------------------------------  ", LogLevels.Info);
 				_logger.WriteEntry("Enter to method on: " + Environment.MachineName.ToString(),LogLevels.Info);
                 //_logger.WriteEntry(" Machine State is: " + GeneralModule.GetProcessState(GeneralModule.eRPCState));
+
+                //_Er_SVCA.Energy1Min();
+                //_Er_SVCB.Energy1Min();
+                //_Er_T4AN.Energy1Min();
+                //_Ea_T4AN.Energy1Min();
+                //_Er_T6AN.Energy1Min();
+                //_Ea_T6AN.Energy1Min();
+
+                //_energyCalc.Energy1Min(_repository.GetAccScadaPoint("SVCA_Q"));
+                //_energyCalc.Energy1Min(_repository.GetAccScadaPoint("SVCB_Q"));
+                //_energyCalc.Energy1Min(_repository.GetAccScadaPoint("T4AN_Q"));
+                //_energyCalc.Energy1Min(_repository.GetAccScadaPoint("T4AN_P"));
+                //_energyCalc.Energy1Min(_repository.GetAccScadaPoint("T6AN_Q"));
+                //_energyCalc.Energy1Min(_repository.GetAccScadaPoint("T6AN_P"));
+
+
+
+                //_theCRPCCalculation.SVC_ReactiveEnergy();
 
                 // Stop the process if it is not Enable
                 if (_repository.GetRPCScadaPoint("RPCFSTATUS").Value == 0.0)
@@ -127,6 +151,7 @@ namespace RPC
                     return;
                 }
 
+               
                 if (!_theCRPCCalculation.TransPrimeVoltageCalc())
                 {
                     _logger.WriteEntry("TransPrimeVoltageCalc() could not be completed!", LogLevels.Warn);
@@ -138,7 +163,7 @@ namespace RPC
                 {
                     _logger.WriteEntry("       ----- 3 Minute Cycle -----", LogLevels.Info);
 
-                    // CosPhi Limit Checking is done automatically in PowerCC
+                    // CosPhi Limit Checking is done automatically in Scada
                     if (!_theCRPCCalculation.CosPhiCalc())
                     {
                         _logger.WriteEntry("CosPhiCalc() does not work!", LogLevels.Warn);
@@ -154,17 +179,28 @@ namespace RPC
                             return;
                         }
                     }
-
+                    
                     // Limit Checking
                     if (!_theCLimitChecker.VoltageLimitChecking())
                     {
                         _logger.WriteEntry("VoltageLimitChecking() does not work!", LogLevels.Warn);
                     }
 
+                    // ATA 1402-04-06
+                    if (!_theCRPCCalculation.Preset3Min())
+                    {
+                        _logger.WriteEntry("Preset3Min() could not be completed!", LogLevels.Warn);
+                        return;
+                    }
+
+
+
                     if (!_theCLimitChecker.QLimitChecking())
                     {
                         _logger.WriteEntry("QLimitChecking() does not work!", LogLevels.Warn);
                     }
+
+
 
                     // Voltage Control
                     if (!_theCVoltageController.VoltageControl())
@@ -200,7 +236,64 @@ namespace RPC
 
 		}
 
-	
+        
 
-	}
+        internal void init()
+        {
+            try
+            {
+                _updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("VTAP1"), 340.0f);
+                _updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("VTAP2"), 346.7f);
+                _updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("VTAP3"), 353.3f);
+                _updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("VTAP4"), 360.0f);
+                _updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("VTAP5"), 366.7f);
+                _updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("VTAP6"), 373.3f);
+                _updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("VTAP7"), 380.0f);
+                _updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("VTAP8"), 386.7f);
+                _updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("VTAP9"), 393.0f);
+                _updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("VTAP10"), 400.0f);
+                _updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("VTAP11"), 405.7f);
+                _updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("VTAP12"), 413.3f);
+                _updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("VTAP13"), 420.0f);
+                _updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("VTAP14"), 426.7f);
+                _updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("VTAP15"), 433.3f);
+                _updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("VTAP16"), 440.0f);
+                _updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("VTAP17"), 446.7f);
+                _updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("VTAP18"), 453.3f);
+                _updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("VTAP19"), 460.0f);
+                _updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("K"), 1.0f);
+                _updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("K1"), 1.0f);
+                _updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("K2"), 1.0f);
+                _updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("M"), 1.0f);
+                _updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("VR_EAF"), 2.0f);
+                _updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("VR_PP"), 2.0f);
+                _updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("VR_TAV"), 1.0f);
+                _updateScadaPointOnServer.SendAlarm(_repository.GetRPCScadaPoint("RPCAlarm"), SinglePointStatus.Disappear, string.Empty);
+                _updateScadaPointOnServer.SendAlarm(_repository.GetRPCScadaPoint("RPCSuggestion"), SinglePointStatus.Disappear, string.Empty);
+
+
+
+            }
+            catch(System.Exception excep)
+            {
+                _logger.WriteEntry($"Could not init value in SCADA: {excep}", LogLevels.Error);
+
+            }
+        }
+
+        public void Integrator(RPCScadaPoint scadaPoint)
+        {
+            var accScadaPoint = _repository.GetAccScadaPoint(scadaPoint.Name);
+            _energyCalc.TotalEnergy(accScadaPoint);
+
+        }
+        public void AlarmAcked_Processing(RPCScadaPoint scadaPoint)
+        {
+            if (!_updateScadaPointOnServer.SendAlarm(_repository.GetRPCScadaPoint(scadaPoint.Name), SinglePointStatus.Disappear, string.Empty))
+            {
+                _logger.WriteEntry($"Fail to Disappear Alarm {scadaPoint.Name}", LogLevels.Error);
+                return;
+            }
+        }
+    }
 }

@@ -315,7 +315,7 @@ namespace OCP
                         foreach (var _overloaded_point in Overloaded_Pointes)
                         {
                             //String Datatime = DateTime.Now.ToString(("yyyy-MMMM-dd HH:mm:ss"));
-                            String Datatime = DateTime.UtcNow.ToIranDateTime().ToString("yyyy/MM/dd HH:mm:ss");
+                            String Datatime = DateTime.UtcNow.ToIranStandardTime();
                             string Four_Five = " ";
                             if (_overloaded_point.OverloadAlarmFiveCycle && CycleNo == 5)
                                 Four_Five = "Five";

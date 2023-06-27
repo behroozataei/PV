@@ -363,7 +363,7 @@ namespace LSP
                         _logger.WriteEntry("Error to find CB ADDRESS in Repository: " + dr_EEC_EAFSPriority.PARTNERADDRESS.ToString(), LogLevels.Error);
                     }
                 }
-                _sfsc_furnace_to_shed.SHEADTIME = DateTime.Now;
+                _sfsc_furnace_to_shed.SHEADTIME = DateTime.UtcNow;
                 ClearSFSCTrigger(_sfsc_furnace_to_shed);               
                 isWorking_CheckLSPActivationFromSFSC = false;
             }

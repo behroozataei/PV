@@ -18,7 +18,8 @@
 	</ItemGroup>	
 
   <ItemGroup>
-    <PackageReference Include="Google.Protobuf" Version="3.20.1" />
+    <PackageReference Include="Google.Protobuf" Version="3.21.12" />
+    <PackageReference Include="Microsoft.Data.SqlClient" Version="5.0.0" />
     <PackageReference Include="NetPro.CsRedis" Version="6.0.15" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
   </ItemGroup>

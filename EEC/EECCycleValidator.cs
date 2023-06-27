@@ -19,15 +19,15 @@ namespace EEC
 
         public int GetEECCycleNo()
         {
-            var cycleNo = System.DateTime.Now.Minute % 15;
+            var cycleNo = System.DateTime.UtcNow.Minute % 15;
 
             if (cycleNo == 0)
             {
                 var fullCycleTag = _EECCycles[14].CycleValue > DateTime.MinValue;
-                _logger.WriteEntry($"In 0-Cycle, FullCycle check= {fullCycleTag.ToString()}, {DateTime.Now.Minute.ToString()}", LogLevels.Info);
+                _logger.WriteEntry($"In 0-Cycle, FullCycle check= {fullCycleTag.ToString()}, {DateTime.UtcNow.Minute.ToString()}", LogLevels.Info);
             }
 
-            _EECCycles[cycleNo].CycleValue = DateTime.Now;
+            _EECCycles[cycleNo].CycleValue = DateTime.UtcNow;
 
             if (cycleNo > 0)
             {

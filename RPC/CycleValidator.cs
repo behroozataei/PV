@@ -38,25 +38,27 @@ namespace RPC
 				if (!LoadRPCCycles())
 				{
 					_logger.WriteEntry("Could not load data from RPC_Cycles!", LogLevels.Warn);
-					if(InitRPCCycleNo ==false)
-						if(!InitRPCCycles())
+					if (InitRPCCycleNo == false)
+					{
+						if (!InitRPCCycles())
 						{
 							_logger.WriteEntry("Could not initialize data for RPC_Cycles!", LogLevels.Warn);
 							return false;
 						}
-					    else
-                        {
+						else
+						{
 							InitRPCCycleNo = true;
-							return true;
+							//return true;
 						}
+					}
 					else
 					{
 						return false;
-                    }
+					}
 				}
 				InitRPCCycleNo = true;
 
-				var vTime = DateTime.Now;
+				var vTime = DateTime.UtcNow;
 				m_CycleNo = vTime.Minute % 15 + 1; // Cycles begin from 1 to 15
 
 				FuncCycle = ((m_CycleNo - 1) / 3) * 3;
@@ -202,7 +204,7 @@ namespace RPC
 
 				for (int i = 1; i <= 15; i++)
 				{
-					_t_rpcCycles.CYCLE[i] = DateTime.Now;
+					_t_rpcCycles.CYCLE[i] = DateTime.UtcNow;
 				}
 				result=RedisUtils.RedisConn.Set(RedisKeyPattern.RPC_Cycles, JsonConvert.SerializeObject(_t_rpcCycles));
 				//result = true;

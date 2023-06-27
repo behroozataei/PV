@@ -55,7 +55,7 @@ namespace RPC
                 {
                     Er_UnbTAV = 0;
 
-                    if (!_updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("MARK9"), (float)1))
+                    if (!_updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("MARK9"), (float)0))
                     {
                         _logger.WriteEntry("Could not update value in SCADA: " + "MARK9", LogLevels.Error);
                     }
@@ -129,7 +129,7 @@ namespace RPC
                     if (COS_PP >= 0.85d)
                     {
                         Er_UnbPP = 0;
-                        if (!_updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("MARK9"), 1))
+                        if (!_updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("MARK9"), 0))
                         {
                             _logger.WriteEntry("Could not update value in SCADA: " + "MARK9", LogLevels.Error);
                         }
@@ -151,7 +151,7 @@ namespace RPC
                         {
                             if (_repository.GetRPCScadaPoint("QGEN_AUTO").Value <= _repository.GetRPCScadaPoint("NGEN_AUTO").Value * _repository.GetRPCScadaPoint("K2").Value + _repository.GetRPCScadaPoint("QMILL").Value)
                             {
-                                if (!_updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("MARK9"), 2))
+                                if (!_updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("MARK9"), 1))
                                 {
                                     _logger.WriteEntry("Could not update value in SCADA: " + "MARK9", LogLevels.Error);
                                 }

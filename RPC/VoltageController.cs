@@ -66,6 +66,7 @@ namespace RPC
 
 		private double[,] Counter = new double[3, 5]; // Counter(1, x) --> High Counter, Counter(2, x) --> Low Counter, x --> BusBars A, B, E, F
 		private bool[,] OverfluxAppear = new bool[5, 6];
+		private int [,] TransformerStatus = new int [5,9];
 
 
 
@@ -122,7 +123,8 @@ namespace RPC
 
 						// Check if a Trans belongs to a bus bar:
 						if (!CheckTransStatus(Busbar, Trans))
-						{
+						{ 
+							
 							_logger.WriteEntry("Transformer not on the busbar! --> " + ((int)Busbar).ToString() + ", " + ((int)Trans).ToString(),LogLevels.Info);
 
 						}
@@ -150,7 +152,7 @@ namespace RPC
 									TransActVoltage = _repository.GetRPCScadaPoint("T4AN_PRIMEVOLT").Value;
 									break;
 								case TransformerName.TransT5AN:
-									ActualTAP = _repository.GetRPCScadaPoint("T5AN_TAP_NEW").Value;
+									ActualTAP = _repository.GetRPCScadaPoint("T5AN_TAP").Value;
 									TransActVoltage = _repository.GetRPCScadaPoint("T5AN_PRIMEVOLT").Value;
 									break;
 								case TransformerName.TransT6AN:
@@ -277,7 +279,7 @@ namespace RPC
 
 										if (Busbar == BusbarBBName.BusbarA || Busbar == BusbarBBName.BusbarB)
 										{
-											if (!_updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("MARK2"), 1))
+											if (!_updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("MARK2"), 0))
 											{
 												result = false;
 												_logger.WriteEntry("Could not update value in SCADA: " + "MARK2",LogLevels.Error);
@@ -285,7 +287,7 @@ namespace RPC
 										}
 										else
 										{
-											if (!_updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("MARK8"), 1))
+											if (!_updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("MARK8"), 0))
 											{
 												result = false;
 												_logger.WriteEntry("Could not update value in SCADA: " + "MARK8", LogLevels.Error);
@@ -309,7 +311,7 @@ namespace RPC
 										//    Call theCTraceLogger.WriteLog(TraceError, "CVoltageController.VoltageControl()", "Could not update value in SCADA: " & "C2_" & Trim(Str(Busbar)))
 										//End If
 									}
-								}
+								} // Not in Overflux
 								else
 								{
 									// Trans in Overflux
@@ -319,10 +321,10 @@ namespace RPC
 									{
 										_logger.WriteEntry( "Sending alarm failed.",LogLevels.Info);
 									}
-									_logger.WriteEntry("OVERFLUX appearing for the Trans" + ((int)Trans).ToString(), LogLevels.Info);
+									_logger.WriteEntry("OVERFLUX appearing for the Trans" + ((int)Trans).ToString() + ", PrimaryVoltage = "+ TransActVoltage + ",TAPVolatage = " + NomTAPVoltage, LogLevels.Info);
 									if (Busbar == BusbarBBName.BusbarA || Busbar == BusbarBBName.BusbarB)
 									{
-										if (!_updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("MARK2"), 2))
+										if (!_updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("MARK2"), 1))
 										{
 											result = false;
 											_logger.WriteEntry("Could not update value in SCADA: " + "MARK2", LogLevels.Error);
@@ -335,7 +337,7 @@ namespace RPC
 									}
 									else
 									{
-										if (!_updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("MARK8"), 2))
+										if (!_updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("MARK8"), 1))
 										{
 											result = false;
 											_logger.WriteEntry("Could not update value in SCADA: " + "MARK8", LogLevels.Error);
@@ -346,16 +348,16 @@ namespace RPC
 										}
 										_logger.WriteEntry("SUGGESTION: DECR TAP PP", LogLevels.Info);
 									}
-								}
-							}
-						}
-					}
+								} // Trans in Overflux
+							} // Transformer Primary actual Voltage > RVOLT  
+						} // Transformer belong to Busbar
+					} // transformer Loop
 					if ((CheckBusbarInRange) && (TransOnBusbar))
 					{
 						// We're not in overflux --> prepare for the TAP changing
 						CheckVoltageInRange(Busbar);
 					}
-				}
+				} //busbar Loop
 			}
 			catch (System.Exception excep)
 			{
@@ -367,8 +369,42 @@ namespace RPC
 			return result;
 		}
 
-		// Checks the Switch Status of the Transformer
-		private bool CheckTransStatus(BusbarBBName aBusbar, TransformerName aTrans)
+   //     private void TransStatustoScada(BusbarBBName busbar, TransformerName trans)
+   //     {
+			//try
+			//{
+			//	switch (busbar)
+			//	{
+			//		case BusbarBBName.BusbarA:
+			//			if (trans == TransformerName.TransT1AN || trans == TransformerName.TransT2AN || trans == TransformerName.TransT3AN || trans == TransformerName.TransT5AN ||
+			//				trans == TransformerName.TransT7AN || trans == TransformerName.TransT8AN)
+			//				_updateScadaPointOnServer.WriteDigital(_repository.GetRPCScadaPoint($"BUSA_T{trans}AN"), (SinglePointStatus)TransformerStatus[(int)busbar, (int)trans]);
+			//			break;
+			//		case BusbarBBName.BusbarB:
+			//			if (trans == TransformerName.TransT1AN || trans == TransformerName.TransT2AN || trans == TransformerName.TransT3AN || trans == TransformerName.TransT5AN ||
+			//				trans == TransformerName.TransT7AN || trans == TransformerName.TransT8AN)
+			//				_updateScadaPointOnServer.WriteDigital(_repository.GetRPCScadaPoint($"BUSB_T{trans}AN"), (SinglePointStatus)TransformerStatus[(int)busbar, (int)trans]);
+			//			break;
+			//		case BusbarBBName.BusbarE:
+			//			if (trans == TransformerName.TransT3AN || trans == TransformerName.TransT4AN || trans == TransformerName.TransT6AN)
+			//				_updateScadaPointOnServer.WriteDigital(_repository.GetRPCScadaPoint($"BUSC_T{trans}AN"), (SinglePointStatus)TransformerStatus[(int)busbar, (int)trans]);
+			//			break;
+			//		case BusbarBBName.BusbarF:
+			//			if (trans == TransformerName.TransT3AN || trans == TransformerName.TransT4AN || trans == TransformerName.TransT6AN)
+			//				_updateScadaPointOnServer.WriteDigital(_repository.GetRPCScadaPoint($"BUSD_T{trans}AN"), (SinglePointStatus)TransformerStatus[(int)busbar, (int)trans]);
+			//			break;
+			//	}
+			//}
+			//catch(System.Exception excep)
+   //         {
+			//	_logger.WriteEntry(excep.Message, LogLevels.Error);
+
+			//}
+            
+   //     }
+
+        // Checks the Switch Status of the Transformer
+        private bool CheckTransStatus(BusbarBBName aBusbar, TransformerName aTrans)
 		{
 			bool result = false;
 			try
@@ -587,13 +623,13 @@ namespace RPC
 					_logger.WriteEntry("BusVoltage=" + BusVoltage.ToString() + " > VHigh=" + VHigh.ToString(), LogLevels.Info);
 					_logger.WriteEntry("Counter(1, " + ((int)aBusbar).ToString() + ")=" + Counter[1, (int)aBusbar].ToString(), LogLevels.Trace);
 
-					if (!_updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("C1_" + aBusbar), (float)Counter[1, (int)aBusbar]))
+					if (!_updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("C1_" + ((uint)aBusbar)), (float)Counter[1, (int)aBusbar]))
 					{
 						_logger.WriteEntry("Could not update value in SCADA: " + "C1_" + aBusbar,LogLevels.Info);
 						return;
 					}
 
-					if (!_updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("C2_" + aBusbar), (float)Counter[2, (int)aBusbar]))
+					if (!_updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("C2_" + ((uint)aBusbar)), (float)Counter[2, (int)aBusbar]))
 					{
 						_logger.WriteEntry( "Could not update value in SCADA: " + "C2_" + aBusbar,LogLevels.Info);
 						return;
@@ -614,7 +650,7 @@ namespace RPC
 									switch (aBusbar)
 									{
 										case BusbarBBName.BusbarA:
-											if (!_updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("MARK4"), 2))
+											if (!_updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("MARK4"), 1))
 											{
 												_logger.WriteEntry("Could not update value in SCADA: " + "MARK4",LogLevels.Error);
 											}
@@ -625,7 +661,7 @@ namespace RPC
 											_logger.WriteEntry( "SUGGESTION: DECR TAP A", LogLevels.Info);
 											break;
 										case BusbarBBName.BusbarB:
-											if (!_updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("MARK6"), 2))
+											if (!_updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("MARK6"), 1))
 											{
 												_logger.WriteEntry("Could not update value in SCADA: " + "MARK6",LogLevels.Error);
 											}
@@ -638,7 +674,7 @@ namespace RPC
 									}
 									break;
 								case 2:  // Close 
-									if (!_updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("MARK2"), 2))
+									if (!_updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("MARK2"), 1))
 									{
 										_logger.WriteEntry("Could not update value in SCADA: " + "MARK2",LogLevels.Error);
 									}
@@ -653,7 +689,7 @@ namespace RPC
 						else
 						{
 							// PP Busbar
-							if (!_updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("MARK8"), 2))
+							if (!_updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("MARK8"), 1))
 							{
 								_logger.WriteEntry("Could not update value in SCADA: " + "MARK8", LogLevels.Error);
 							}
@@ -685,13 +721,13 @@ namespace RPC
 						Counter[1, (int)aBusbar] = 0;
 						Counter[2, (int)aBusbar] = 0;
 
-						if (!_updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("C1_" + aBusbar), (float)Counter[1, (int)aBusbar]))
+						if (!_updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("C1_" + ((int)aBusbar)), (float)Counter[1, (int)aBusbar]))
 						{
 							_logger.WriteEntry( "Could not update value in SCADA: " + "C1_" + aBusbar, LogLevels.Info);
 							return;
 						}
 
-						if (!_updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("C2_" + aBusbar), (float)Counter[2, (int)aBusbar]))
+						if (!_updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("C2_" + ((int)aBusbar)), (float)Counter[2, (int)aBusbar]))
 						{
 							_logger.WriteEntry("Could not update value in SCADA: " + "C2_" + aBusbar,LogLevels.Info);
 							return;
@@ -706,13 +742,13 @@ namespace RPC
 						_logger.WriteEntry( "BusVoltage=" + BusVoltage.ToString() + " < VLow=" + VLow.ToString(),LogLevels.Info);
 						_logger.WriteEntry("Counter(2, " + ((int)aBusbar).ToString() + ")=" + Counter[2, (int)aBusbar].ToString(), LogLevels.Trace);
 
-						if (!_updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("C1_" + aBusbar), (float)(Counter[1, (int)aBusbar])))
+						if (!_updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("C1_" + ((int)aBusbar)), (float)(Counter[1, (int)aBusbar])))
 						{
 							_logger.WriteEntry("Could not update value in SCADA: " + "C2_" + aBusbar, LogLevels.Error);
 							return;
 						}
 
-						if (!_updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("C2_" + aBusbar), (float)Counter[2, (int)aBusbar]))
+						if (!_updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("C2_" + ((int)aBusbar)), (float)Counter[2, (int)aBusbar]))
 						{
 							_logger.WriteEntry("Could not update value in SCADA: " + "C2_" + aBusbar, LogLevels.Error);
 							return;
@@ -804,7 +840,7 @@ namespace RPC
 											switch (aBusbar)
 											{
 												case BusbarBBName.BusbarA:
-													if (!_updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("MARK3"), 2))
+													if (!_updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("MARK3"), 1))
 													{
 														_logger.WriteEntry("Could not update value in SCADA: " + "MARK3", LogLevels.Error);
 													}
@@ -815,7 +851,7 @@ namespace RPC
 													_logger.WriteEntry( "SUGGESTION: INCR TAP A", LogLevels.Info);
 													break;
 												case BusbarBBName.BusbarB:
-													if (!_updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("MARK5"), 2))
+													if (!_updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("MARK5"), 1))
 													{
 														_logger.WriteEntry("Could not update value in SCADA: " + "MARK5", LogLevels.Error);
 													}
@@ -828,7 +864,7 @@ namespace RPC
 											}
 											break;
 										case 2:  // Close 
-											if (!_updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("MARK1"), 2))
+											if (!_updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("MARK1"), 1))
 											{
 												_logger.WriteEntry("Could not update value in SCADA: " + "MARK1", LogLevels.Error);
 											}
@@ -843,7 +879,7 @@ namespace RPC
 								else
 								{
 									// PP Busbar
-									if (!_updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("MARK7"), 2))
+									if (!_updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("MARK7"), 1))
 									{
 										_logger.WriteEntry("Could not update value in SCADA: " + "MARK7", LogLevels.Error);
 									}
@@ -890,12 +926,12 @@ namespace RPC
 		private void Delay(int WaitSecond)
 		{
 
-			int StartSecond = DateTime.Now.Second;
+			int StartSecond = DateTime.UtcNow.Second;
 
 			do
 			{
 			}
-			while (DateTime.Now.Second - StartSecond < WaitSecond);
+			while (DateTime.UtcNow.Second - StartSecond < WaitSecond);
 		}
 	}
 }

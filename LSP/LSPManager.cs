@@ -1130,7 +1130,7 @@ namespace LSP
 
                 foreach (var aPriol in _PriorityList)
                 {
-                    var dtCurrShedTime = DateTime.Now;
+                    var dtCurrShedTime = DateTime.UtcNow;
 
                     //Call theCTraceLogger.WriteLog(TraceError, "idxPriol = " & idxPriol & " ; PriorityList = " & m_arrPriols(idxPriol).PriorityNo)
 
@@ -1170,7 +1170,7 @@ namespace LSP
                                 }
                                 else
                                 {
-                                    aPriol.GetArrBreakers(idxItem).LastShedTime = DateTime.UtcNow.ToIranDateTime();
+                                    aPriol.GetArrBreakers(idxItem).LastShedTime = DateTime.UtcNow; 
                                     _logger.WriteEntry("Sending OPEN command was accomlished for Breaker : " + cbToShed.NetworkPath, LogLevels.Info);
                                     Loads_shedded.Enqueue(new Tuple<CPriorityList, LSPBreakerToShed, bool, bool>(aPriol, aPriol.GetArrBreakers(idxItem), false, true));
                                 }
@@ -1205,7 +1205,7 @@ namespace LSP
                                 // Checking last shed time for this CB
                                 //TODO: check
                                 var dtLastShedTime = aPriol.GetArrBreakers(idxItem).LastShedTime;
-                                dtCurrShedTime = DateTime.UtcNow.ToIranDateTime();
+                                dtCurrShedTime = DateTime.UtcNow;
 
                                 var diffInSeconds = (dtCurrShedTime - dtLastShedTime).TotalSeconds;
                                 if ((dtLastShedTime == DateTime.MinValue) ||
@@ -1366,7 +1366,7 @@ namespace LSP
                                 }
                                 else
                                 {
-                                    _logger.WriteEntry("Last shed time is below than 20 seconds than Now, LastShedTime = " + dtLastShedTime.ToString(), LogLevels.Info);
+                                    _logger.WriteEntry("Last shed time is below than 20 seconds than Now, LastShedTime = " + dtLastShedTime.ToIranStandardTime(), LogLevels.Info);
                                 }
 
                             NextItemInPriol:;
@@ -1417,7 +1417,7 @@ namespace LSP
                                             Math.Round(Breaker_Current, 2) + "')";
 
                     var parameters = new IDbDataParameter[6];
-                    parameters[0] = _repository.Get_historicalDataManager().CreateParameter("p_DateTime",Shedded_Breaker.Item2.LastShedTime.ToString("yyyy/MM/dd HH:mm:ss.ff"));
+                    parameters[0] = _repository.Get_historicalDataManager().CreateParameter("p_DateTime",Shedded_Breaker.Item2.LastShedTime.ToIranStandardTime());
                     parameters[1] = _repository.Get_historicalDataManager().CreateParameter("p_Prio_Num", Shedded_Breaker.Item1._priorityNo);
                     parameters[2] = _repository.Get_historicalDataManager().CreateParameter("p_SumIT", Math.Round(Shedded_Breaker.Item1._sumIt, 2));
                     parameters[3] = _repository.Get_historicalDataManager().CreateParameter("p_Bearker_Num", Shedded_Breaker.Item2.BreakerNo);
@@ -1964,7 +1964,7 @@ namespace LSP
                     float[] furnacespower = new float[] { sfsc_eafsp.FURNACE1, sfsc_eafsp.FURNACE2, sfsc_eafsp.FURNACE3, sfsc_eafsp.FURNACE4,
                                                            sfsc_eafsp.FURNACE5, sfsc_eafsp.FURNACE6, sfsc_eafsp.FURNACE7, sfsc_eafsp.FURNACE8 };
 
-                    _logger.WriteEntry("ReducePower" + " TelDateTime = " + sfsc_eafsp.TELDATETIME.ToString(), LogLevels.Info);
+                    _logger.WriteEntry("ReducePower" + " TelDateTime = " + sfsc_eafsp.TELDATETIME.ToIranStandardTime(), LogLevels.Info);
                     _logger.WriteEntry("ReducePower" + " PowerFurnace = " + furnacespower[FurnaceNumber - 1].ToString(), LogLevels.Info);
                     result = (int)PowerMax - (int)furnacespower[FurnaceNumber - 1];
                     _logger.WriteEntry("ReducePower = " + result.ToString(), LogLevels.Info);

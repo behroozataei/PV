@@ -27,7 +27,7 @@ namespace RPC
             {
                 if (ascadaPoint is null)
                 {
-                    _logger.WriteEntry("ScadaPoint is NULL", LogLevels.Warn);
+                    _logger.WriteEntry($"ScadaPoint {ascadaPoint.Name} is NULL", LogLevels.Warn);
                     return executed;
                 }
 
@@ -93,7 +93,7 @@ namespace RPC
             var executed = false;
             if (scadaPoint is null)
             {
-                _logger.WriteEntry("ScadaPoint is NULL", LogLevels.Warn);
+                _logger.WriteEntry($"ScadaPoint {scadaPoint.Name} is NULL to WriteAnalog Value ", LogLevels.Warn);
                 return executed;
             }
            
@@ -118,6 +118,37 @@ namespace RPC
             return executed;
         }
 
+        public bool WriteDigital(RPCScadaPoint scadaPoint, SinglePointStatus Status )
+        {
+
+            var executed = false;
+            if (scadaPoint is null)
+            {
+                _logger.WriteEntry("ScadaPoint is NULL", LogLevels.Warn);
+                return executed;
+            }
+
+            var applyCalculatedValue = new ApplyCalculatedValueRequest();
+            applyCalculatedValue.Items.Add(
+                new CalculatedValueItem() { Console = "RPC", ElementId = scadaPoint.Id.ToString(), Value = (float) Status });
+
+            try
+            {
+                var reply = _commandService.ApplyCalculatedValue(applyCalculatedValue);
+
+                if (reply.Executed == false)
+                    _logger.WriteEntry("RPC", reply.Log, LogLevels.Warn);
+                else
+                    executed = true;
+            }
+            catch (Exception ex)
+            {
+                _logger.WriteEntry($"Write data for  {scadaPoint.Name} is not executed, {ex.Message}", LogLevels.Error);
+            }
+
+            return executed;
+        }
+
         public bool SendAlarm(RPCScadaPoint ascadaPoint, DigitalSingleStatus ev, string alarmText)
         {
             bool executed = false;
@@ -126,7 +157,7 @@ namespace RPC
             {
                 if (ascadaPoint is null)
                 {
-                    _logger.WriteEntry("ScadaPoint is NULL", LogLevels.Warn);
+                    _logger.WriteEntry($"ScadaPoint  { ascadaPoint.Name} is NULL to Send Alarm", LogLevels.Warn);
                     return executed;
                 }
 

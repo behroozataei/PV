@@ -297,7 +297,7 @@ namespace DCP
         {
             //1401.03.24
             var sql = "INSERT INTO dbo.T_FURNACE + (Start, FurnaceNumber) values('" +
-                        DateTime.UtcNow.ToIranDateTime().ToString(("yyyy-MMMM-dd HH:mm:ss")) +
+                        DateTime.UtcNow.ToIranTime() +
                         "', " + I.ToString() + ")";
 
             try
@@ -491,7 +491,7 @@ namespace DCP
         {
             try
             {
-                var sql = "Update dbo.T_EAFGroupRequest Set ResponseDateTime = '" + DateTime.Now.ToString() + "' Where RequestDateTime = (Select MAX(RequestDateTime) From dbo.T_EAFGroupRequest)";
+                var sql = "Update dbo.T_EAFGroupRequest Set ResponseDateTime = '" + DateTime.UtcNow.ToIranTime() + "' Where RequestDateTime = (Select MAX(RequestDateTime) From dbo.T_EAFGroupRequest)";
 
                 var rowAffected = _linkDBpcsDataManager.ExecuteNonQuery(sql);
                 if (rowAffected > 0)

@@ -254,7 +254,7 @@ namespace LSP
                 // For "REAL COMMAND ONLY" these lines will be executed!
                 for (int cntr = 0; cntr < 3; cntr++)
                 {
-                    _logger.WriteEntry($"SendCommand for Item: {scadaPoint.NetworkPath}  ; cntr = {cntr} ; {DateTime.UtcNow.ToLocalFullDateAndTimeString()}", LogLevels.Info);
+                    _logger.WriteEntry($"SendCommand for Item: {scadaPoint.NetworkPath}  ; cntr = {cntr} ; {DateTime.UtcNow.ToIranStandardTime()}", LogLevels.Info);
                     var reply = _scadaCommand.ChangeStateCommand(controlRequest, 2);
                     if (reply.Executed)
                     {
@@ -304,7 +304,7 @@ namespace LSP
                 // For "REAL COMMAND ONLY" these lines will be executed!
                 for (int cntr = 0; cntr < 3; cntr++)
                 {
-                    _logger.WriteEntry($"SendCommand for Item: {scadaPoint.NetworkPath}  ; cntr = {cntr} ; {DateTime.UtcNow.ToLocalFullDateAndTimeString()}", LogLevels.Info);
+                    _logger.WriteEntry($"SendCommand for Item: {scadaPoint.NetworkPath}  ; cntr = {cntr} ; {DateTime.UtcNow.ToIranStandardTime()}", LogLevels.Info);
                     var reply = _scadaCommand.ChangeStateCommand(controlRequest, 2);
                     if (reply.Executed)
                     {

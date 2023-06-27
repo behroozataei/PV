@@ -12,6 +12,9 @@ namespace RPC
         public RedisUtils GetRedisUtiles();
         public bool TryGetHISAverageinIntervalTime(RPCScadaPoint scadaPoint, IntervalTime duration, out float value);
         public void PrintRepository();
+        Dictionary<string,ACCScadaPoint> accScadaPoint { get; }
+        public ACCScadaPoint GetAccScadaPoint(string name);
+
 
     }
 }
