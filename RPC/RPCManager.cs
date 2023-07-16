@@ -186,12 +186,6 @@ namespace RPC
                         _logger.WriteEntry("VoltageLimitChecking() does not work!", LogLevels.Warn);
                     }
 
-                    // ATA 1402-04-06
-                    if (!_theCRPCCalculation.Preset3Min())
-                    {
-                        _logger.WriteEntry("Preset3Min() could not be completed!", LogLevels.Warn);
-                        return;
-                    }
 
 
 
@@ -262,7 +256,7 @@ namespace RPC
                 _updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("VTAP18"), 453.3f);
                 _updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("VTAP19"), 460.0f);
                 _updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("K"), 1.0f);
-                _updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("K1"), 1.0f);
+                _updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("K1"), 2.0f);
                 _updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("K2"), 1.0f);
                 _updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("M"), 1.0f);
                 _updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("VR_EAF"), 2.0f);

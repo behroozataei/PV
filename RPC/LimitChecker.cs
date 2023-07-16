@@ -153,8 +153,9 @@ namespace RPC
 
 				result = true;
 
-				Er_EAF = _repository.GetRPCScadaPoint("Er_EAF_3Min").Value; 
-				Er_SVC = _repository.GetRPCScadaPoint("Er_SVC_3Min").Value; ;
+				Er_EAF = _repository.GetRPCScadaPoint("Er_MF_1MinSum").Value; ; 
+				Er_SVC = _repository.GetRPCScadaPoint("Er_SVCA").Value+ _repository.GetRPCScadaPoint("Er_SVCA").Value
+					     +_repository.GetRPCScadaPoint("Er_SVC1").Value + _repository.GetRPCScadaPoint("Er_SVC2").Value;
 				K = _repository.GetRPCScadaPoint("K").Value; ;
 
 				if (Er_SVC > Er_EAF + K)
@@ -178,8 +179,8 @@ namespace RPC
 
 				// In the documents ther's a section that checks Capacitor Bank with LFS,
 				// but in the perl codes there's not such a section.
-				Er_BANK = _repository.GetRPCScadaPoint("Er_BANK_3Min").Value;
-				Er_LF = _repository.GetRPCScadaPoint("Er_LF_3Min").Value;
+				Er_BANK = _repository.GetRPCScadaPoint("Er_BANK").Value;
+				Er_LF = _repository.GetRPCScadaPoint("Er_LF").Value;
 				M = Er_LF = _repository.GetRPCScadaPoint("M").Value; ;
 
 				if (Er_BANK > Er_LF + M)

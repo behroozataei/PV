@@ -96,7 +96,7 @@ namespace RPC
                         }
                     }
                 }
-                else
+                else //COS_TAV <0.85
                 {
                     _logger.WriteEntry("COS_TAV < 0.85", LogLevels.Info);
                     if (COS_TAV != 0)
@@ -112,7 +112,7 @@ namespace RPC
                     {
                         Er_UnbEAF = 0;
                     }
-                    else
+                    else //COS_EAF < 0.85
                     {
                         _logger.WriteEntry("COS_EAF < 0.85", LogLevels.Info);
                         if (COS_EAF != 0)
@@ -134,7 +134,7 @@ namespace RPC
                             _logger.WriteEntry("Could not update value in SCADA: " + "MARK9", LogLevels.Error);
                         }
                     }
-                    else
+                    else //COS_PP <0.85
                     {
                         _logger.WriteEntry("COS_PP < 0.85", LogLevels.Info);
                         if (COS_PP != 0)
@@ -213,7 +213,7 @@ namespace RPC
                 double ReactEnergy85 = 0;
 
                 ReactEnergyActual = Math.Sqrt(Math.Pow(ActiveEnergyActual / CosPhiActual, 2) - Math.Pow(ActiveEnergyActual, 2));
-                ReactEnergy85 = Math.Sqrt(Math.Pow(ActiveEnergyActual / Math.Cos(0.85d), 2) - Math.Pow(ActiveEnergyActual, 2));
+                ReactEnergy85     = Math.Sqrt(Math.Pow(ActiveEnergyActual / (0.85d)     , 2) - Math.Pow(ActiveEnergyActual, 2));
 
                 UnbReactEnergy = ReactEnergyActual - ReactEnergy85;
             }

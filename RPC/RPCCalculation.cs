@@ -33,11 +33,6 @@ namespace RPC
         private double Er_PP = 0; // Progressive PP Reactive Energy
         private double Er_SVC = 0; // Progressive SVC Reactive Energy
 
-        private double Er_SVC_3Min = 0; // SVC Reactive Energy 3Minutes
-        private double Er_EAF_3Min = 0; // EAF Reactive Energy 3Minutes
-        private double Er_BANK_3Min = 0; // BANK Reactive Energy 3Minutes
-        private double Er_LF_3Min = 0; // LF Reactive Energy 3Minutes
-
 
         // Running in every minute calculations
         public bool Preset1Min()
@@ -279,44 +274,7 @@ namespace RPC
             return result;
         }
 
-        internal bool Preset3Min()
-        {
-            bool result = false;
-            _logger.WriteEntry("--- Reset the Energy Values Every 3 Minutes ---", LogLevels.Info);
-
-            result = true;
-
-            // Set the 3 Minutes energies to 0
-            Er_EAF_3Min = 0;
-            if (!_updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("Er_EAF_3Min"), (float)Er_EAF_3Min))
-            {
-                result = false;
-                _logger.WriteEntry("Could not update value in SCADA: Er_EAF_3Min", LogLevels.Error);
-            }
-
-            Er_SVC_3Min = 0;
-            if (!_updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("Er_SVC_3Min"), (float)Er_SVC_3Min))
-            {
-                result = false;
-                _logger.WriteEntry("Could not update value in SCADA: Er_SVC_3Min", LogLevels.Error);
-            }
-
-            Er_BANK_3Min = 0;
-            if (!_updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("Er_BANK_3Min"), (float)Er_BANK_3Min))
-            {
-                result = false;
-                _logger.WriteEntry("Could not update value in SCADA: Er_BANK_3Min", LogLevels.Error);
-            }
-
-            Er_LF_3Min = 0;
-            if (!_updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("Er_LF_3Min"), (float)Er_LF_3Min))
-            {
-                result = false;
-                _logger.WriteEntry("Could not update value in SCADA: Er_LF_3Min", LogLevels.Error);
-            }
-            return result;
-        }
-
+ 
 
 
         // Reads the active and reactive energies every 1 minute and calculates
@@ -330,8 +288,8 @@ namespace RPC
                 result = true;
 
                 // TAVANIR (400kV)
-                Ea_TAV = Ea_TAV + _repository.GetRPCScadaPoint("Ea_TAV_1").Value + _repository.GetRPCScadaPoint("Ea_TAV_2").Value
-                                - _repository.GetRPCScadaPoint("Ea_TAV_1_E").Value - _repository.GetRPCScadaPoint("Ea_TAV_2_E").Value;
+                Ea_TAV = Ea_TAV + _repository.GetRPCScadaPoint("Ea_TAV_1").Value + _repository.GetRPCScadaPoint("Ea_TAV_2").Value;
+                               // - _repository.GetRPCScadaPoint("Ea_TAV_1_E").Value - _repository.GetRPCScadaPoint("Ea_TAV_2_E").Value;
                 if (!_updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("Ea_TAV"), (float)Ea_TAV))
                 {
                     result = false;
@@ -339,8 +297,8 @@ namespace RPC
                     return result;
                 }
 
-                Er_TAV = Er_TAV + _repository.GetRPCScadaPoint("Er_TAV_1").Value + _repository.GetRPCScadaPoint("Er_TAV_2").Value
-                                - _repository.GetRPCScadaPoint("Er_TAV_1_E").Value - _repository.GetRPCScadaPoint("Er_TAV_2_E").Value;
+                Er_TAV = Er_TAV + _repository.GetRPCScadaPoint("Er_TAV_1").Value + _repository.GetRPCScadaPoint("Er_TAV_2").Value;
+                                //- _repository.GetRPCScadaPoint("Er_TAV_1_E").Value - _repository.GetRPCScadaPoint("Er_TAV_2_E").Value;
                 if (!_updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("Er_TAV"), (float)Er_TAV))
                 {
                     result = false;
@@ -353,8 +311,6 @@ namespace RPC
                 Er_SVC = Er_SVC + _repository.GetRPCScadaPoint("Er_SVC1").Value + _repository.GetRPCScadaPoint("Er_SVC2").Value +
                                   _repository.GetRPCScadaPoint("Er_SVCA").Value + _repository.GetRPCScadaPoint("Er_SVCB").Value;
 
-                Er_SVC_3Min = Er_SVC_3Min + _repository.GetRPCScadaPoint("Er_SVC1").Value + _repository.GetRPCScadaPoint("Er_SVC2").Value +
-                                  _repository.GetRPCScadaPoint("Er_SVCA").Value + _repository.GetRPCScadaPoint("Er_SVCB").Value;
 
                 if (!_updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("Er_SVC"), (float)Er_SVC))
                 {
@@ -362,15 +318,6 @@ namespace RPC
                     _logger.WriteEntry("Could not update value in SCADA: Er_SVC", LogLevels.Error);
                     return result;
                 }
-
-                if (!_updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("Er_SVC_3Min"), (float)Er_SVC_3Min))
-                {
-                    result = false;
-                    _logger.WriteEntry("Could not update value in SCADA: Er_SVC_Min", LogLevels.Error);
-                    return result;
-                }
-
-
 
 
                 // EAF
@@ -414,7 +361,7 @@ namespace RPC
                 Ea_MF += _repository.GetRPCScadaPoint("Ea_MF_1MinSum").Value;
                 Er_MF += _repository.GetRPCScadaPoint("Er_MF_1MinSum").Value;
 
-                Er_EAF_3Min += _repository.GetRPCScadaPoint("Er_MF_1MinSum").Value;
+               
 
                 if (!_updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("Ea_MF"), (float)Ea_MF))
                 {
@@ -429,12 +376,6 @@ namespace RPC
                     return result;
                 }
 
-                if (!_updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("Er_EAF_3Min"), (float)Er_EAF_3Min))
-                {
-                    result = false;
-                    _logger.WriteEntry("Could not update value in SCADA: Er_EAF_3Min", LogLevels.Error);
-                    return result;
-                }
 
 
                 // PP
@@ -464,23 +405,6 @@ namespace RPC
                     return result;
                 }
 
-                //BANK
-                Er_BANK_3Min = Er_BANK_3Min + _repository.GetRPCScadaPoint("Er_BANK").Value;
-                if (!_updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("Er_BANK_3Min"), (float)Er_BANK_3Min))
-                {
-                    result = false;
-                    _logger.WriteEntry("Could not update value in SCADA: Er_BANK_3Min", LogLevels.Error);
-                    return result;
-                }
-
-                //LF
-                Er_LF_3Min = Er_BANK_3Min + _repository.GetRPCScadaPoint("Er_LF").Value;
-                if (!_updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("Er_LF_3Min"), (float)Er_LF_3Min))
-                {
-                    result = false;
-                    _logger.WriteEntry("Could not update value in SCADA: Er_LF_3Min", LogLevels.Error);
-                    return result;
-                }
 
 
                 _logger.WriteEntry("----- Progressive Energy Calculation -----", LogLevels.Info);
@@ -521,10 +445,6 @@ namespace RPC
                 _logger.WriteEntry("Er_PP = " + Er_PP.ToString(), LogLevels.Trace);
                 _logger.WriteEntry("Ea_MF = " + Ea_MF.ToString(), LogLevels.Trace);
                 _logger.WriteEntry("Er_MF = " + Er_MF.ToString(), LogLevels.Trace);
-                _logger.WriteEntry("Er_EAF_3Min = " + Er_EAF_3Min.ToString(), LogLevels.Trace);
-                _logger.WriteEntry("Er_SVC_3Min = " + Er_SVC_3Min.ToString(), LogLevels.Trace);
-                _logger.WriteEntry("Er_LF_3Min = " + Er_LF_3Min.ToString(), LogLevels.Trace);
-                _logger.WriteEntry("Er_BANK_3Min = " + Er_BANK_3Min.ToString(), LogLevels.Trace);
 
             }
             catch (System.Exception excep)
@@ -532,7 +452,7 @@ namespace RPC
 
                 _logger.WriteEntry(excep.Message, LogLevels.Error);
                 result = false;
-            }
+            }  
             return result;
         }
 

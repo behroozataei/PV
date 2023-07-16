@@ -68,7 +68,7 @@ namespace DCIS
 
             var dataTable = _staticDataManager.GetRecord(
                 "SELECT METER_PROXY, METER_NAME, ACCUMULATOR_NETWORK_PATH, " +
-                "ANALOG_NETWORK_PATH FROM APP.DCIS_PARAMS");
+                "ANALOG_NETWORK_PATH FROM APP_DCISF_PARAMS");
 
             foreach (DataRow row in dataTable.Rows)
             {
@@ -90,7 +90,7 @@ namespace DCIS
 
         private void PopulateShiftTimeFromDatabase()
         {
-            var shiftDataTable = _staticDataManager.GetRecord("SELECT ShiftID, ShiftStartTime, ShiftEndTime, CalculationStartTime FROM APP.WS_CALCULATIONTIMEPERSHIFT");
+            var shiftDataTable = _staticDataManager.GetRecord("SELECT ShiftID, ShiftStartTime, ShiftEndTime, CalculationStartTime FROM APP_DCISF_CALCTIMEPERSHIFT");
             //var shiftDataTable = _staticDataManager.GetRecord("SELECT ShiftID, ShiftStartTime, ShiftEndTime, CalculationStartTime FROM SCADA.WS_CALCULATIONTIMEPERSHIFT");
 
             foreach (DataRow row in shiftDataTable.Rows)
@@ -107,42 +107,14 @@ namespace DCIS
 
         }
 
-        //public bool TryGetArchiveFromExactDateTime(Guid analogMeasurementId, DateTime calclulationStartTime, out float value, out QualityCodes quality)
-        //{
-        //    try
-        //    {
-        //        var command = "SELECT VALUE, QUALITY FROM SCADAHIS.HISANALOGS WHERE MEASUREMENTID = :1 AND TIMESTAMP = :2";
-        //        var parameters = new IDbDataParameter[]
-        //        {
-        //            _historicalDataManager.CreateParameter(":1", analogMeasurementId.ToString().ToUpper()),
-        //            _historicalDataManager.CreateParameter(":2", calclulationStartTime.ToUniversalTime())
-        //        };
-
-        //        var archiveDataTable = _historicalDataManager.GetRecord(command, CommandType.Text, parameters);
-
-        //        if (archiveDataTable.Rows.Count > 0)
-        //        {
-        //            value = Convert.ToSingle(archiveDataTable.Rows[0][0]);
-        //            quality = (QualityCodes)Convert.ToInt32(archiveDataTable.Rows[0][1]);
-        //            return true;
-        //        }
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        _logger.WriteEntry(ex is Irisa.DataLayer.DataException ? ex.ToString() : ex.Message, LogLevels.Error);
-        //    }
-
-        //    value = 0;
-        //    quality = 0;
-        //    return false;
-        //}
+        
 
         public bool TryGetArchiveFromExactDateTime(Guid analogMeasurementId, CalculationTimePerShift duration, Queue<SampleData> archData)
         {
             try
             {
 
-                var command = $"SELECT VALUE, TIMESTAMP, QUALITY FROM HISANALOGS WHERE MEASUREMENTID = '{analogMeasurementId.ToString().ToUpper()}' AND TIMESTAMP >=  '{duration.ShiftStartTime.ToString("yyyy-MM-dd HH:mm:ss.ff")}' AND TIMESTAMP <=  '{duration.ShiftEndTime.ToString("yyyy-MM-dd HH:mm:ss.ff")}' ORDER BY  TIMESTAMP ASC ";
+                var command = $"SELECT VALUE, TIMESTAMP, QUALITY FROM HISANALOGS WHERE MEASUREMENTID = '{analogMeasurementId.ToString().ToUpper()}' AND TIMESTAMP >=  to_timestamp('{duration.ShiftStartTime.ToString("yyyy-MM-dd HH:mm:ss.ff")}','yyyy-MM-dd HH24:mi:ss.ff') AND TIMESTAMP <=  to_timestamp('{duration.ShiftEndTime.ToString("yyyy-MM-dd HH:mm:ss.ff")}','yyyy-MM-dd HH24:mi:ss.ff')  ORDER BY  TIMESTAMP ASC ";
                 //var command = $"SELECT VALUE, TIMESTAMP, QUALITY FROM SCADAHIS.HISANALOGS WHERE MEASUREMENTID = '{analogMeasurementId.ToString().ToUpper()}' AND TIMESTAMP >=  timestamp'{duration.ShiftStartTime.ToString("yyyy-MM-dd HH:mm:ss.ff")}' AND TIMESTAMP <=  timestamp '{duration.ShiftEndTime.ToString("yyyy-MM-dd HH:mm:ss.ff")}'";
 
                 var archiveDataTable = _historicalDataManager.GetRecord(command);
@@ -174,24 +146,38 @@ namespace DCIS
 
         public bool GetFirstData(Guid analogMeasurementId, CalculationTimePerShift duration, out float value)
         {
+            double Minutes_Step = 10.0;
             try
             {
-                //var command = $"SELECT VALUE, TIMESTAMP, QUALITY FROM SCADAHIS.HISANALOGS WHERE " +
-                //              $"TIMESTAMP = (SELECT MAX(TIMESTAMP) FROM SCADAHIS.HISANALOGS  WHERE MEASUREMENTID = '{analogMeasurementId.ToString().ToUpper()}' AND TIMESTAMP <=  timestamp '{duration.ShiftStartTime.ToString("yyyy-MM-dd HH:mm:ss.ff")}') AND " +
-                //              $"MEASUREMENTID = '{analogMeasurementId.ToString().ToUpper()}'";
-
                 var command = $"SELECT VALUE, TIMESTAMP, QUALITY FROM HISANALOGS WHERE " +
-                              $"TIMESTAMP = (SELECT MAX(TIMESTAMP) FROM HISANALOGS  WHERE MEASUREMENTID = '{analogMeasurementId.ToString().ToUpper()}' AND TIMESTAMP <=  '{duration.ShiftStartTime.ToString("yyyy-MM-dd HH:mm:ss.ff")}') AND " +
-                              $"MEASUREMENTID = '{analogMeasurementId.ToString().ToUpper()}'";
+                              $"MEASUREMENTID = '{analogMeasurementId.ToString().ToUpper()}' AND " +
+                              $"TIMESTAMP <=   to_timestamp('{duration.ShiftStartTime.ToString("yyyy-MM-dd HH:mm:ss.ff")}','yyyy-MM-dd HH24:mi:ss.ff') AND " +
+                              $"TIMESTAMP >=   to_timestamp('{duration.ShiftStartTime.AddMinutes(-1 * Minutes_Step).ToString("yyyy-MM-dd HH:mm:ss.ff")}','yyyy-MM-dd HH24:mi:ss.ff') ORDER BY TIMESTAMP DESC";
 
                 var archiveDataTable = _historicalDataManager.GetRecord(command);
+
+                if (archiveDataTable.Rows.Count == 0)
+                {
+
+                    int Count = 0;
+                    do
+                    {
+                        Count++;
+                        {
+                            command = $"SELECT VALUE, TIMESTAMP, QUALITY FROM HISANALOGS WHERE " +
+                                      $"MEASUREMENTID = '{analogMeasurementId.ToString().ToUpper()}' AND " +
+                                      $"TIMESTAMP <=   to_timestamp('{duration.ShiftStartTime.ToString("yyyy-MM-dd HH:mm:ss.ff")}','yyyy-MM-dd HH24:mi:ss.ff') AND " +
+                                      $"TIMESTAMP >=   to_timestamp('{duration.ShiftStartTime.AddMinutes(-1 * Math.Pow(Minutes_Step , Count)).ToString("yyyy-MM-dd HH:mm:ss.ff")}','yyyy-MM-dd HH24:mi:ss.ff') ORDER BY TIMESTAMP DESC";
+                        }
+                        archiveDataTable = _historicalDataManager.GetRecord(command);
+                    } while (archiveDataTable.Rows.Count == 0 && Count < 5);
+                }
 
                 value = 0;
                 if (archiveDataTable.Rows.Count > 0)
                 {
                     DataRow row = archiveDataTable.Rows[0];
                     value = Convert.ToSingle(row["VALUE"]);
-                    //_logger.WriteEntry($"First Data: time = {Convert.ToDateTime(row["TIMESTAMP"])} Value = {value}", LogLevels.Info);
                     return true;
                 }
                 return false;

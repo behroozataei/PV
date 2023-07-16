@@ -34,12 +34,12 @@ namespace DCIS
             _logger = serviceProvider.GetService<ILogger>();
 
 
-            _staticDataManager = new SqlServerDataManager(_config["SQLServerNameOfStaticDataDatabase"], _config["SQLServerDatabaseAddress"], _config["SQLServerUser"], _config["SQLServerPassword"]);
-            //_staticDataManager = new Irisa.DataLayer.Oracle.OracleDataManager(_config["OracleServicename"], _config["OracleDatabaseAddress"], _config["OracleStaticUser"], _config["OracleStaticPassword"]);
-            _historicalDataManager = new SqlServerDataManager(_config["SQLServerNameOfHistoricalDatabase"], _config["SQLServerDatabaseAddress"], _config["SQLServerUser"], _config["SQLServerPassword"]);
-           //_historicalDataManager = new Irisa.DataLayer.Oracle.OracleDataManager(_config["OracleServicename"], _config["OracleDatabaseAddress"], _config["OracleHISUser"], _config["OracleHISPassword"]);
-            _storeLogs = new StoreLogs(_staticDataManager, _logger, "[HIS].[HIS_LOGS_INSERT]");
-            //_storeLogs = new StoreLogs(_staticDataManager, _logger, "SCADA.\"HIS_HisLogs_Insert\"");
+           // _staticDataManager = new SqlServerDataManager(_config["SQLServerNameOfStaticDataDatabase"], _config["SQLServerDatabaseAddress"], _config["SQLServerUser"], _config["SQLServerPassword"]);
+            _staticDataManager = new Irisa.DataLayer.Oracle.OracleDataManager(_config["OracleServicename"], _config["OracleDatabaseAddress"], _config["OracleStaticUser"], _config["OracleStaticPassword"]);
+            //_historicalDataManager = new SqlServerDataManager(_config["SQLServerNameOfHistoricalDatabase"], _config["SQLServerDatabaseAddress"], _config["SQLServerUser"], _config["SQLServerPassword"]);
+           _historicalDataManager = new Irisa.DataLayer.Oracle.OracleDataManager(_config["OracleServicename"], _config["OracleDatabaseAddress"], _config["OracleHISUser"], _config["OracleHISPassword"]);
+           // _storeLogs = new StoreLogs(_staticDataManager, _logger, "[HIS].[HIS_LOGS_INSERT]");
+            _storeLogs = new StoreLogs(_staticDataManager, _logger, "SCADA.\"HIS_HisLogs_Insert\"");
             
 
             var historyDataRequest = new HistoryDataRequest
@@ -73,11 +73,6 @@ namespace DCIS
             _logger.LogReceived += OnLogReceived;
             _storeLogs.Start();
             _logger.WriteEntry("Start of running DCIS ... ***************************************", LogLevels.Info);
-
-
-            Report.test();
-
-
 
             while (!COMMON.Connection.PingHost(_config["CpsIpAddress"], 10000))
             {
