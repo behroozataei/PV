@@ -19,7 +19,7 @@
 FROM func_runtime:latest
 WORKDIR /app
 COPY . . 
-
+RUN mkdir -p /etc/function
 RUN chmod +x DCP
 RUN chmod +x dcp-entrypoint.sh 
 ENTRYPOINT ["./dcp-entrypoint.sh"]

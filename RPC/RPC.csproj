@@ -3,6 +3,8 @@
   <PropertyGroup>
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <UserSecretsId>dotnet-RPC-B31A51B4-6D26-4AAA-8E77-612A2932715B</UserSecretsId>
+    <StartupObject>RPC.Program</StartupObject>
+    <PackageOutputPath>..\..\build\Release\RPC\</PackageOutputPath>
   </PropertyGroup>
 
   <ItemGroup>

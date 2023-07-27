@@ -20,6 +20,7 @@ FROM func_runtime:latest
 WORKDIR /app
 COPY . . 
 
+RUN mkdir -p /etc/function
 RUN chmod +x EEC
 RUN chmod +x eec-entrypoint.sh 
 ENTRYPOINT ["./eec-entrypoint.sh"]

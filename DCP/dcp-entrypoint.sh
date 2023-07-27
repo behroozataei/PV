@@ -1,4 +1,5 @@
 #!/bin/sh
+cp /etc/function/appsettings.json /app/appsettings.json
 if [ -z "$REDIS_PASSWORD" ]
 then
     until [ "$(redis-cli -h $REDIS_MASTER_HOST -p $REDIS_MASTER_PORT ping)" = "PONG" ] \
