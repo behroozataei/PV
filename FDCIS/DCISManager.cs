@@ -13,7 +13,7 @@ namespace DCIS
 {
     internal class DCISManager:IProcessing
     {
-        private const int TIMER_TICKS =90000;
+        private const int TIMER_TICKS =1000;
         private readonly IRepository _repository;
         private readonly ILogger _logger;
         private readonly Timer _timer_15_Min;

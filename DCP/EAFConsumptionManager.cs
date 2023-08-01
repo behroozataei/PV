@@ -170,7 +170,7 @@ namespace DCP
                                 //Module1.ArrayEAFsCurrent[J - 1, 1] = "Standby";
                                 //WriteData(ArrayEAFsConsumption[J - 1], "0");
                                 //EAFCONSUMPTION[J - 1] = 0;
-                                _repository.UpdateFurnace(furnace, DateTime.UtcNow.ToIranStandardTime(), SumEAFConsumptionPerHeat[furnace - 1].ToString());
+                                _repository.UpdateFurnace(furnace, DateTime.UtcNow.ToIranTime().ToString(), SumEAFConsumptionPerHeat[furnace - 1].ToString());
                                 SumEAFConsumptionPerHeat[furnace - 1] = 0;
                                 // TODO: check if we have put 0 for this furnace for 'ConsEnergy_EAF'
 

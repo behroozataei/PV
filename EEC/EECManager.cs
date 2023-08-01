@@ -166,6 +166,7 @@ namespace EEC
 
         public void StartCyclicOperation()
         {
+            CheckCPSStatus();
             _SFSCManager.Start();
             _energyCalculator.InitialValues();
             _energyCalculator.printInitialValues();
@@ -195,18 +196,18 @@ namespace EEC
             // Wait to be loaded all User set-points
             var _EC = _repository.GetScadaPoint("ECONTRACT_User");
             var _PL = _repository.GetScadaPoint("PLIMIT_User");
-            while (true)
-            {
-                if ((_EC.Value > 0) && (_PL.Value > 0))
-                {
-                    if (!_energyCalculator.UpdateCurrentValuesFromLastNewValues())
-                        _logger.WriteEntry("Error in UpdateCurrentValuesFromLastNewValues!", LogLevels.Error);
+            //while (true)
+            //{
+            //    if ((_EC.Value > 0) && (_PL.Value > 0))
+            //    {
+            //        if (!_energyCalculator.UpdateCurrentValuesFromLastNewValues())
+            //            _logger.WriteEntry("Error in UpdateCurrentValuesFromLastNewValues!", LogLevels.Error);
 
-                    break;
-                }
+            //        break;
+            //    }
 
-                System.Threading.Thread.Sleep(1000);
-            }
+            //    System.Threading.Thread.Sleep(1000);
+            //}
         }
 
         public IProcessing RuntimeDataProcessing
