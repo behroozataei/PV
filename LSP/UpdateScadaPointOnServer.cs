@@ -255,7 +255,7 @@ namespace LSP
                 for (int cntr = 0; cntr < 3; cntr++)
                 {
                     _logger.WriteEntry($"SendCommand for Item: {scadaPoint.NetworkPath}  ; cntr = {cntr} ; {DateTime.UtcNow.ToIranStandardTime()}", LogLevels.Info);
-                    var reply = _scadaCommand.ChangeStateCommand(controlRequest, 2);
+                    var reply = _scadaCommand.ChangeStateCommand(controlRequest, commandReplyTimeout: 5);
                     if (reply.Executed)
                     {
                         _logger.WriteEntry("LSP Command for " + $"{scadaPoint.NetworkPath} is received with {value} " + reply.Log, LogLevels.Info);
@@ -305,7 +305,7 @@ namespace LSP
                 for (int cntr = 0; cntr < 3; cntr++)
                 {
                     _logger.WriteEntry($"SendCommand for Item: {scadaPoint.NetworkPath}  ; cntr = {cntr} ; {DateTime.UtcNow.ToIranStandardTime()}", LogLevels.Info);
-                    var reply = _scadaCommand.ChangeStateCommand(controlRequest, 2);
+                    var reply = _scadaCommand.ChangeStateCommand(controlRequest, commandReplyTimeout: 5);
                     if (reply.Executed)
                     {
                         _logger.WriteEntry("LSP SFSC Command for " + $"{scadaPoint.NetworkPath} is received with {value} " + reply.Log, LogLevels.Info);
