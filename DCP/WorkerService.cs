@@ -27,7 +27,7 @@ namespace DCP
         private readonly BlockingCollection<CpsRuntimeData> _cpsRuntimeDataBuffer;
         private readonly RuntimeDataReceiver _runtimeDataReceiver;
         private readonly DCPManager _dcpManager;
-        private readonly RedisUtils _RedisConnectorHelper;
+        private readonly RedisUtils _RTDBManager;
         private readonly IConfiguration _config;
 
         public WorkerService(IServiceProvider serviceProvider)
@@ -49,15 +49,16 @@ namespace DCP
                 RequireConnectivityNode = false,
             };
 
-            _RedisConnectorHelper = new RedisUtils(0, _config["RedisKeySentinel1"], _config["RedisKeySentinel2"], _config["RedisKeySentinel3"], _config["RedisKeySentinel4"], _config["RedisKeySentinel5"], _config["RedisPassword"], _config["RedisServiceName"],
+            RedisUtils.SetRedisUtilsParams(0, _config["RedisKeySentinel1"], _config["RedisKeySentinel2"], _config["RedisKeySentinel3"], _config["RedisKeySentinel4"], _config["RedisKeySentinel5"], _config["RedisPassword"], _config["RedisServiceName"],
                                                       _config["RedisConName1"], _config["RedisConName2"], _config["RedisConName3"], _config["RedisConName4"], _config["RedisConName5"], _config["IsSentinel"]);
+            _RTDBManager = RedisUtils.GetRedisUtils();
             
 
             _cpsRuntimeDataBuffer = new BlockingCollection<CpsRuntimeData>();
             _rpcService = new CpsRpcService(_config["CpsIpAddress"], 10000, historyDataRequest, _cpsRuntimeDataBuffer, GetRpcSslCredentials());
 
-            _repository = new Repository(_logger, _staticDataManager, _historicalDataManager, _linkDBpcsDataManager, _RedisConnectorHelper);
-            _dcpManager = new DCPManager(_logger, _repository, _rpcService.CommandService, _historicalDataManager);
+            _repository = new Repository(_logger, _staticDataManager, _historicalDataManager, _linkDBpcsDataManager, _RTDBManager);
+            _dcpManager = new DCPManager(_logger, _repository, _rpcService.CommandService, _historicalDataManager, _RTDBManager);
             _runtimeDataReceiver = new RuntimeDataReceiver(_logger, _repository, (IProcessing)_dcpManager, _rpcService, _cpsRuntimeDataBuffer);
            
         }
@@ -65,7 +66,7 @@ namespace DCP
         {
             try
             {
-                RedisUtils.RedisUtils_Connect();
+                _RTDBManager.RedisUtils_Connect();
             }
             catch (Exception ex)
             {
@@ -91,7 +92,7 @@ namespace DCP
             _logger.WriteEntry(">>>>> Connected to CPS", LogLevels.Info);
 
             _logger.WriteEntry("Check Redis Connection", LogLevels.Info);
-            while (!RedisUtils.IsConnected)
+            while (!_RTDBManager.IsConnected)
             {
                 _logger.WriteEntry(">>>>> Waiting for Redis Connection", LogLevels.Info);
                 CallConnection();

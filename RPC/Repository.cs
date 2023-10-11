@@ -22,11 +22,11 @@ namespace RPC
         private readonly Dictionary<Guid, RPCScadaPoint> _scadaPoints;
         private readonly Dictionary<string, RPCScadaPoint> _scadaPointsHelper;
         public Dictionary<string, ACCScadaPoint> _accScadaPoints;
-        private readonly RedisUtils _RedisConnectorHelper;
+        private readonly RedisUtils _RTDBManager;
 
         private bool isBuild = false;
 
-        public Repository(ILogger logger, DataManager staticDataManager, DataManager historicalDataManager, RedisUtils RedisConnectorHelper)
+        public Repository(ILogger logger, DataManager staticDataManager, DataManager historicalDataManager, RedisUtils RTDBManager)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _dataManager = staticDataManager ?? throw new ArgumentNullException(nameof(staticDataManager));
@@ -34,7 +34,7 @@ namespace RPC
             _scadaPoints = new Dictionary<Guid, RPCScadaPoint>();
             _accScadaPoints = new Dictionary<string, ACCScadaPoint>();
             _scadaPointsHelper = new Dictionary<string, RPCScadaPoint>();
-            _RedisConnectorHelper = RedisConnectorHelper ?? throw new ArgumentNullException(nameof(RedisConnectorHelper));
+            _RTDBManager = RTDBManager ?? throw new ArgumentNullException(nameof(RTDBManager));
         }
 
         public bool Build()
@@ -73,7 +73,7 @@ namespace RPC
                 var dataTable = _dataManager.GetRecord($"SELECT * from APP_RPC_PARAMS"); ;
                 if (dataTable != null)
                 {
-                    if (!RedisUtils.DelKeys(RedisKeyPattern.RPC_PARAMS))
+                    if (!_RTDBManager.DelKeys(RedisKeyPattern.RPC_PARAMS))
                         _logger.WriteEntry("Error: Delete APP_RPC_PARAMS from Redis", LogLevels.Error);
                 }
 
@@ -94,8 +94,8 @@ namespace RPC
                     RPC_param.ID = id.ToString();
                     RPC_param.SNAME = row["SNAME"].ToString(); ;
 
-                    if (RedisUtils.CheckConnection())
-                        RedisUtils.RedisConn.Set(RedisKeyPattern.RPC_PARAMS + networkPath, JsonConvert.SerializeObject(RPC_param));
+                    if (_RTDBManager.CheckConnection())
+                        _RTDBManager.RedisConn.Set(RedisKeyPattern.RPC_PARAMS + networkPath, JsonConvert.SerializeObject(RPC_param));
                     else
                         _logger.WriteEntry("Redis Connection Error", LogLevels.Error);
 
@@ -128,8 +128,8 @@ namespace RPC
             _logger.WriteEntry("Loading RPC_PARAMS Data from Cache", LogLevels.Info);
             try
             {
-                var keys = RedisUtils.GetKeys(pattern: RedisKeyPattern.RPC_PARAMS);
-                var dataTable_cache = RedisUtils.StringGet<RPC_PARAMS_Str>(keys);
+                var keys = _RTDBManager.GetKeys(pattern: RedisKeyPattern.RPC_PARAMS);
+                var dataTable_cache = _RTDBManager.StringGet<RPC_PARAMS_Str>(keys);
                 foreach (RPC_PARAMS_Str row in dataTable_cache)
                 {
                     var id = Guid.Parse((row.ID).ToString());
@@ -168,8 +168,8 @@ namespace RPC
 
         void BuildAccList()
         {
-            var keys = RedisUtils.GetKeys(pattern: RedisKeyPattern.RPC_PARAMS);
-            var dataTable_cache = RedisUtils.StringGet<RPC_PARAMS_Str>(keys);
+            var keys = _RTDBManager.GetKeys(pattern: RedisKeyPattern.RPC_PARAMS);
+            var dataTable_cache = _RTDBManager.StringGet<RPC_PARAMS_Str>(keys);
             foreach (RPC_PARAMS_Str row in dataTable_cache)
             {
                 if(row.SCADATYPE.ToLower() == "accumulatorcalc")
@@ -204,7 +204,7 @@ namespace RPC
 
         public RedisUtils GetRedisUtiles()
         {
-            return _RedisConnectorHelper;
+            return _RTDBManager;
 
         }
 

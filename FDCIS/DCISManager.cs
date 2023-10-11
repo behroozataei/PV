@@ -13,7 +13,7 @@ namespace DCIS
 {
     internal class DCISManager:IProcessing
     {
-        private const int TIMER_TICKS =1000;
+        private const int TIMER_TICKS =10000;
         private readonly IRepository _repository;
         private readonly ILogger _logger;
         private readonly Timer _timer_15_Min;
@@ -61,7 +61,7 @@ namespace DCIS
 
                 //shiftTime.ShiftStartTime = DateTime.UtcNow.AddSeconds(-120);
                 //shiftTime.ShiftEndTime = DateTime.UtcNow.AddSeconds(-60);
-                GenReport genReport = new GenReport();
+                //GenReport genReport = new GenReport();
 
 
                 foreach (var pointId in _repository.GetMeterIdList())
@@ -85,9 +85,9 @@ namespace DCIS
                     var total_Value = Totalizer(_hisValuesInIntervalTime);
                     _logger.WriteEntry($"{_repository.GetHisPoint(pointId).AccumulatorNetworkPath} : {shiftTime.ShiftEndTime.ToLocalTime()}  ,  {total_Value}", LogLevels.Info);
                     _updateScadaPointOnServer.WriteSCADAPoint(_repository.GetHisPoint(pointId), total_Value);
-                    genReport.AddConsumed(_repository.GetHisPoint(pointId).AccumulatorNetworkPath, total_Value) ;
+                    //genReport.AddConsumed(_repository.GetHisPoint(pointId).AccumulatorNetworkPath, total_Value) ;
                 }
-                genReport.save();
+                //genReport.save();
 
                 Executed = true;
                 CalcTime = DateTime.Now;

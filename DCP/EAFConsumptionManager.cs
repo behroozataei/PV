@@ -26,15 +26,17 @@ namespace DCP
 
         private readonly ILogger _logger;
         private readonly IRepository _repository;
+        private readonly RedisUtils _RTDBManager;
         private readonly UpdateScadaPointOnServer _updateScadaPointOnServer;
         private readonly string[] _OnOff_furnces_New;  //Array for On/Off of furnaces;		
         private readonly string[] _OnOff_furnces_Old;  //Array for On/Off of furnaces;		
 
-        internal EAFConsumptionManager(ILogger logger, IRepository repository, ICpsCommandService cpsCommandService)
+        internal EAFConsumptionManager(ILogger logger, IRepository repository, ICpsCommandService cpsCommandService, RedisUtils RTDBManager)
         {
             // TODO : 
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _repository = repository ?? throw new ArgumentNullException(nameof(repository));
+            _RTDBManager = RTDBManager ?? throw new ArgumentNullException(nameof(RTDBManager));
             _updateScadaPointOnServer = new UpdateScadaPointOnServer(_logger, cpsCommandService);
 
             try
@@ -249,11 +251,11 @@ namespace DCP
                     //}
 
                     EEC_SFSCEAFSPRIORITY_Str eec_sfsceafprio = new EEC_SFSCEAFSPRIORITY_Str();
-                    eec_sfsceafprio = JsonConvert.DeserializeObject<EEC_SFSCEAFSPRIORITY_Str>(RedisUtils.RedisConn.Get(RedisKeyPattern.EEC_SFSCEAFSPRIORITY + dr["Furnace"].ToString()));
+                    eec_sfsceafprio = JsonConvert.DeserializeObject<EEC_SFSCEAFSPRIORITY_Str>(_RTDBManager.RedisConn.Get(RedisKeyPattern.EEC_SFSCEAFSPRIORITY + dr["Furnace"].ToString()));
                     eec_sfsceafprio.CONSUMED_ENERGY_PER_HEAT = dr["Consumed Energy Per Heat"].ToString();
                     eec_sfsceafprio.STATUS_OF_FURNACE = dr["Status"].ToString();
                     eec_sfsceafprio.REASON = "DCP.EAFsConsumption => CONSUMED_ENERGY_PER_HEAT is updated, 1-Minute";
-                    RedisUtils.RedisConn.Set(RedisKeyPattern.EEC_SFSCEAFSPRIORITY + eec_sfsceafprio.FURNACE, JsonConvert.SerializeObject(eec_sfsceafprio));
+                    _RTDBManager.RedisConn.Set(RedisKeyPattern.EEC_SFSCEAFSPRIORITY + eec_sfsceafprio.FURNACE, JsonConvert.SerializeObject(eec_sfsceafprio));
 
                 }
             }
@@ -278,7 +280,7 @@ namespace DCP
                 {
                     var scadaPoint = _repository.GetScadaPoint("Current_EAF" + nFurnace.ToString());
                     EEC_SFSCEAFSPRIORITY_Str eec_sfsceafprio = new EEC_SFSCEAFSPRIORITY_Str();
-                    eec_sfsceafprio = JsonConvert.DeserializeObject<EEC_SFSCEAFSPRIORITY_Str>(RedisUtils.RedisConn.Get(RedisKeyPattern.EEC_SFSCEAFSPRIORITY + nFurnace.ToString()));
+                    eec_sfsceafprio = JsonConvert.DeserializeObject<EEC_SFSCEAFSPRIORITY_Str>(_RTDBManager.RedisConn.Get(RedisKeyPattern.EEC_SFSCEAFSPRIORITY + nFurnace.ToString()));
 
                     if (scadaPoint.Value > EAFS_ON_OFF_CURRENT_LIMIT)
                     {
@@ -309,7 +311,7 @@ namespace DCP
                         //	_logger.WriteEntry("'UPDATE APP_EEC_SFSCEAFSPriority SET STATUS_OF_FURNACE' is not possible!", LogLevels.Error);
                         //}
 
-                        RedisUtils.RedisConn.Set(RedisKeyPattern.EEC_SFSCEAFSPRIORITY + eec_sfsceafprio.FURNACE, JsonConvert.SerializeObject(eec_sfsceafprio));
+                        _RTDBManager.RedisConn.Set(RedisKeyPattern.EEC_SFSCEAFSPRIORITY + eec_sfsceafprio.FURNACE, JsonConvert.SerializeObject(eec_sfsceafprio));
 
                     }
                     _OnOff_furnces_Old[nFurnace - 1] = _OnOff_furnces_New[nFurnace - 1];

@@ -19,12 +19,12 @@ namespace OCP
 
         private readonly Dictionary<Guid, OCPScadaPoint> _scadaPoints;
         private readonly Dictionary<string, OCPScadaPoint> _scadaPointsHelper;
-        private readonly RedisUtils _RedisConnectorHelper;
+        private readonly RedisUtils _RTDBManager;
 
         private bool LoadfromCache = false;
         private bool isBuild = false;
 
-        public Repository(ILogger logger, DataManager staticDataManager, DataManager historicalDataManager, RedisUtils RedisConnectorHelper)
+        public Repository(ILogger logger, DataManager staticDataManager, DataManager historicalDataManager, RedisUtils RTDBManager)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _dataManager = staticDataManager ?? throw new ArgumentNullException(nameof(staticDataManager));
@@ -34,7 +34,7 @@ namespace OCP
 
             _scadaPoints = new Dictionary<Guid, OCPScadaPoint>();
             _scadaPointsHelper = new Dictionary<string, OCPScadaPoint>();
-            _RedisConnectorHelper = RedisConnectorHelper ?? throw new ArgumentNullException(nameof(RedisConnectorHelper));
+            _RTDBManager = RTDBManager ?? throw new ArgumentNullException(nameof(RTDBManager));
         }
 
         public bool Build()
@@ -173,8 +173,8 @@ namespace OCP
 
             try
             {
-                var keys = RedisUtils.GetKeys(pattern: RedisKeyPattern.OCP_CheckPoints);
-                var dataTable_cache = RedisUtils.StringGet<OCP_CHECKPOINTS_Str>(keys);
+                var keys = _RTDBManager.GetKeys(pattern: RedisKeyPattern.OCP_CheckPoints);
+                var dataTable_cache = _RTDBManager.StringGet<OCP_CHECKPOINTS_Str>(keys);
                 foreach (var row in dataTable_cache)
                 {
                     var checkPoint = new OCPCheckPoint();
@@ -291,7 +291,7 @@ namespace OCP
                 var dataTable = _dataManager.GetRecord($"SELECT * FROM APP_OCP_PARAMS");
                 if (dataTable != null)
                 {
-                    if (!RedisUtils.DelKeys(RedisKeyPattern.OCP_PARAMS))
+                    if (!_RTDBManager.DelKeys(RedisKeyPattern.OCP_PARAMS))
                         _logger.WriteEntry("Error: Delete APP_OCP_PARAMS from Redis", LogLevels.Error);
                 }
                 foreach (DataRow row in dataTable.Rows)
@@ -311,8 +311,8 @@ namespace OCP
                     ocp_param.NETWORKPATH = networkPath;
                     ocp_param.SCADATYPE = scadaPoint.SCADAType;
                     ocp_param.ID = id.ToString();
-                    if (RedisUtils.IsConnected)
-                        RedisUtils.RedisConn.Set(RedisKeyPattern.OCP_PARAMS + networkPath, JsonConvert.SerializeObject(ocp_param));
+                    if (_RTDBManager.IsConnected)
+                        _RTDBManager.RedisConn.Set(RedisKeyPattern.OCP_PARAMS + networkPath, JsonConvert.SerializeObject(ocp_param));
                     else
                         _logger.WriteEntry("Redis Connection Error", LogLevels.Error);
 
@@ -351,8 +351,8 @@ namespace OCP
             
             try
             {
-                var keys = RedisUtils.GetKeys(pattern: RedisKeyPattern.OCP_PARAMS);
-                var dataTable_cache = RedisUtils.StringGet<OCP_PARAMS_Str>(keys);
+                var keys = _RTDBManager.GetKeys(pattern: RedisKeyPattern.OCP_PARAMS);
+                var dataTable_cache = _RTDBManager.StringGet<OCP_PARAMS_Str>(keys);
                 foreach (OCP_PARAMS_Str row in dataTable_cache)
                 {
                     var id = Guid.Parse((row.ID).ToString());

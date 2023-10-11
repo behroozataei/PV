@@ -14,17 +14,19 @@ namespace RPC
 		private readonly IRepository _repository;
 		private readonly ILogger _logger;
 		private readonly UpdateScadaPointOnServer _updateScadaPointOnServer;
+        private readonly RedisUtils _RTDBManager;
 
-		private DateTime[] m_Cycles = new DateTime[16]; //Array for 15 minutes period
+        private DateTime[] m_Cycles = new DateTime[16]; //Array for 15 minutes period
 		private int m_CycleNo = 0;
 		private bool InitRPCCycleNo = false;
 
-		internal CycleValidator(IRepository repository, ILogger logger, UpdateScadaPointOnServer updateScadaPointOnServer)
+		internal CycleValidator(IRepository repository, ILogger logger, UpdateScadaPointOnServer updateScadaPointOnServer, RedisUtils RTDBManager)
 		{
 			_repository = repository ?? throw new ArgumentNullException(nameof(repository));
 			_logger = logger ?? throw new ArgumentNullException(nameof(logger));
 			_updateScadaPointOnServer = updateScadaPointOnServer ?? throw new ArgumentNullException(nameof(updateScadaPointOnServer));
-		}
+            _RTDBManager = RTDBManager ?? throw new ArgumentNullException(nameof(RTDBManager));
+        }
 		public bool GetRPCCycleNo()
 		{
 			bool result = false;
@@ -157,7 +159,7 @@ namespace RPC
 			try
 			{
 				T_RPCCycles_Str _t_rpcCycles = new T_RPCCycles_Str();
-				_t_rpcCycles = JsonConvert.DeserializeObject<T_RPCCycles_Str>(RedisUtils.RedisConn.Get(RedisKeyPattern.RPC_Cycles.ToString()));
+				_t_rpcCycles = JsonConvert.DeserializeObject<T_RPCCycles_Str>(_RTDBManager.RedisConn.Get(RedisKeyPattern.RPC_Cycles.ToString()));
 
 				for (int i = 1; i <= 15; i++)
 				{
@@ -178,13 +180,13 @@ namespace RPC
 			try
 			{
 				T_RPCCycles_Str _t_rpcCycles = new T_RPCCycles_Str();
-				_t_rpcCycles = JsonConvert.DeserializeObject<T_RPCCycles_Str>(RedisUtils.RedisConn.Get(RedisKeyPattern.RPC_Cycles.ToString()));
+				_t_rpcCycles = JsonConvert.DeserializeObject<T_RPCCycles_Str>(_RTDBManager.RedisConn.Get(RedisKeyPattern.RPC_Cycles.ToString()));
 
 				for (int i = 1; i <= 15; i++)
 				{
 					_t_rpcCycles.CYCLE[i] = m_Cycles[i];
 				}
-				result =RedisUtils.RedisConn.Set(RedisKeyPattern.RPC_Cycles, JsonConvert.SerializeObject(_t_rpcCycles));
+				result = _RTDBManager.RedisConn.Set(RedisKeyPattern.RPC_Cycles, JsonConvert.SerializeObject(_t_rpcCycles));
 				//result = true;
 			}
 			catch (System.Exception excep)
@@ -206,7 +208,7 @@ namespace RPC
 				{
 					_t_rpcCycles.CYCLE[i] = DateTime.UtcNow;
 				}
-				result=RedisUtils.RedisConn.Set(RedisKeyPattern.RPC_Cycles, JsonConvert.SerializeObject(_t_rpcCycles));
+				result= _RTDBManager.RedisConn.Set(RedisKeyPattern.RPC_Cycles, JsonConvert.SerializeObject(_t_rpcCycles));
 				//result = true;
 			}
 			catch (System.Exception excep)

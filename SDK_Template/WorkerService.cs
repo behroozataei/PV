@@ -27,33 +27,17 @@ namespace SDK_Template
         private readonly Repository _repository;
         private readonly RuntimeDataReceiver _runtimeDataReceiver;
         private readonly SDK_Template_Manager _sdk_template_manager;
-        private readonly RedisUtils _RedisConnectorHelper;
+        private readonly RedisUtils _RTDBManager;
         private readonly IConfiguration _config;
 
         public WorkerService(IServiceProvider serviceProvider)
         {
-            var config = serviceProvider.GetService<IConfiguration>();
+            _config = serviceProvider.GetService<IConfiguration>();
             _logger = serviceProvider.GetService<ILogger>();
 
-            
-            _RedisConnectorHelper = new RedisUtils(0, _config["RedisKeySentinel1"], _config["RedisKeySentinel2"], _config["RedisKeySentinel3"], _config["RedisKeySentinel4"], _config["RedisKeySentinel5"], _config["RedisPassword"], _config["RedisServiceName"],
-                                                       _config["RedisConName1"], _config["RedisConName2"], _config["RedisConName3"], _config["RedisConName4"], _config["RedisConName5"], _config["IsSentinel"]);
+            _dataManager = new Irisa.DataLayer.Oracle.OracleDataManager(_config["OracleServicename"], _config["OracleDatabaseAddress"], _config["OracleStaticUser"], _config["OracleStaticPassword"]);
+            _storeLogs = new StoreLogs(_dataManager, _logger, "SCADA.\"HIS_HisLogs_Insert\"");
 
-
-            //if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            //{
-            //    _dataManager = new SqlServerDataManager(config["SQLServerNameOfStaticDataDatabase"], config["SQLServerDatabaseAddress"], config["SQLServerUser"], config["SQLServerPassword"]);
-            //    _storeLogs = new StoreLogs(_dataManager, _logger, "[HIS].[HIS_LOGS_INSERT]");
-
-            //}
-            //else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-            {
-                _dataManager = new Irisa.DataLayer.Oracle.OracleDataManager(config["OracleServicename"], config["OracleDatabaseAddress"], config["OracleStaticUser"], config["OracleStaticPassword"]);
-                _storeLogs = new StoreLogs(_dataManager, _logger, "SCADA.\"HIS_HisLogs_Insert\"");
-            }
-
-            //_dataManager = new Irisa.DataLayer.Oracle.OracleDataManager(config["OracleServicename"], config["OracleDatabaseAddress"], config["OracleStaticUser"], config["OracleStaticPassword"]);
-            //_storeLogs = new StoreLogs(_dataManager, _logger, "SCADA.\"HIS_HisLogs_Insert\"");
             var historyDataRequest = new HistoryDataRequest
             {
                 RequireMeasurements = true,
@@ -63,17 +47,17 @@ namespace SDK_Template
                 RequireConnectivityNode = false,
             };
 
+            RedisUtils.SetRedisUtilsParams(0, _config["RedisKeySentinel1"], _config["RedisKeySentinel2"], _config["RedisKeySentinel3"], _config["RedisKeySentinel4"], _config["RedisKeySentinel5"], _config["RedisPassword"], _config["RedisServiceName"],
+                                                       _config["RedisConName1"], _config["RedisConName2"], _config["RedisConName3"], _config["RedisConName4"], _config["RedisConName5"], _config["IsSentinel"]);
+            _RTDBManager = RedisUtils.GetRedisUtils();
+
             _cpsRuntimeDataBuffer = new BlockingCollection<CpsRuntimeData>();
-            _rpcService = new CpsRpcService(config["CpsIpAddress"], 10000, historyDataRequest, _cpsRuntimeDataBuffer);
-            _repository = new Repository(_logger, _dataManager, _RedisConnectorHelper);
+            _rpcService = new CpsRpcService(_config["CpsIpAddress"], 10000, historyDataRequest, _cpsRuntimeDataBuffer);
+            _repository = new Repository(_logger, _dataManager, _RTDBManager);
             _sdk_template_manager = new SDK_Template_Manager(_logger, _repository, _rpcService.CommandService);
             _runtimeDataReceiver = new RuntimeDataReceiver(_logger, _repository, (IProcessing)_sdk_template_manager, _rpcService, _cpsRuntimeDataBuffer);
         }
-        private void _RedisConnectorHelper_ConnectionFailed(object sender, StackExchange.Redis.ConnectionFailedEventArgs e)
-        {
-            _logger.WriteEntry("Redis Connection Failed", LogLevels.Error);
-
-        }
+        
 
         public override Task StartAsync(CancellationToken cancellationToken)
         {

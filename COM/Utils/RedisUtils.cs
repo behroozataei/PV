@@ -9,6 +9,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using NetPro.CsRedis;
 using CSRedis;
+using System.NetPro;
 
 //using ServiceStack.Redis;
 //using Microsoft.Extensions.Configuration;
@@ -18,7 +19,7 @@ namespace COMMON
 
     public class RedisUtils
     {
-        public static RedisUtils MainRTDBManager;
+        private static RedisUtils MainRTDBManager = null;
         private static string _password;
         private static string _redisKeySentinel1;
         private static string _redisKeySentinel2;
@@ -32,48 +33,58 @@ namespace COMMON
         private static string _redisConName4;
         private static string _redisConName5;
         private static int _database = 0;
-        public RedisUtils(int database, string RedisKeySentinel1, string RedisKeySentinel2, string RedisKeySentinel3, string RedisKeySentinel4, string RedisKeySentinel5, string password, string servicename,
-                                                                  string redisConName1, string redisConName2, string redisConName3, string redisConName4, string redisConName5, string isSentinel)
+        private RedisUtils()
         {
-            try
+           
+        }
+        private static readonly object Instancelock = new object();
+        public static RedisUtils GetRedisUtils()
+        {
+            lock (Instancelock)
             {
-                _database = database;
-                _password = password;
-                _redisKeySentinel1 = RedisKeySentinel1;
-                _redisKeySentinel2 = RedisKeySentinel2;
-                _redisKeySentinel3 = RedisKeySentinel3;
-                _redisKeySentinel4 = RedisKeySentinel4;
-                _redisKeySentinel5 = RedisKeySentinel5;
-                _servicename = servicename;
-                _redisConName1 = redisConName1;
-                _redisConName2 = redisConName2;
-                _redisConName3 = redisConName3;
-                _redisConName4 = redisConName4;
-                _redisConName5 = redisConName5;
-
-                hasSentinel = Convert.ToBoolean(isSentinel);
-                
-            }
-            catch (Exception ex)
-            {
-
+                if (MainRTDBManager == null)
+                {
+                    MainRTDBManager = new RedisUtils();
+                }
+                return MainRTDBManager;
             }
         }
+
+        public static void SetRedisUtilsParams(int database, string RedisKeySentinel1, string RedisKeySentinel2, string RedisKeySentinel3, string RedisKeySentinel4, string RedisKeySentinel5, string password, string servicename,
+                                                                 string redisConName1, string redisConName2, string redisConName3, string redisConName4, string redisConName5, string isSentinel)
+        {
+            _database = database;
+            _password = password;
+            _redisKeySentinel1 = RedisKeySentinel1;
+            _redisKeySentinel2 = RedisKeySentinel2;
+            _redisKeySentinel3 = RedisKeySentinel3;
+            _redisKeySentinel4 = RedisKeySentinel4;
+            _redisKeySentinel5 = RedisKeySentinel5;
+            _servicename = servicename;
+            _redisConName1 = redisConName1;
+            _redisConName2 = redisConName2;
+            _redisConName3 = redisConName3;
+            _redisConName4 = redisConName4;
+            _redisConName5 = redisConName5;
+            hasSentinel = Convert.ToBoolean(isSentinel);
+        }
+
+
 
 
         //****************************************************
 
         //private static IConnectionMultiplexer RedisConnection;
-        public static CSRedisClient RedisConn;
+        public  CSRedisClient RedisConn;
 
         //public static IServer Server { get; set; }
         //public IDatabase DataBase { get; set; }
         //public static bool IsConnected => RedisConnection != null ? RedisConnection.IsConnected : false;
        // public static bool IsConnected => RedisConnection1!= null ? RedisConnection1.Ping() : false;
-        public static bool IsConnected => RedisConn!= null ? true : false;
+        public  bool IsConnected => RedisConn!= null ? true : false;
         // public static string RTDBStatus => RedisConnection != null ? RedisConnection.GetStatus() : "";
 
-        public static bool CheckConnection()
+        public  bool CheckConnection()
         {
             int Connectionstat = 1;
             bool result = false;
@@ -107,7 +118,7 @@ namespace COMMON
 
 
 
-        private static List<string> GetEndPoints
+        private  List<string> GetEndPoints
         {
             get
             {
@@ -137,7 +148,7 @@ namespace COMMON
         }
 
         // [Obsolete]
-        public static void RedisUtils_Connect()
+        public  void RedisUtils_Connect()
         {
             try
             {
@@ -208,7 +219,7 @@ namespace COMMON
 
         
 
-        private static void connect()
+        private  void connect()
         {
 
             try
@@ -251,7 +262,7 @@ namespace COMMON
         //    _isRunning = true;
         //}
 
-        private static void waitForReconnecting()
+        private  void waitForReconnecting()
         {
             while (!IsConnected)
             {
@@ -264,14 +275,14 @@ namespace COMMON
 
        
 
-        public static IEnumerable<T> StringGet<T>(string[] redisKeys)
+        public  IEnumerable<T> StringGet<T>(string[] redisKeys)
         {
             var result = redisKeys.Select(n => RedisConn.Get(n));
             //var result = StringGet(redisKeys);
             return result.Select(n => JsonConvert.DeserializeObject<T>(n));
         }
 
-        public static bool StringGet<T>(string redisKey, ref T value)
+        public  bool StringGet<T>(string redisKey, ref T value)
         {
             bool ret = false;
             int tryCount = 0;
@@ -295,14 +306,14 @@ namespace COMMON
             return ret;
         }
 
-        public static String[] GetKeys(String pattern)
+        public  String[] GetKeys(String pattern)
         {
             return  RedisConn.Keys(pattern + "*");
            // return RedisConn.KeysAsync(pattern + "*").Result;
                     
         }
 
-        public static bool DelKeys(string pattern)
+        public  bool DelKeys(string pattern)
 
         {
             bool ret = false;

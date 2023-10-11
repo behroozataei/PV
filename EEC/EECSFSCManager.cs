@@ -20,6 +20,7 @@ namespace EEC
 
         private readonly IRepository _repository;
         private readonly ILogger _logger;
+        private readonly RedisUtils _RTDBManager;
         private readonly Timer _timer_4_Seconds;
         private UpdateScadaPointOnServer _updateScadaPointOnServer;
 
@@ -36,10 +37,11 @@ namespace EEC
         private readonly int[] _BBG_furnces;   //Array for Busbar group of furnaces
         private readonly int[] _BBG_EEC_furnces;   //Array for Busbar group of furnaces for EEC
 
-        internal EECSFSCManager(ILogger logger, IRepository repository, ICpsCommandService cpsCommandService)
+        internal EECSFSCManager(ILogger logger, IRepository repository, ICpsCommandService cpsCommandService, RedisUtils RTDBManager)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _repository = repository ?? throw new ArgumentNullException(nameof(repository));
+            _RTDBManager = RTDBManager ?? throw new ArgumentNullException(nameof(RTDBManager));
             _updateScadaPointOnServer = new UpdateScadaPointOnServer(_logger, cpsCommandService);
 
             _timer_4_Seconds = new Timer();
@@ -235,7 +237,7 @@ namespace EEC
                 //    return false;
                 //}
 
-                _eec_tel = JsonConvert.DeserializeObject<EEC_TELEGRAM_Str>(RedisUtils.RedisConn.Get(RedisKeyPattern.EEC_TELEGRAM));
+                _eec_tel = JsonConvert.DeserializeObject<EEC_TELEGRAM_Str>(_RTDBManager.RedisConn.Get(RedisKeyPattern.EEC_TELEGRAM));
 
                 
                 if (!(_eec_tel is null))
@@ -442,7 +444,7 @@ namespace EEC
                             {
                                 // if (_repository.GetRedisUtiles().GetKeys(pattern: RedisKeyPattern.EEC_SFSCEAFSPRIORITY + (fur + 1).ToString()).Length != 0)
                                 // 1401-12-02 delay on redis query
-                                eec_sfsceafprio[fur] = JsonConvert.DeserializeObject<EEC_SFSCEAFSPRIORITY_Str>(RedisUtils.RedisConn.Get(RedisKeyPattern.EEC_SFSCEAFSPRIORITY + (fur + 1).ToString()));
+                                eec_sfsceafprio[fur] = JsonConvert.DeserializeObject<EEC_SFSCEAFSPRIORITY_Str>(_RTDBManager.RedisConn.Get(RedisKeyPattern.EEC_SFSCEAFSPRIORITY + (fur + 1).ToString()));
                                 //else
                                 //{
                                 //    _logger.WriteEntry($"Error in 'SELECT PRIORITY TABLE FROM APP_EEC_SFSCEAFSPRIORITY'", LogLevels.Error);
@@ -501,7 +503,7 @@ namespace EEC
                                 sfsc_furnace_to_shed.SHEADTIME = DateTime.Parse("1900-01-01 00:00:00");
                                 sfsc_furnace_to_shed.SHEADCOMMAND = true;
 
-                                RedisUtils.RedisConn.Set(RedisKeyPattern.SFSC_FURNACE_TO_SHED, JsonConvert.SerializeObject(sfsc_furnace_to_shed));
+                                _RTDBManager.RedisConn.Set(RedisKeyPattern.SFSC_FURNACE_TO_SHED, JsonConvert.SerializeObject(sfsc_furnace_to_shed));
                                 //_updateScadaPointOnServer.SendAlarm(_repository.GetScadaPoint("SFSCACTIVATED"), DigitalSingleStatus.Open, " ");
 
                                 //1401_08_08 Preparing Data For HMI
@@ -651,11 +653,11 @@ namespace EEC
                         if ((_BBG_furnces[furnace - 1] != bbg) || (_BBG_EEC_furnces[furnace - 1] != bbg_eec))
                         {
                             EEC_SFSCEAFSPRIORITY_Str eec_sfsceafprio = new EEC_SFSCEAFSPRIORITY_Str();
-                            eec_sfsceafprio = JsonConvert.DeserializeObject<EEC_SFSCEAFSPRIORITY_Str>(RedisUtils.RedisConn.Get(RedisKeyPattern.EEC_SFSCEAFSPRIORITY + furnace.ToString()));
+                            eec_sfsceafprio = JsonConvert.DeserializeObject<EEC_SFSCEAFSPRIORITY_Str>(_RTDBManager.RedisConn.Get(RedisKeyPattern.EEC_SFSCEAFSPRIORITY + furnace.ToString()));
                             eec_sfsceafprio.GROUPNUM = scadapointEAFGroup.Value.ToString();
                             eec_sfsceafprio.GROUPNUM_EEC = scadapointEAFGroupEEC.Value.ToString();
                             eec_sfsceafprio.REASON = "EEC.SFSCManager => GROUPNUM is updated";
-                            RedisUtils.RedisConn.Set(RedisKeyPattern.EEC_SFSCEAFSPRIORITY + eec_sfsceafprio.FURNACE, JsonConvert.SerializeObject(eec_sfsceafprio));
+                            _RTDBManager.RedisConn.Set(RedisKeyPattern.EEC_SFSCEAFSPRIORITY + eec_sfsceafprio.FURNACE, JsonConvert.SerializeObject(eec_sfsceafprio));
 
                             _BBG_furnces[furnace - 1] = Convert.ToInt32(scadapointEAFGroup.Value.ToString());
                             _BBG_EEC_furnces[furnace - 1] = Convert.ToInt32(scadapointEAFGroupEEC.Value.ToString());

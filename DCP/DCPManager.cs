@@ -23,6 +23,7 @@ namespace DCP
         private readonly ILogger _logger;
         private readonly UpdateScadaPointOnServer _updateScadaPointOnServer;
         private readonly DataManager _historicalDataManager;
+        private readonly RedisUtils _RTDBManager;
 
         // In second
         private int TIMER_CYCLE_LoadPowerForEAFS = 4000;
@@ -40,10 +41,11 @@ namespace DCP
         // An object for handling PCS Telegrams
         private PCSManager _pcsManager = null;
 
-        public DCPManager(ILogger logger, IRepository repository, ICpsCommandService cpsCommandService, DataManager historicalDataManager)
+        public DCPManager(ILogger logger, IRepository repository, ICpsCommandService cpsCommandService, DataManager historicalDataManager, RedisUtils RTDBManager)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _repository = repository ?? throw new ArgumentNullException(nameof(repository));
+            _RTDBManager = RTDBManager ?? throw new ArgumentNullException(nameof(RTDBManager));
             _updateScadaPointOnServer = new UpdateScadaPointOnServer(_logger, cpsCommandService);
             _cpsCommandService = cpsCommandService;
             _historicalDataManager = historicalDataManager;
@@ -69,11 +71,11 @@ namespace DCP
         {
             //--------------------------------------------------------
             // Step 1: For DC-EAFS Consumption:
-            _eafConsumptonManager = new EAFConsumptionManager(_logger, _repository, _cpsCommandService);
+            _eafConsumptonManager = new EAFConsumptionManager(_logger, _repository, _cpsCommandService,_RTDBManager);
 
             //--------------------------------------------------------
             // Step 2: For DC-PCS:
-            _pcsManager = new PCSManager(_logger, _repository, _updateScadaPointOnServer, _historicalDataManager);
+            _pcsManager = new PCSManager(_logger, _repository, _updateScadaPointOnServer, _historicalDataManager, _RTDBManager);
 
 
             try

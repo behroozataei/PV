@@ -1,4 +1,5 @@
-﻿using Irisa.Logger;
+﻿using COMMON;
+using Irisa.Logger;
 using Irisa.Message;
 using System;
 using System.Threading.Tasks;
@@ -17,11 +18,13 @@ namespace EEC
         private readonly Timer _timer_1_Minute;
         private UpdateScadaPointOnServer _updateScadaPointOnServer;
         private EECSFSCManager _SFSCManager = null;
+        private readonly RedisUtils _RTDBManager;
 
-        internal EECManager(ILogger logger, IRepository repository, ICpsCommandService commandService)
+        internal EECManager(ILogger logger, IRepository repository, ICpsCommandService commandService, RedisUtils RTDBManager)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _repository = repository ?? throw new ArgumentNullException(nameof(repository));
+            _RTDBManager = RTDBManager ?? throw new ArgumentNullException(nameof(RTDBManager));
             _cycleValidator = new EECCycleValidator(_logger);
 
             _timer_1_Minute = new Timer();
@@ -31,7 +34,7 @@ namespace EEC
             _updateScadaPointOnServer = new UpdateScadaPointOnServer(_logger, commandService);
             _energyCalculator = new EECEnergyCalculator(_repository, _logger, _updateScadaPointOnServer);
 
-            _SFSCManager = new EECSFSCManager(_logger, repository, commandService);
+            _SFSCManager = new EECSFSCManager(_logger, repository, commandService, RTDBManager);
             
         }
 

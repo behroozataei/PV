@@ -19,11 +19,11 @@ namespace OPC
         private readonly Dictionary<string, ScadaPoint> _opcscadaPointsHelper;
         private readonly Dictionary<string, Guid> _entityMapper;
         private readonly Dictionary<Guid, string> _entityMapperOutput;
-        private readonly RedisUtils _RedisConnectorHelper;
+        private readonly RedisUtils _RTDBManager;
 
         private bool isBuild = false;
 
-        public Repository(ILogger logger, DataManager databaseQuery, RedisUtils RedisConnectorHelper)
+        public Repository(ILogger logger, DataManager databaseQuery, RedisUtils RTDBManager)
         {
             _OPCRepository = new OPCRepository();
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -32,7 +32,7 @@ namespace OPC
             _entityMapperOutput = new Dictionary<Guid, string>();
             _opcscadaPoints = new Dictionary<Guid, ScadaPoint>();            
             _opcscadaPointsHelper = new Dictionary<string, ScadaPoint>();
-            _RedisConnectorHelper = RedisConnectorHelper ?? throw new ArgumentNullException(nameof(RedisConnectorHelper));
+            _RTDBManager = RTDBManager ?? throw new ArgumentNullException(nameof(RTDBManager));
 
         }
         public bool Build()
@@ -157,10 +157,10 @@ namespace OPC
             try
             {
                 HVLOPC_MEAS_Str opc_meas = new HVLOPC_MEAS_Str();
-                if (RedisUtils.IsConnected)
+                if (_RTDBManager.IsConnected)
                 {
                     _logger.WriteEntry("Clear OPCScadapoint from Redis", LogLevels.Info);
-                    if (!RedisUtils.DelKeys(RedisKeyPattern.HVLOPCMeasurement))
+                    if (!_RTDBManager.DelKeys(RedisKeyPattern.HVLOPCMeasurement))
                         _logger.WriteEntry("Error: Delete APP_VLOPCMeasurement from Redis", LogLevels.Error);
 
                 }
@@ -180,8 +180,8 @@ namespace OPC
                     opc_meas.ID = opcscadapint.MeasurementId;
                     opc_meas.TagType = (int)opcscadapint.Type;
                     opc_meas.Description = opcscadapint.Direction;
-                    if (RedisUtils.IsConnected)
-                        RedisUtils.RedisConn.Set(RedisKeyPattern.HVLOPCMeasurement + opc_meas.NetworkPath, JsonConvert.SerializeObject(opc_meas));
+                    if (_RTDBManager.IsConnected)
+                        _RTDBManager.RedisConn.Set(RedisKeyPattern.HVLOPCMeasurement + opc_meas.NetworkPath, JsonConvert.SerializeObject(opc_meas));
                     else
                         _logger.WriteEntry("Redis Connection Error", LogLevels.Error);
                 }
@@ -199,8 +199,8 @@ namespace OPC
         {
             _logger.WriteEntry("Loading Data from Cache", LogLevels.Info);
 
-            var keys = RedisUtils.GetKeys(pattern: RedisKeyPattern.HVLOPCMeasurement);
-            var dataTable = RedisUtils.StringGet<HVLOPC_MEAS_Str>(keys);
+            var keys = _RTDBManager.GetKeys(pattern: RedisKeyPattern.HVLOPCMeasurement);
+            var dataTable = _RTDBManager.StringGet<HVLOPC_MEAS_Str>(keys);
 
             foreach (HVLOPC_MEAS_Str row in dataTable)
             {
@@ -267,10 +267,10 @@ namespace OPC
             try
             {
                 HVLOPC_PARAM_Str opc_param = new HVLOPC_PARAM_Str();
-                if (RedisUtils.IsConnected)
+                if (_RTDBManager.IsConnected)
                 {
                     _logger.WriteEntry("Clear OPCParam from Redis", LogLevels.Info);
-                    if (!RedisUtils.DelKeys(RedisKeyPattern.HVLOPC_Params))
+                    if (!_RTDBManager.DelKeys(RedisKeyPattern.HVLOPC_Params))
                         _logger.WriteEntry("Error: Delete APP_HVLOPC_PARAMS from Redis", LogLevels.Error);
 
                 }
@@ -282,7 +282,7 @@ namespace OPC
                 opc_param.IP = _OPCRepository.Connection.IP;
                 opc_param.Port = _OPCRepository.Connection.Port;
                 opc_param.Description = "Description";
-                RedisUtils.RedisConn.Set(RedisKeyPattern.HVLOPC_Params, JsonConvert.SerializeObject(opc_param));
+                _RTDBManager.RedisConn.Set(RedisKeyPattern.HVLOPC_Params, JsonConvert.SerializeObject(opc_param));
             }
             catch (Exception ex)
             {
@@ -298,8 +298,8 @@ namespace OPC
         {
             try
             {
-                var keys = RedisUtils.GetKeys(pattern: RedisKeyPattern.HVLOPC_Params);
-                var paramTable = RedisUtils.StringGet<HVLOPC_PARAM_Str>(keys);
+                var keys = _RTDBManager.GetKeys(pattern: RedisKeyPattern.HVLOPC_Params);
+                var paramTable = _RTDBManager.StringGet<HVLOPC_PARAM_Str>(keys);
                 var row = paramTable.First();
                 _OPCRepository.Connection.Name = row.Name;
                 _OPCRepository.Connection.IP = row.IP;

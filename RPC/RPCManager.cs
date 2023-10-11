@@ -15,8 +15,9 @@ namespace RPC
         private readonly UpdateScadaPointOnServer _updateScadaPointOnServer;
         private readonly IRepository _repository;
         private readonly Timer _timer;
+        private readonly RedisUtils _RTDBManager;
 
-		private const int RPC_TIMER_TICKS = 60000;
+        private const int RPC_TIMER_TICKS = 60000;
 		public NetworkConfValidator _theCNetworkConfValidator;
         public CycleValidator _theCCycleValidator;
 		private RPCCalculation _theCRPCCalculation;
@@ -25,22 +26,24 @@ namespace RPC
         private QController _theCQController;
         private CosPHIController _theCCosPhiController;
         public EnergyCalc _energyCalc;
+       
 
 
 
 
 
-        public RPCManager(ILogger logger, IRepository repository, ICpsCommandService scadaCommand)
+        public RPCManager(ILogger logger, IRepository repository, ICpsCommandService scadaCommand, RedisUtils RTDBManager)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _updateScadaPointOnServer = new UpdateScadaPointOnServer(logger, scadaCommand);
+            _RTDBManager = RTDBManager ?? throw new ArgumentNullException(nameof(RTDBManager));
             _repository = repository;
             _timer = new Timer();
             _timer.Interval = RPC_TIMER_TICKS;
             _timer.Elapsed += RunCyclicOperation;
 
             _theCNetworkConfValidator = new NetworkConfValidator(_repository, _logger, _updateScadaPointOnServer);
-            _theCCycleValidator = new CycleValidator(_repository, _logger, _updateScadaPointOnServer);
+            _theCCycleValidator = new CycleValidator(_repository, _logger, _updateScadaPointOnServer, _RTDBManager);
             _theCRPCCalculation = new RPCCalculation(_repository, _logger, _updateScadaPointOnServer);
             _theCLimitChecker = new LimitChecker(_repository, _logger, _updateScadaPointOnServer);
             _theCVoltageController = new VoltageController(repository, _logger, _updateScadaPointOnServer);

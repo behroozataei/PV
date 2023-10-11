@@ -17,18 +17,18 @@ namespace OPC
         private readonly Dictionary<Guid, ScadaPoint> _scadaPoints;
         private readonly Dictionary<string, ScadaPoint> _scadaPointsHelper;
         private readonly Dictionary<string, Guid> _entityMapper;
-        private readonly RedisUtils _RedisConnectorHelper;
+        private readonly RedisUtils _RTDBManager;
 
         private bool isBuild = false;
 
-        public Repository(ILogger logger, DataManager databaseQuery, RedisUtils RedisConnectorHelper)
+        public Repository(ILogger logger, DataManager databaseQuery, RedisUtils RTDBManager)
         {
             _OPCRepository = new OPCRepository();
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _dataManager = databaseQuery ?? throw new ArgumentNullException(nameof(databaseQuery));
             _entityMapper = new Dictionary<string, Guid>();
             _scadaPoints = new Dictionary<Guid, ScadaPoint>();
-            _RedisConnectorHelper = RedisConnectorHelper ?? throw new ArgumentNullException(nameof(RedisConnectorHelper));
+            _RTDBManager = RTDBManager ?? throw new ArgumentNullException(nameof(RTDBManager));
         }
         public bool Build()
         {
@@ -70,7 +70,7 @@ namespace OPC
                 dataTable = dbQuery.GetRecord(sql);
                 if (dataTable != null)
                 {
-                    if (!RedisUtils.DelKeys(RedisKeyPattern.OPCMeasurement))
+                    if (!_RTDBManager.DelKeys(RedisKeyPattern.OPCMeasurement))
                         _logger.WriteEntry("Error: Delete APP_OPC_MEASUREMENT from Redis", LogLevels.Error);
                 }
                 OPC_MEAS_Str opc_meas = new OPC_MEAS_Str();
@@ -85,8 +85,8 @@ namespace OPC
                     opc_meas.MessageConfiguration = (int)row["MessageConfiguration"];
                     opc_meas.ID = GetGuid(row["NetworkPath"].ToString());
                     opc_meas.TagType = (int)(row["TagType"].ToString() == "DMODigitalMeasurement" ? Type.Digital : Type.Analog);
-                    if (RedisUtils.IsConnected)
-                        RedisUtils.RedisConn.Set(RedisKeyPattern.OPCMeasurement + opc_meas.NetworkPath, JsonConvert.SerializeObject(opc_meas));
+                    if (_RTDBManager.IsConnected)
+                        _RTDBManager.RedisConn.Set(RedisKeyPattern.OPCMeasurement + opc_meas.NetworkPath, JsonConvert.SerializeObject(opc_meas));
                     else
                         _logger.WriteEntry("Redis Connection Error", LogLevels.Error);
 
@@ -121,8 +121,8 @@ namespace OPC
 
             try
             {
-                var keys = RedisUtils.GetKeys(pattern: RedisKeyPattern.OPCMeasurement);
-                var dataTable = RedisUtils.StringGet<OPC_MEAS_Str>(keys);
+                var keys = _RTDBManager.GetKeys(pattern: RedisKeyPattern.OPCMeasurement);
+                var dataTable = _RTDBManager.StringGet<OPC_MEAS_Str>(keys);
 
                 foreach (OPC_MEAS_Str row in dataTable)
                 {
@@ -167,7 +167,7 @@ namespace OPC
                 dataTable = dbQuery.GetRecord(sql);
                 if (dataTable != null)
                 {
-                    if (!RedisUtils.DelKeys(RedisKeyPattern.OPC_Params))
+                    if (!_RTDBManager.DelKeys(RedisKeyPattern.OPC_Params))
                         _logger.WriteEntry("Error: Delete APP_OPC_PARAMS from Redis", LogLevels.Error);
                 }
 
@@ -182,8 +182,8 @@ namespace OPC
                 opc_param.Port = _OPCRepository.Connection.Port;
                 opc_param.Description = row["Description"].ToString();
 
-                if (RedisUtils.IsConnected)
-                    RedisUtils.RedisConn.Set(RedisKeyPattern.OPC_Params, JsonConvert.SerializeObject(opc_param));
+                if (_RTDBManager.IsConnected)
+                    _RTDBManager.RedisConn.Set(RedisKeyPattern.OPC_Params, JsonConvert.SerializeObject(opc_param));
             }
             catch (Exception ex)
             {
@@ -197,8 +197,8 @@ namespace OPC
         {
             try
             {
-                var keys = RedisUtils.GetKeys(pattern: RedisKeyPattern.OPC_Params);
-                var paramTable = RedisUtils.StringGet<OPC_PARAM_Str>(keys);
+                var keys = _RTDBManager.GetKeys(pattern: RedisKeyPattern.OPC_Params);
+                var paramTable = _RTDBManager.StringGet<OPC_PARAM_Str>(keys);
                 var row = paramTable.First();
                 _OPCRepository.Connection.Name = row.Name;
                 _OPCRepository.Connection.IP = row.IP;

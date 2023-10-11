@@ -57,6 +57,7 @@ namespace DCP
         private readonly IRepository _repository;
         private readonly ILogger _logger;
         private readonly UpdateScadaPointOnServer _updateScadaPointOnServer;
+        private readonly RedisUtils _RTDBManager;
 
         private bool isWorking;
         private bool isWoring_timer_EAFGroupReq;
@@ -66,14 +67,15 @@ namespace DCP
         //==============================================================================
         //MEMBER FUNCTIONS
         //==============================================================================
-        public PCSManager(ILogger logger, IRepository repository, UpdateScadaPointOnServer updateScadaPointOnServer, DataManager historicalDataManager)
+        public PCSManager(ILogger logger, IRepository repository, UpdateScadaPointOnServer updateScadaPointOnServer, DataManager historicalDataManager, RedisUtils RTDBManager)
         {
             try
             {
                 _logger = logger ?? throw new ArgumentNullException(nameof(logger));
                 _repository = repository ?? throw new ArgumentNullException(nameof(repository));
                 _updateScadaPointOnServer = updateScadaPointOnServer ?? throw new ArgumentNullException(nameof(updateScadaPointOnServer));
-                
+                _RTDBManager = RTDBManager ?? throw new ArgumentNullException(nameof(RTDBManager));
+
 
                 //-----------------------------------------------------------------------------------
                 // An array for Tag of all Digital Points in SCADA may be changed
@@ -568,7 +570,7 @@ namespace DCP
                 //_EECTelegram.m_TelegramID = aRecSet("T_CEECTELEGRAM_ID")
                 _EECTelegram = new EECTelegram();
 
-                var keys = RedisUtils.GetKeys(pattern: RedisKeyPattern.EEC_TELEGRAM);
+                var keys = _RTDBManager.GetKeys(pattern: RedisKeyPattern.EEC_TELEGRAM);
                 if (keys.Length == 0)
                 {
 
@@ -577,7 +579,7 @@ namespace DCP
                     return;
                 }
 
-                var dataTable_cache = RedisUtils.StringGet<EEC_TELEGRAM_Str>(keys);
+                var dataTable_cache = _RTDBManager.StringGet<EEC_TELEGRAM_Str>(keys);
 
                 _eec_telegram = dataTable_cache.FirstOrDefault();
 
@@ -671,7 +673,7 @@ namespace DCP
                 //}
                
                 _eec_telegram.SENTTIME = DateTime.UtcNow;
-                RedisUtils.RedisConn.Set(RedisKeyPattern.EEC_TELEGRAM, JsonConvert.SerializeObject(_eec_telegram));
+                _RTDBManager.RedisConn.Set(RedisKeyPattern.EEC_TELEGRAM, JsonConvert.SerializeObject(_eec_telegram));
 
             }
             catch (System.Exception excep)

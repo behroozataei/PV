@@ -15,17 +15,17 @@ namespace MAB
         private readonly DataManager _dataManager;
         private readonly Dictionary<Guid, MABScadaPoint> _scadaPoints;
         private readonly Dictionary<string, MABScadaPoint> _scadaPointsHelper;
-        private readonly RedisUtils _RedisConnectorHelper;
+        private readonly RedisUtils _RTDBManager;
 
         private bool isBuild = false;
 
-        public Repository(ILogger logger, DataManager staticDataManager, RedisUtils RedisConnectorHelper)
+        public Repository(ILogger logger, DataManager staticDataManager, RedisUtils RTDBManager)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _dataManager = staticDataManager ?? throw new ArgumentNullException(nameof(staticDataManager));
             _scadaPoints = new Dictionary<Guid, MABScadaPoint>();
             _scadaPointsHelper = new Dictionary<string, MABScadaPoint>();
-            _RedisConnectorHelper = RedisConnectorHelper ?? throw new ArgumentNullException(nameof(RedisConnectorHelper));
+            _RTDBManager = RTDBManager ?? throw new ArgumentNullException(nameof(RTDBManager));
         }
 
         public bool Build()
@@ -67,7 +67,7 @@ namespace MAB
                 dataTable = dataManager.GetRecord(command);
                 if (dataTable != null)
                 {
-                    if (!RedisUtils.DelKeys(RedisKeyPattern.MAB_PARAMS))
+                    if (!_RTDBManager.DelKeys(RedisKeyPattern.MAB_PARAMS))
                         _logger.WriteEntry("Error: Delete APP_MAB_PARAMS from Redis", LogLevels.Error);
                 }
             }
@@ -98,8 +98,8 @@ namespace MAB
 
                 try
                 {
-                    if (RedisUtils.IsConnected)
-                        RedisUtils.RedisConn.Set(RedisKeyPattern.MAB_PARAMS + networkPath, JsonConvert.SerializeObject(mab_param));
+                    if (_RTDBManager.IsConnected)
+                        _RTDBManager.RedisConn.Set(RedisKeyPattern.MAB_PARAMS + networkPath, JsonConvert.SerializeObject(mab_param));
                     else
                         _logger.WriteEntry("Redis Connection Error", LogLevels.Error);
 
@@ -134,8 +134,8 @@ namespace MAB
             try
             {
 
-                var keys = RedisUtils.GetKeys(pattern: RedisKeyPattern.MAB_PARAMS);
-                var dataTable = RedisUtils.StringGet<MAB_PARAMS_Str>(keys);
+                var keys = _RTDBManager.GetKeys(pattern: RedisKeyPattern.MAB_PARAMS);
+                var dataTable = _RTDBManager.StringGet<MAB_PARAMS_Str>(keys);
 
 
                 foreach (MAB_PARAMS_Str row in dataTable)

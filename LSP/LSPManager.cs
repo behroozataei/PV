@@ -19,6 +19,7 @@ namespace LSP
     {
         private readonly ILogger _logger;
         private readonly ICpsCommandService _scadaCommand;
+        private readonly RedisUtils _RTDBManager;
         private readonly UpdateScadaPointOnServer _updateScadaPointOnServer;
         private readonly ChangeControlStateOnServer _changeControlStateOnServer;
         private bool isCompleted = true;
@@ -64,13 +65,14 @@ namespace LSP
         //==============================================================================
         //MEMBER FUNCTIONS
         //==============================================================================
-        internal LSPManager(ILogger logger, IRepository repository, ICpsCommandService scadaCommand)
+        internal LSPManager(ILogger logger, IRepository repository, ICpsCommandService scadaCommand, RedisUtils RTDBManager)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _updateScadaPointOnServer = new UpdateScadaPointOnServer(logger, scadaCommand);
             _changeControlStateOnServer = new ChangeControlStateOnServer(logger, scadaCommand);
             _repository = repository;
             _scadaCommand = scadaCommand;
+            _RTDBManager = RTDBManager ?? throw new ArgumentNullException(nameof(RTDBManager));
 
             //-----------------------------------------------------------------------------------
             // An array for Tag of all Digital Points in SCADA may be changed
@@ -189,7 +191,7 @@ namespace LSP
                     _logger.WriteEntry("Error in LSP in 'trying to remove Blocked Marker from OVERLOAD!'", LogLevels.Error);
 
                 // Create and run SFSCManager
-                _sfscManager = new LSPSFSCManager(_logger, _repository, _scadaCommand, _PriorityList);
+                _sfscManager = new LSPSFSCManager(_logger, _repository, _scadaCommand, _PriorityList, _RTDBManager);
 
 
                 //_logger.WriteEntry(" INITILIZE: Before SendCommandTestRetry ", LogLevels.Info);

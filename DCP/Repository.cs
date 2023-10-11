@@ -18,17 +18,17 @@ namespace DCP
         private readonly DataManager _historicalDataManager;
         private readonly Dictionary<Guid, DCPScadaPoint> _scadaPoints;
         private readonly Dictionary<string, DCPScadaPoint> _scadaPointsHelper;
-        private readonly RedisUtils _RedisConnectorHelper;
+        private readonly RedisUtils _RTDBManager;
 
         private bool isBuild = false;
 
-        public Repository(ILogger logger, DataManager staticDataManager, DataManager historicalDataManager, SqlServerDataManager linkDBpcsDataManager, RedisUtils RedisConnectorHelper)
+        public Repository(ILogger logger, DataManager staticDataManager, DataManager historicalDataManager, SqlServerDataManager linkDBpcsDataManager, RedisUtils RTDBManager)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _staticDataManager = staticDataManager ?? throw new ArgumentNullException(nameof(staticDataManager));
             _historicalDataManager = historicalDataManager ?? throw new ArgumentNullException(nameof(historicalDataManager));
             _linkDBpcsDataManager = linkDBpcsDataManager ?? throw new ArgumentNullException(nameof(linkDBpcsDataManager));
-            _RedisConnectorHelper = RedisConnectorHelper ?? throw new ArgumentNullException(nameof(RedisConnectorHelper));
+            _RTDBManager = RTDBManager ?? throw new ArgumentNullException(nameof(RTDBManager));
 
             _scadaPoints = new Dictionary<Guid, DCPScadaPoint>();
             _scadaPointsHelper = new Dictionary<string, DCPScadaPoint>();
@@ -63,7 +63,7 @@ namespace DCP
                 var dataTable = _staticDataManager.GetRecord($"SELECT * from APP_DCP_PARAMS");
                 if(dataTable !=null)
                 {
-                   if(! RedisUtils.DelKeys(RedisKeyPattern.DCP_PARAMS))
+                   if(!_RTDBManager.DelKeys(RedisKeyPattern.DCP_PARAMS))
                         _logger.WriteEntry("Error: Delete APP_DCP_PARAMS from Redis", LogLevels.Error);
                 }
 
@@ -85,8 +85,8 @@ namespace DCP
 
 
                     dcp_param.ID = id.ToString();
-                    if (RedisUtils.IsConnected)
-                        RedisUtils.RedisConn.Set(RedisKeyPattern.DCP_PARAMS + networkPath, JsonConvert.SerializeObject(dcp_param));
+                    if (_RTDBManager.IsConnected)
+                        _RTDBManager.RedisConn.Set(RedisKeyPattern.DCP_PARAMS + networkPath, JsonConvert.SerializeObject(dcp_param));
 
                     var scadaPoint = new DCPScadaPoint(id, name, networkPath, (PointDirectionType)Enum.Parse(typeof(PointDirectionType), pointDirectionType));
 
@@ -117,8 +117,8 @@ namespace DCP
            
             try
             {
-                var keys = RedisUtils.GetKeys(pattern: RedisKeyPattern.DCP_PARAMS);
-                var dataTable_cache = RedisUtils.StringGet<DCP_PARAMS_Str>(keys);
+                var keys = _RTDBManager.GetKeys(pattern: RedisKeyPattern.DCP_PARAMS);
+                var dataTable_cache = _RTDBManager.StringGet<DCP_PARAMS_Str>(keys);
 
                 foreach (DCP_PARAMS_Str row in dataTable_cache)
                 {
@@ -201,7 +201,7 @@ namespace DCP
                // if (_RedisConnectorHelper.GetKeys(pattern: RedisKeyPattern.SFSC_EAFSPOWER).Length == 0)
                //     return dataTable;
 
-                dataTable = JsonConvert.DeserializeObject<SFSC_EAFSPOWER_Str>(RedisUtils.RedisConn.Get(RedisKeyPattern.SFSC_EAFSPOWER));
+                dataTable = JsonConvert.DeserializeObject<SFSC_EAFSPOWER_Str>(_RTDBManager.RedisConn.Get(RedisKeyPattern.SFSC_EAFSPOWER));
             }
             catch (Irisa.DataLayer.DataException ex)
             {
@@ -643,7 +643,7 @@ namespace DCP
 
         public RedisUtils GetRedisUtiles()
         {
-            return _RedisConnectorHelper;
+            return _RTDBManager;
 
         }
 

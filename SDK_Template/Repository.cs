@@ -15,17 +15,17 @@ namespace SDK_Template
         private readonly DataManager _dataManager;
         private readonly Dictionary<Guid, SDK_Template_ScadaPoint> _scadaPoints;
         private readonly Dictionary<string, SDK_Template_ScadaPoint> _scadaPointsHelper;
-        private readonly RedisUtils _RedisConnectorHelper;
+        private readonly RedisUtils _RTDBManager;
 
         private bool isBuild = false;
 
-        public Repository(ILogger logger, DataManager staticDataManager, RedisUtils RedisConnectorHelper)
+        public Repository(ILogger logger, DataManager staticDataManager, RedisUtils RTDBManager)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _dataManager = staticDataManager ?? throw new ArgumentNullException(nameof(staticDataManager));
             _scadaPoints = new Dictionary<Guid, SDK_Template_ScadaPoint>();
             _scadaPointsHelper = new Dictionary<string, SDK_Template_ScadaPoint>();
-            _RedisConnectorHelper = RedisConnectorHelper ?? throw new ArgumentNullException(nameof(RedisConnectorHelper));
+            _RTDBManager = RTDBManager ?? throw new ArgumentNullException(nameof(RTDBManager));
         }
 
         public bool Build()
@@ -93,8 +93,8 @@ namespace SDK_Template
 
                 try
                 {
-                    if (RedisUtils.IsConnected)
-                        RedisUtils.RedisConn.Set(RedisKeyPattern.SDK_TEMPLATE + networkPath, JsonConvert.SerializeObject(sdk_temp_params));
+                    if (_RTDBManager.IsConnected)
+                        _RTDBManager.RedisConn.Set(RedisKeyPattern.SDK_TEMPLATE + networkPath, JsonConvert.SerializeObject(sdk_temp_params));
                     else
                         _logger.WriteEntry("Redis Connection Error", LogLevels.Error);
 
@@ -130,9 +130,9 @@ namespace SDK_Template
             IEnumerable<SDK_TEMP_PARAMS_Str> dataTable = null;
             try
             {
-                var keys = RedisUtils.GetKeys(pattern: RedisKeyPattern.SDK_TEMPLATE);
+                var keys = _RTDBManager.GetKeys(pattern: RedisKeyPattern.SDK_TEMPLATE);
                 if (keys.Length!=0)
-                    dataTable = RedisUtils.StringGet<SDK_TEMP_PARAMS_Str>(keys);
+                    dataTable = _RTDBManager.StringGet<SDK_TEMP_PARAMS_Str>(keys);
             }
             catch
             {

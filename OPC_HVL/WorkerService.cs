@@ -23,7 +23,8 @@ namespace OPC
         private readonly DataManager _staticDataManager;
         private readonly RuntimeDataReceiver _runtimeDataReceiver;
         private readonly BlockingCollection<CpsRuntimeData> _cpsRuntimeDataBuffer;
-        private readonly RedisUtils _RedisConnectorHelper;
+        private readonly RedisUtils _RTDBManager
+            ;
         private readonly IConfiguration _config;
         public WorkerService(IServiceProvider serviceProvider)
         {
@@ -41,12 +42,12 @@ namespace OPC
                 RequireEquipment = false,
                 RequireConnectivityNode = false,
             };
-            _RedisConnectorHelper = new RedisUtils(0, _config["RedisKeySentinel1"], _config["RedisKeySentinel2"], _config["RedisKeySentinel3"], _config["RedisKeySentinel4"], _config["RedisKeySentinel5"], _config["RedisPassword"], _config["RedisServiceName"],
+            _RTDBManager =  RedisUtils.GetRedisUtils(0, _config["RedisKeySentinel1"], _config["RedisKeySentinel2"], _config["RedisKeySentinel3"], _config["RedisKeySentinel4"], _config["RedisKeySentinel5"], _config["RedisPassword"], _config["RedisServiceName"],
                                                     _config["RedisConName1"], _config["RedisConName2"], _config["RedisConName3"], _config["RedisConName4"], _config["RedisConName5"], _config["IsSentinel"]);
 
             _cpsRuntimeDataBuffer = new BlockingCollection<CpsRuntimeData>();
             _rpcService = new CpsRpcService(_config["CpsIpAddress"], 10000, historyDataRequest, _cpsRuntimeDataBuffer);
-            _repository = new Repository(_logger, _staticDataManager, _RedisConnectorHelper);
+            _repository = new Repository(_logger, _staticDataManager, _RTDBManager);
             _opcManager = new OPCManager(_logger, _repository, _rpcService.CommandService);
             _runtimeDataReceiver = new RuntimeDataReceiver(_logger, _repository, _opcManager, _rpcService, _cpsRuntimeDataBuffer);
         }
@@ -55,7 +56,7 @@ namespace OPC
         {
             try
             {
-                RedisUtils.RedisUtils_Connect();
+                _RTDBManager.RedisUtils_Connect();
             }
             catch (Exception ex)
             {
@@ -78,7 +79,7 @@ namespace OPC
             _logger.WriteEntry(">>>>> Connected to CPS", LogLevels.Info);
 
             _logger.WriteEntry("Check Redis Connection", LogLevels.Info);
-            while (!RedisUtils.IsConnected)
+            while (!_RTDBManager.IsConnected)
             {
                 _logger.WriteEntry(">>>>> Waiting for Redis Connection", LogLevels.Info);
                 CallConnection();

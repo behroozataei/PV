@@ -14,6 +14,7 @@ namespace LSP
     class LSPSFSCManager
     {
         private readonly ILogger _logger;
+        private readonly RedisUtils _RTDBManager;
         private readonly UpdateScadaPointOnServer _updateScadaPointOnServer;
         private readonly ChangeControlStateOnServer _changeControlStateOnServer;
         private readonly IRepository _repository;
@@ -32,12 +33,13 @@ namespace LSP
         SFSC_FURNACE_TO_SHED_Str _sfsc_furnace_to_shed = null;
         Stopwatch _stopwatch1, _stopwatch2;
 
-        internal LSPSFSCManager(ILogger logger, IRepository repository, ICpsCommandService scadaCommand, List<CPriorityList> priorityList)
+        internal LSPSFSCManager(ILogger logger, IRepository repository, ICpsCommandService scadaCommand, List<CPriorityList> priorityList, RedisUtils RTDBManager)
         {
             try
             {
                 _repository = repository;
                 _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+                _RTDBManager = RTDBManager ?? throw new ArgumentNullException(nameof(RTDBManager));
                 _updateScadaPointOnServer = new UpdateScadaPointOnServer(logger, scadaCommand);
                 _changeControlStateOnServer = new ChangeControlStateOnServer(logger, scadaCommand);
                 _priorityList = priorityList;
@@ -214,7 +216,7 @@ namespace LSP
 
 
                 _stopwatch1.Restart();
-                if (!RedisUtils.StringGet(RedisKeyPattern.SFSC_FURNACE_TO_SHED, ref _sfsc_furnace_to_shed))
+                if (!_RTDBManager.StringGet(RedisKeyPattern.SFSC_FURNACE_TO_SHED, ref _sfsc_furnace_to_shed))
                 {
                     _logger.WriteEntry("can not read SFSCSELECTEDFURNACETOSHED record from Redis!", LogLevels.Warn);
                     isWorking_CheckLSPActivationFromSFSC = false;
@@ -292,7 +294,7 @@ namespace LSP
 
                 _logger.WriteEntry("SELECTED FURNACE IS:" + _sfsc_furnace_to_shed.FURNACE, LogLevels.Info);
 
-                var keys = RedisUtils.GetKeys(pattern: RedisKeyPattern.EEC_EAFSPriority);
+                var keys = _RTDBManager.GetKeys(pattern: RedisKeyPattern.EEC_EAFSPriority);
                 if (keys.Length == 0)
                 {
                     _logger.WriteEntry("Error in running get furnce number from cache", LogLevels.Error);
@@ -300,7 +302,7 @@ namespace LSP
                     return;
                 }
 
-                var datatable = RedisUtils.StringGet<EEC_EAFSPRIORITY_Str>(keys);
+                var datatable = _RTDBManager.StringGet<EEC_EAFSPRIORITY_Str>(keys);
                 EEC_EAFSPRIORITY_Str dr_EEC_EAFSPriority = datatable.Where(n => n.FURNACE == _sfsc_furnace_to_shed.FURNACE).First();
 
                 if (dr_EEC_EAFSPriority is null)
@@ -395,7 +397,7 @@ namespace LSP
                     }
 
                 sfsc_furnace_to_shed.SHEADCOMMAND = false;
-                RedisUtils.RedisConn.Set(RedisKeyPattern.SFSC_FURNACE_TO_SHED, JsonConvert.SerializeObject(sfsc_furnace_to_shed));
+                _RTDBManager.RedisConn.Set(RedisKeyPattern.SFSC_FURNACE_TO_SHED, JsonConvert.SerializeObject(sfsc_furnace_to_shed));
                 //_updateScadaPointOnServer.SendAlarm(_repository.GetLSPScadaPoint("SFSCACTIVATED"), SinglePointStatus.Disappear, "");
             }
             catch (Exception ex)

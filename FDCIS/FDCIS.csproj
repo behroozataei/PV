@@ -10,6 +10,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Aspose.Cells" Version="23.8.0" />
     <PackageReference Include="Google.Protobuf" Version="3.21.12" />
     <PackageReference Include="Grpc.Core" Version="2.46.1" />
     <PackageReference Include="Microsoft.Build.Tasks.Git" Version="1.0.0">
@@ -29,9 +30,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Reference Include="Aspose.Cells">
-      <HintPath>..\Requirement\Aspose.Cells.dll</HintPath>
-    </Reference>
     <Reference Include="Irisa.Common">
       <HintPath>..\Requirement\Irisa.Common.dll</HintPath>
     </Reference>
