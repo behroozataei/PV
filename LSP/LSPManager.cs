@@ -1637,6 +1637,11 @@ namespace LSP
                     _logger.WriteEntry(TAN_name + " TAN_BB = " + scadaPoint.Value.ToString(), LogLevels.Info);
 
                     var eafsPriolDT = _repository.FetchEAFSPriority(scadaPoint.Value.ToString(), "ON", Exception);
+                    if(eafsPriolDT == null || eafsPriolDT.Length == 0) 
+                    {
+                        _logger.WriteEntry("Can not find any Furnaces in EAF Priority List to Shed !!", LogLevels.Warn);
+
+                    }
 
                     if (scadaPoint.Value == 0)
                     {
@@ -1787,6 +1792,10 @@ namespace LSP
 
                 //--------------------------------------------------------------
                 // Only for transformers 1, 2, 3, 5 ,7, 8; except overloaded transformer
+
+                var mab_EEC = _repository.GetLSPScadaPoint("MAB_EEC");
+                var PCS_BB_Conn = (byte)mab_EEC.Value == (byte)DigitalSingleStatusOnOff.On ? "ON" : "OFF";
+                _logger.WriteEntry($"PCS-BB Connection: {PCS_BB_Conn}", LogLevels.Info);
                 for (byte idxTransformer = 1; idxTransformer <= Constants.MaxNoOfTransformers; idxTransformer = (byte)(idxTransformer + 1))
                 {
                     //--------------------------------------------------------------
@@ -1808,16 +1817,17 @@ namespace LSP
                             // 1399.09.29 KAJI    002_Added
                             string TAN_BB = "T" + idxTransformer.ToString() + "AN-BB";
                             var transBB = _repository.GetLSPScadaPoint(TAN_BB);
-                            _logger.WriteEntry($" Overloaded Transformer{idxTransformer} Busbar = " + transBB.Value.ToString(), LogLevels.Info);
+                            _logger.WriteEntry($"Not Overloaded Transformer{idxTransformer} Busbar = " + transBB.Value.ToString(), LogLevels.Info);
                             iTransPos = (byte)transBB.Value;
                             // 1399.09.29 KAJI    002_Added_End
 
                             // Important note: This part does not implemented in the OLD SYSTEM
                             // If MAB is closed
-                            var mab = _repository.GetLSPScadaPoint("MAB");
+                           
                             //if (m_CLSPParams.MABStatus == ((byte) Breaker_Status.bClose))
-                            if ((byte)mab.Value == ((byte)Breaker_Status.bClose))
+                            if ((byte)mab_EEC.Value == ((byte)DigitalSingleStatusOnOff.On))
                             {
+                                
                                 if (_EAFBusbars[1].BusbarPower > 0 || _EAFBusbars[2].BusbarPower > 0)
                                 {
                                     if (iTransPos == 1)
@@ -1841,7 +1851,7 @@ namespace LSP
                             }
                             else
                             {
-                                // MAB is Open
+                                // MAB-EEC is Open
                                 if (iTransPos == 1 && _EAFBusbars[1].BusbarPower > 0)
                                 {
                                     _logger.WriteEntry("Transformer no.:" + idxTransformer.ToString() + " is on Overloaded Busbar-A", LogLevels.Info);
@@ -1860,6 +1870,13 @@ namespace LSP
                                     }
                                 }
                             }
+                        }
+                        else
+                        {
+                            string TAN_BB = "T" + idxTransformer.ToString() + "AN-BB";
+                            var transBB = _repository.GetLSPScadaPoint(TAN_BB);
+                            _logger.WriteEntry($"Overloaded Transformer{idxTransformer} Busbar = " + transBB.Value.ToString(), LogLevels.Info);
+
                         }
                     }
                 }
@@ -1936,12 +1953,14 @@ namespace LSP
         // R.Hemmaty
         private double ReducePower(double PowerMax)
         {
+            _logger.WriteEntry("----------------------  ReducePower  ----------------------", LogLevels.Info);
             int result = Constants.ReducePowerPrefer;
             try
             {
 
                 var priol = _PriorityList.Find(priol => priol._priorityNo == Constants.PRIORITYLISTNO_EAF);
                 var FurnaceNumber = System.Convert.ToInt32(priol.GetArrBreakers(1).FurnaceIndex);
+                _logger.WriteEntry("First selected Furnace to shedded is = " + "furnace"+FurnaceNumber.ToString(), LogLevels.Info);
                 //var reducePowerData = _repository.FetchReducedPower(FurnaceNumber);
 
                 //if (reducePowerData.Rows.Count > 0)
