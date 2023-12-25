@@ -122,7 +122,7 @@ namespace RPC
 
           
             _runtimeDataReceiver.Start();
-            // _rpcManager.CheckCPSStatus();
+            _rpcManager.CheckCPSStatus();
 
             _rpcManager.init();
             _rpcManager.Start();

@@ -1172,7 +1172,7 @@ namespace LSP
                                 }
                                 else
                                 {
-                                    aPriol.GetArrBreakers(idxItem).LastShedTime = DateTime.UtcNow; 
+                                    aPriol.GetArrBreakers(idxItem).LastShedTime = DateTime.UtcNow;
                                     _logger.WriteEntry("Sending OPEN command was accomlished for Breaker : " + cbToShed.NetworkPath, LogLevels.Info);
                                     Loads_shedded.Enqueue(new Tuple<CPriorityList, LSPBreakerToShed, bool, bool>(aPriol, aPriol.GetArrBreakers(idxItem), false, true));
                                 }
@@ -1413,13 +1413,13 @@ namespace LSP
                                             $"'{Shedded_Breaker.Item2.LastShedTime.ToString("yyyy/MM/dd HH:mm:ss.ff")}'" +
                                             ",'" +
                                             Shedded_Breaker.Item1._priorityNo + "', '" +
-                                            Math.Round(Shedded_Breaker.Item1._sumIt, 2) + "', '" + 
+                                            Math.Round(Shedded_Breaker.Item1._sumIt, 2) + "', '" +
                                             Shedded_Breaker.Item2.BreakerNo + "', '" +
                                             network_path.Replace("Network/Substations/", "") + "', '" +
                                             Math.Round(Breaker_Current, 2) + "')";
 
                     var parameters = new IDbDataParameter[6];
-                    parameters[0] = _repository.Get_historicalDataManager().CreateParameter("p_DateTime",Shedded_Breaker.Item2.LastShedTime.ToIranStandardTime());
+                    parameters[0] = _repository.Get_historicalDataManager().CreateParameter("p_DateTime", Shedded_Breaker.Item2.LastShedTime.ToIranStandardTime());
                     parameters[1] = _repository.Get_historicalDataManager().CreateParameter("p_Prio_Num", Shedded_Breaker.Item1._priorityNo);
                     parameters[2] = _repository.Get_historicalDataManager().CreateParameter("p_SumIT", Math.Round(Shedded_Breaker.Item1._sumIt, 2));
                     parameters[3] = _repository.Get_historicalDataManager().CreateParameter("p_Bearker_Num", Shedded_Breaker.Item2.BreakerNo);
@@ -1637,7 +1637,7 @@ namespace LSP
                     _logger.WriteEntry(TAN_name + " TAN_BB = " + scadaPoint.Value.ToString(), LogLevels.Info);
 
                     var eafsPriolDT = _repository.FetchEAFSPriority(scadaPoint.Value.ToString(), "ON", Exception);
-                    if(eafsPriolDT == null || eafsPriolDT.Length == 0) 
+                    if (eafsPriolDT == null || eafsPriolDT.Length == 0)
                     {
                         _logger.WriteEntry("Can not find any Furnaces in EAF Priority List to Shed !!", LogLevels.Warn);
 
@@ -1789,13 +1789,10 @@ namespace LSP
                 float aPower = 0;
 
                 result = false;
+                var mab = _repository.GetLSPScadaPoint("MAB");
 
                 //--------------------------------------------------------------
                 // Only for transformers 1, 2, 3, 5 ,7, 8; except overloaded transformer
-
-                var mab_EEC = _repository.GetLSPScadaPoint("MAB_EEC");
-                var PCS_BB_Conn = (byte)mab_EEC.Value == (byte)DigitalSingleStatusOnOff.On ? "ON" : "OFF";
-                _logger.WriteEntry($"PCS-BB Connection: {PCS_BB_Conn}", LogLevels.Info);
                 for (byte idxTransformer = 1; idxTransformer <= Constants.MaxNoOfTransformers; idxTransformer = (byte)(idxTransformer + 1))
                 {
                     //--------------------------------------------------------------
@@ -1823,11 +1820,11 @@ namespace LSP
 
                             // Important note: This part does not implemented in the OLD SYSTEM
                             // If MAB is closed
-                           
-                            //if (m_CLSPParams.MABStatus == ((byte) Breaker_Status.bClose))
-                            if ((byte)mab_EEC.Value == ((byte)DigitalSingleStatusOnOff.On))
+
+
+                            //                            if (m_CLSPParams.MABStatus == ((byte) Breaker_Status.bClose))
+                            if ((byte)mab.Value == ((byte)Breaker_Status.bClose))
                             {
-                                
                                 if (_EAFBusbars[1].BusbarPower > 0 || _EAFBusbars[2].BusbarPower > 0)
                                 {
                                     if (iTransPos == 1)
@@ -1851,7 +1848,7 @@ namespace LSP
                             }
                             else
                             {
-                                // MAB-EEC is Open
+                                // MAB is Open
                                 if (iTransPos == 1 && _EAFBusbars[1].BusbarPower > 0)
                                 {
                                     _logger.WriteEntry("Transformer no.:" + idxTransformer.ToString() + " is on Overloaded Busbar-A", LogLevels.Info);
@@ -1869,6 +1866,8 @@ namespace LSP
                                         _logger.WriteEntry("Transformer no.:" + idxTransformer.ToString() + " is not on Overloaded Busbar", LogLevels.Info);
                                     }
                                 }
+                                if((iTransPos == 1 && _EAFBusbars[1].BusbarPower > 0) || (iTransPos == 2 && _EAFBusbars[2].BusbarPower > 0))
+                                    Open_EEC_MAB(); //2023/12/25
                             }
                         }
                         else
@@ -1880,10 +1879,9 @@ namespace LSP
                         }
                     }
                 }
-
-                var mab_EECValue = _repository.GetLSPScadaPoint("MAB_EEC").Value;
-                //if (m_CLSPParams.MABStatus == ((byte) Breaker_Status.bClose))
-                if (mab_EECValue == ((float)DigitalSingleStatusOnOff.On))
+                //if (m_CLSPParams.MABStatus == ((byte) Breaker_Status.bClose)) 
+                //!!!!!!
+                if ((byte)mab.Value == ((byte)Breaker_Status.bClose))
                 {
                     _EAFBusbars[1].BusbarPower += _EAFBusbars[2].BusbarPower;
                     _EAFBusbars[2].BusbarPower = 0;
@@ -1904,6 +1902,29 @@ namespace LSP
 
             return result;
         }
+
+        //Open PCS-BB Connection (MAB_EEC)
+        public void Open_EEC_MAB()
+        {
+            LSPScadaPoint _MAB_EEC;
+            _MAB_EEC = _repository.GetLSPScadaPoint("MAB_EEC");
+            // force MAB-EEC to Open
+            if (_MAB_EEC.Value == (float)DigitalSingleStatusOnOff.On)
+            {
+                if (!_updateScadaPointOnServer.ApplyMarkerCommand(_MAB_EEC))
+                {
+                    _logger.WriteEntry("Error in EEC in 'trying to remove Blocked Marker from _MAB_EEC!'", LogLevels.Error);
+                    return;
+                }
+
+                if (!_updateScadaPointOnServer.SendAlarm(_repository.GetLSPScadaPoint("MAB_EEC"), (SinglePointStatus)DigitalSingleStatusOnOff.Off, "MAB_EEC is Opened  . . . "))
+                {
+                    _logger.WriteEntry("Fail to Open MAB_EEC", LogLevels.Error);
+                    return;
+                }
+            }
+        }
+
 
         // Reset the SumIT on shed points
         private bool ResetCheckPoints()
@@ -1960,7 +1981,7 @@ namespace LSP
 
                 var priol = _PriorityList.Find(priol => priol._priorityNo == Constants.PRIORITYLISTNO_EAF);
                 var FurnaceNumber = System.Convert.ToInt32(priol.GetArrBreakers(1).FurnaceIndex);
-                _logger.WriteEntry("First selected Furnace to shedded is = " + "furnace"+FurnaceNumber.ToString(), LogLevels.Info);
+                _logger.WriteEntry("First selected Furnace to shedded is = " + "furnace" + FurnaceNumber.ToString(), LogLevels.Info);
                 //var reducePowerData = _repository.FetchReducedPower(FurnaceNumber);
 
                 //if (reducePowerData.Rows.Count > 0)

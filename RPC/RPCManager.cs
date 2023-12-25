@@ -5,6 +5,7 @@ using System;
 using System.Timers;
 using COMMON;
 using Irisa.Message.CPS;
+using System.Threading.Tasks;
 
 namespace RPC
 {
@@ -70,14 +71,29 @@ namespace RPC
 
         public void Start()
         {
-            _timer.Start();
-            _energyCalc.Start();
+            var currentTime = DateTime.UtcNow;
+            var delay = (60 - currentTime.Second) * 1000 + (30000 - currentTime.Millisecond);
+            var delayTask = Task.Delay(delay);
+            delayTask.ContinueWith((t) =>
+            {
+                _timer.Start();
+                _energyCalc.Start();
+            });
+        }
+        public void CheckCPSStatus()
+        {
 
+            while (!GlobalData.CPSStatus)
+            {
+                System.Threading.Thread.Sleep(5000);
+                _logger.WriteEntry("Waiting for Connecting to CPS", LogLevels.Info);
+
+            }
         }
 
-       
 
-		public void RunCyclicOperation(object sender, ElapsedEventArgs e)
+
+        public void RunCyclicOperation(object sender, ElapsedEventArgs e)
 		{
 			try
 			{
@@ -239,34 +255,45 @@ namespace RPC
         {
             try
             {
-                _updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("VTAP1"), 340.0f);
-                _updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("VTAP2"), 346.7f);
-                _updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("VTAP3"), 353.3f);
-                _updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("VTAP4"), 360.0f);
-                _updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("VTAP5"), 366.7f);
-                _updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("VTAP6"), 373.3f);
-                _updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("VTAP7"), 380.0f);
-                _updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("VTAP8"), 386.7f);
-                _updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("VTAP9"), 393.0f);
+                _updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("VTAP19"), 340.0f);
+                _updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("VTAP18"), 346.7f);
+                _updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("VTAP17"), 353.3f);
+                _updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("VTAP16"), 360.0f);
+                _updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("VTAP15"), 366.7f);
+                _updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("VTAP14"), 373.3f);
+                _updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("VTAP13"), 380.0f);
+                _updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("VTAP12"), 386.7f);
+                _updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("VTAP11"), 393.0f);
                 _updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("VTAP10"), 400.0f);
-                _updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("VTAP11"), 405.7f);
-                _updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("VTAP12"), 413.3f);
-                _updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("VTAP13"), 420.0f);
-                _updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("VTAP14"), 426.7f);
-                _updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("VTAP15"), 433.3f);
-                _updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("VTAP16"), 440.0f);
-                _updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("VTAP17"), 446.7f);
-                _updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("VTAP18"), 453.3f);
-                _updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("VTAP19"), 460.0f);
-                _updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("K"), 1.0f);
-                _updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("K1"), 2.0f);
-                _updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("K2"), 1.0f);
-                _updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("M"), 1.0f);
-                _updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("VR_EAF"), 2.0f);
-                _updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("VR_PP"), 2.0f);
-                _updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("VR_TAV"), 1.0f);
+                _updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("VTAP9"), 405.7f);
+                _updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("VTAP8"), 413.3f);
+                _updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("VTAP7"), 420.0f);
+                _updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("VTAP6"), 426.7f);
+                _updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("VTAP5"), 433.3f);
+                _updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("VTAP4"), 440.0f);
+                _updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("VTAP3"), 446.7f);
+                _updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("VTAP2"), 453.3f);
+                _updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("VTAP1"), 460.0f);
+                _updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("K"), 10.0f);
+                _updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("K1"), 10.0f);
+                _updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("K2"), 15.0f);
+                _updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("M"), 10.0f);
+                _updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("VR_EAF"), 4.0f);
+                _updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("VR_PP"), 4.0f);
+                _updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("VR_TAV"), 3.0f);
                 _updateScadaPointOnServer.SendAlarm(_repository.GetRPCScadaPoint("RPCAlarm"), SinglePointStatus.Disappear, string.Empty);
                 _updateScadaPointOnServer.SendAlarm(_repository.GetRPCScadaPoint("RPCSuggestion"), SinglePointStatus.Disappear, string.Empty);
+                _updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("MARK1"), 0);
+                _updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("MARK2"), 0);
+                _updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("MARK3"), 0);
+                _updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("MARK4"), 0);
+                _updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("MARK5"), 0);
+                _updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("MARK6"), 0);
+                _updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("MARK7"), 0);
+                _updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("MARK8"), 0);
+                _updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("MARK9"), 0);
+                _updateScadaPointOnServer.WriteAnalog(_repository.GetRPCScadaPoint("MARK10"), 0);
+
 
 
 

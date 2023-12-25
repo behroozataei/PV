@@ -36,6 +36,8 @@ namespace EEC
         private readonly DateTime[,] _cycles;  //Array for seconds period
         private readonly int[] _BBG_furnces;   //Array for Busbar group of furnaces
         private readonly int[] _BBG_EEC_furnces;   //Array for Busbar group of furnaces for EEC
+        private bool isLSPOverloadset = false;
+        private int Cyc_Count_LSPOverloadset = 0;
 
         internal EECSFSCManager(ILogger logger, IRepository repository, ICpsCommandService cpsCommandService, RedisUtils RTDBManager)
         {
@@ -177,6 +179,15 @@ namespace EEC
 
                 //}
 
+                //2023/12/25 Ataei
+                //Check Overload1 and Overload2
+                if(!CheckOverloadedLimtfromLSP())
+                {
+                    _logger.WriteEntry("LSP Overload limit is set, Waiting one minute or  Resetting Oveloaded Power limit! ", LogLevels.Warn);
+                    isWorking = false;
+                    return;
+                }
+
                 // Step 4. Load PMax1 and PMax2 from EEC!
                 if (!ReadEECPMaxFromTableOrSCADA())
                 {
@@ -221,7 +232,45 @@ namespace EEC
             isWorking = false;
         }
 
-        
+        //2023/12/25
+        private bool CheckOverloadedLimtfromLSP()
+        {
+            bool ret = false;
+            try
+            {
+                if ((_repository.GetScadaPoint("OVERLOAD1").Value > 0.1) || (_repository.GetScadaPoint("OVERLOAD2").Value > 0.1))
+                {
+                    if (isLSPOverloadset == false)
+                    {
+                        isLSPOverloadset = true;
+                        ClearOverloadAppear();
+                        ret = false;
+                    }
+                    else
+                    {
+                        Cyc_Count_LSPOverloadset++;
+                        if (Cyc_Count_LSPOverloadset > 15)                                                   
+                            ret = true;                        
+                        else
+                            ret = false;
+                    }
+                    
+                }
+                else
+                {
+                    isLSPOverloadset = false;
+                    Cyc_Count_LSPOverloadset = 0;
+                    ret = true;
+                }
+
+                return ret;
+            }
+            catch(Exception ex)
+            {
+                _logger.WriteEntry(ex.Message, LogLevels.Error, ex);
+                return false;
+            }
+        }
 
         private bool ReadEECPMaxFromTableOrSCADA()
         {

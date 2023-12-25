@@ -42,8 +42,9 @@ namespace OPC
                 RequireEquipment = false,
                 RequireConnectivityNode = false,
             };
-            _RTDBManager =  RedisUtils.GetRedisUtils(0, _config["RedisKeySentinel1"], _config["RedisKeySentinel2"], _config["RedisKeySentinel3"], _config["RedisKeySentinel4"], _config["RedisKeySentinel5"], _config["RedisPassword"], _config["RedisServiceName"],
-                                                    _config["RedisConName1"], _config["RedisConName2"], _config["RedisConName3"], _config["RedisConName4"], _config["RedisConName5"], _config["IsSentinel"]);
+            RedisUtils.SetRedisUtilsParams(0, _config["RedisKeySentinel1"], _config["RedisKeySentinel2"], _config["RedisKeySentinel3"], _config["RedisKeySentinel4"], _config["RedisKeySentinel5"], _config["RedisPassword"], _config["RedisServiceName"],
+                                                      _config["RedisConName1"], _config["RedisConName2"], _config["RedisConName3"], _config["RedisConName4"], _config["RedisConName5"], _config["IsSentinel"]);
+            _RTDBManager = RedisUtils.GetRedisUtils();
 
             _cpsRuntimeDataBuffer = new BlockingCollection<CpsRuntimeData>();
             _rpcService = new CpsRpcService(_config["CpsIpAddress"], 10000, historyDataRequest, _cpsRuntimeDataBuffer);

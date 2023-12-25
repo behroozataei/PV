@@ -108,7 +108,10 @@ namespace RPC
                 if (reply.Executed == false)
                     _logger.WriteEntry("RPC", reply.Log, LogLevels.Warn);
                 else
+                {
+                    scadaPoint.Value = value;
                     executed = true;
+                }
             }
             catch (Exception ex)
             {

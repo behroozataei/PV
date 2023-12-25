@@ -880,7 +880,9 @@ namespace EEC
                     }
                     else
                     {
-                        PSend = _OVERL1.Value + _OVERL2.Value;
+                        PSend = ((_OVERL1.Value > CPS_ZERO_VALUE) ? _OVERL1.Value : _PMAX1.Value) +
+                                ((_OVERL2.Value > CPS_ZERO_VALUE) ? _OVERL2.Value : _PMAX2.Value);
+
                         if (PSend > _PMAXG.Value)
                         {
                             PSend = _PMAXG.Value;
@@ -891,7 +893,8 @@ namespace EEC
                         //' ---------------------------------------------------------------------------------------------------------------
                     }
                 }
-                else
+                
+                else // MAB_EEC is OPEN (status = off)
                 {
                     // ' In case of MABOpen, only PSend1 and PSend2 are important for PCS
                     if (_MAB_EEC.Value == (float)DigitalSingleStatusOnOff.Off)
@@ -901,7 +904,10 @@ namespace EEC
                         // To Be Checked: if (MABStat == GeneralModule.BREAKER_OPEN)
                         if (_OVERL1.Value <= CPS_ZERO_VALUE && _OVERL2.Value > CPS_ZERO_VALUE)
                         {
-                            PSend1 = _PMAX1.Value;
+                            if(_PMAX1.Value< CPS_ZERO_VALUE)
+                                PSend1 = _PMAX2.Value/2;
+                            else
+                                PSend1 = _PMAX1.Value;
                             PSend2 = _OVERL2.Value;
                             PSend = PSend1 + PSend2;
                             if (PSend > _PMAXG.Value)
@@ -927,7 +933,10 @@ namespace EEC
                             if (_OVERL1.Value > CPS_ZERO_VALUE && _OVERL2.Value <= CPS_ZERO_VALUE)
                             {
                                 PSend1 = _OVERL1.Value;
-                                PSend2 = _PMAX2.Value;
+                                if(_PMAX2.Value < CPS_ZERO_VALUE)
+                                    PSend2 = _PMAX1.Value/2;
+                                else
+                                    PSend2 = _PMAX2.Value;
                                 PSend = PSend1 + PSend2;
                                 if (PSend > _PMAXG.Value)
                                 {

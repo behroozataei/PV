@@ -79,6 +79,8 @@ namespace OCP
         {
             var cycleNo = 0;
             //_logger.WriteEntry($"Delay of Runtime Cycle: {e.Delay} , Timer faults = {e.Fallouts}", LogLevels.Info);
+            if (DateTime.Now.Minute==0  && DateTime.Now.Second < 4)
+                _logger.WriteEntry($"OCPTimer: Time = {DateTime.Now}", LogLevels.Debug);
 
             try
             {
@@ -154,6 +156,8 @@ namespace OCP
                 //_overloadCheck.ResetIT(eResetType.ResetAll);
 
                 bool isAnyOverload = _overloadCheck.CheckOverload(cycleNo);
+                if (DateTime.Now.Minute == 0 && DateTime.Now.Second < 15 && cycleNo == 1)
+                    _logger.WriteEntry($"CheckOverload : Time = {DateTime.Now.ToString("yyyy - MM - dd HH: mm:ss.fff")} ; CycleNo={ cycleNo} ", LogLevels.Debug);
 
                 if (!_overloadPreparation.PrepareOverloadData(cycleNo, _overloadCheck))
                     _logger.WriteEntry("Try to run PrepareOverloadData for processing OVERLOAD_CONDITION was failed.", LogLevels.Error);
@@ -177,6 +181,7 @@ namespace OCP
             catch (System.Exception ex)
             {
                 _logger.WriteEntry(ex.Message, LogLevels.Error);
+                isCompleted = true;
             }
         }
 

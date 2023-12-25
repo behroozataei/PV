@@ -66,7 +66,7 @@ namespace RPC
                     }
                     else
                     {
-                        _logger.WriteEntry("COS_EAF < 0.85", LogLevels.Info);
+                        _logger.WriteEntry($"COS_EAF = {COS_EAF} < 0.85", LogLevels.Info);
                         if (COS_EAF != 0)
                         {
                             CalcUnbReactEnergy(COS_EAF, _repository.GetRPCScadaPoint("Ea_EAF").Value);
@@ -84,7 +84,7 @@ namespace RPC
                     }
                     else
                     {
-                        _logger.WriteEntry("COS_PP < 0.85", LogLevels.Info);
+                        _logger.WriteEntry($"COS_PP = {COS_PP} < 0.85", LogLevels.Info);
                         if (COS_PP != 0)
                         {
                             CalcUnbReactEnergy(COS_PP, _repository.GetRPCScadaPoint("Ea_PP").Value);
@@ -98,7 +98,7 @@ namespace RPC
                 }
                 else //COS_TAV <0.85
                 {
-                    _logger.WriteEntry("COS_TAV < 0.85", LogLevels.Info);
+                    _logger.WriteEntry($"COS_TAV = {COS_TAV} < 0.85", LogLevels.Info);
                     if (COS_TAV != 0)
                     {
                         CalcUnbReactEnergy(COS_TAV, _repository.GetRPCScadaPoint("Ea_TAV").Value);
@@ -114,7 +114,7 @@ namespace RPC
                     }
                     else //COS_EAF < 0.85
                     {
-                        _logger.WriteEntry("COS_EAF < 0.85", LogLevels.Info);
+                        _logger.WriteEntry($"COS_EAF = {COS_EAF} < 0.85", LogLevels.Info);
                         if (COS_EAF != 0)
                         {
                             CalcUnbReactEnergy(COS_EAF, _repository.GetRPCScadaPoint("Ea_EAF").Value);
@@ -136,7 +136,7 @@ namespace RPC
                     }
                     else //COS_PP <0.85
                     {
-                        _logger.WriteEntry("COS_PP < 0.85", LogLevels.Info);
+                        _logger.WriteEntry($"COS_PP = {COS_PP} < 0.85", LogLevels.Info);
                         if (COS_PP != 0)
                         {
                             CalcUnbReactEnergy(COS_PP, _repository.GetRPCScadaPoint("Ea_PP").Value);
@@ -214,7 +214,7 @@ namespace RPC
 
                 ReactEnergyActual = Math.Sqrt(Math.Pow(ActiveEnergyActual / CosPhiActual, 2) - Math.Pow(ActiveEnergyActual, 2));
                 ReactEnergy85     = Math.Sqrt(Math.Pow(ActiveEnergyActual / (0.85d)     , 2) - Math.Pow(ActiveEnergyActual, 2));
-
+                _logger.WriteEntry($"Cosphi = {CosPhiActual}; ActiveEnergyActual = {ActiveEnergyActual}; ReactEnergyActual = {ReactEnergyActual}; ReactEnergy85 = {ReactEnergy85}"  , LogLevels.Info);
                 UnbReactEnergy = ReactEnergyActual - ReactEnergy85;
             }
             catch (System.Exception excep)

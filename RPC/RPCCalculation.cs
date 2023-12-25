@@ -724,6 +724,9 @@ namespace RPC
                 C05C_DS2 = (DigitalDoubleStatus)_repository.GetRPCScadaPoint("C05C_DS2").Value;
                 C05C_DS3 = (DigitalDoubleStatus)_repository.GetRPCScadaPoint("C05C_DS3").Value;
 
+
+                _logger.WriteEntry("----- Trans. Primary Voltage Calc. -----", LogLevels.Info);
+
                 // Bus 400 voltages
                 V400_1 = _repository.GetRPCScadaPoint("V400_1").Value;
                 V400_2 = _repository.GetRPCScadaPoint("V400_2").Value;
@@ -922,7 +925,7 @@ namespace RPC
 
                         if ((C05A_CB == DigitalDoubleStatus.Close) && (C05A_DS1 == DigitalDoubleStatus.Close) && (C05A_DS2 == DigitalDoubleStatus.Close))
                         {
-                            T7AN_PRIMEVOLT = V400_1;
+                            T8AN_PRIMEVOLT = V400_1;
                             _logger.WriteEntry("T8AN_PRIMEVOLT (In Logic) : " + V400_1.ToString(), LogLevels.Trace);
                         }
                         else
@@ -930,7 +933,7 @@ namespace RPC
                             if ((C05B_CB == DigitalDoubleStatus.Close) && (C05B_DS1 == DigitalDoubleStatus.Close) && (C05B_DS2 == DigitalDoubleStatus.Close) &&
                                 (C05C_CB == DigitalDoubleStatus.Close) && (C05C_DS1 == DigitalDoubleStatus.Close) && (C05C_DS2 == DigitalDoubleStatus.Close))
                             {
-                                T7AN_PRIMEVOLT = V400_2;
+                                T8AN_PRIMEVOLT = V400_2;
                                 _logger.WriteEntry("T8AN_PRIMEVOLT (In Logic) : " + V400_2.ToString(), LogLevels.Trace);
                             }
                         }
