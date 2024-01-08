@@ -33,6 +33,7 @@ namespace COMMON
         private static string _redisConName4;
         private static string _redisConName5;
         private static int _database = 0;
+        bool Connectionstat = true;
         private RedisUtils()
         {
            
@@ -84,11 +85,11 @@ namespace COMMON
         public  bool IsConnected => RedisConn!= null ? true : false;
         // public static string RTDBStatus => RedisConnection != null ? RedisConnection.GetStatus() : "";
 
-        public  bool CheckConnection()
+        public  bool CheckConnection(string APP_Connection)
         {
-            int Connectionstat = 1;
             bool result = false;
-            if (!RedisConn.Set("APP:Connection", Connectionstat))
+            Connectionstat = !Connectionstat;
+            if (!RedisConn.Set(APP_Connection, Connectionstat))
             {
                 return false;
                 //throw new Exception("RTDB is not connected");

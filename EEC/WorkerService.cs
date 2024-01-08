@@ -111,6 +111,8 @@ namespace EEC
             _eecManager.StartCyclicOperation();
 
             _logger.WriteEntry("End of preparing data for EEC ... ***************************************", LogLevels.Info);
+            Task RedisConMon = new Task(() => RedisConnctionMonitoring("EEC"));
+            RedisConMon.Start();
             return base.StartAsync(cancellationToken);
         }
 
@@ -186,6 +188,31 @@ namespace EEC
                 return new RpcSslCredentials(rootCertificate, clientCertificateChain, clientPrivateKey);
             }
             return null;
+        }
+        private void RedisConnctionMonitoring(String AppName)
+        {
+            while (true)
+            {
+                try
+                {
+                    if (_RTDBManager.CheckConnection("APP:" + AppName))
+                        ;
+                    //_logger.WriteEntry("RedisConnctionMonitoring: Redis Connection Ok", LogLevels.Info);
+                    else
+                    {
+                        _logger.WriteEntry("RedisConnctionMonitoring: Redis not Connected", LogLevels.Error);
+                        _RTDBManager.RedisConn.Dispose();
+                        CallConnection();
+                    }
+                }
+                catch
+                {
+                    _RTDBManager.RedisConn.Dispose();
+                    CallConnection();
+                    _logger.WriteEntry("RedisConnctionMonitoring: Redis Connection Error", LogLevels.Error);
+                }
+                Thread.Sleep(5000);
+            }
         }
     }
 }

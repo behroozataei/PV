@@ -70,7 +70,7 @@ namespace LSP
                 _logger.WriteEntry($"Redis Connection Error {ex}", LogLevels.Error);
 
             }
-            
+
         }
 
         //private  void _mainRTDBmanager_ErrorMessage(object sender, StackExchange.Redis.RedisErrorEventArgs e)
@@ -107,7 +107,7 @@ namespace LSP
             _logger.LogReceived += OnLogReceived;
             _storeLogs.Start();
             _logger.WriteEntry("Start of running LSP ... ***************************************", LogLevels.Info);
-                       
+
             while (!COMMON.Connection.PingHost(_config["CpsIpAddress"], 10000))
             {
                 _logger.WriteEntry(">>>>> Waiting for CPS Connection", LogLevels.Info);
@@ -137,6 +137,8 @@ namespace LSP
             _lspManager.CheckCPSStatus();  //waiting for connection
             _lspManager.Initialize();
             _logger.WriteEntry("End of preparing data for LSP ... ***************************************", LogLevels.Info);
+            Task RedisConMon = new Task(() => RedisConnctionMonitoring("LSP"));
+            RedisConMon.Start();
             return base.StartAsync(cancellationToken);
         }
 
@@ -213,6 +215,31 @@ namespace LSP
                 return new RpcSslCredentials(rootCertificate, clientCertificateChain, clientPrivateKey);
             }
             return null;
+        }
+        private void RedisConnctionMonitoring(String AppName)
+        {
+            while (true)
+            {
+                try
+                {
+                    if (_RTDBManager.CheckConnection("APP:" + AppName))
+                        ;
+                    //_logger.WriteEntry("RedisConnctionMonitoring: Redis Connection Ok", LogLevels.Info);
+                    else
+                    {
+                        _logger.WriteEntry("RedisConnctionMonitoring: Redis not Connected", LogLevels.Error);
+                        _RTDBManager.RedisConn.Dispose();
+                        CallConnection();
+                    }
+                }
+                catch
+                {
+                    _RTDBManager.RedisConn.Dispose();
+                    CallConnection();
+                    _logger.WriteEntry("RedisConnctionMonitoring: Redis Connection Error", LogLevels.Error);
+                }
+                Thread.Sleep(5000);
+            }
         }
     }
 }

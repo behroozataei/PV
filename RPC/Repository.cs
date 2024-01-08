@@ -94,7 +94,7 @@ namespace RPC
                     RPC_param.ID = id.ToString();
                     RPC_param.SNAME = row["SNAME"].ToString(); ;
 
-                    if (_RTDBManager.CheckConnection())
+                    if (_RTDBManager.CheckConnection("APP:RPC"))
                         _RTDBManager.RedisConn.Set(RedisKeyPattern.RPC_PARAMS + networkPath, JsonConvert.SerializeObject(RPC_param));
                     else
                         _logger.WriteEntry("Redis Connection Error", LogLevels.Error);
