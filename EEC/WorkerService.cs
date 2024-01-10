@@ -59,6 +59,8 @@ namespace EEC
         {
             try
             {
+                if (_RTDBManager.IsConnected)
+                    return;
                 _RTDBManager.RedisUtils_Connect();
             }
             catch (Exception ex)
@@ -178,15 +180,28 @@ namespace EEC
         private RpcSslCredentials? GetRpcSslCredentials()
         {
             var dataTable = _dataManager.GetRecord("APP_GRPC_CERTIFICATION_SELECT", CommandType.StoredProcedure);
+            string rootCertificate = "";
+            string clientCertificateChain = "";
+            string clientPrivateKey = "";
 
             if (dataTable.Rows.Count > 0)
             {
-                var rootCertificate = Convert.ToString(dataTable.Rows[0]["ROOT_CERTIFICATE"]);
-                var clientCertificateChain = Convert.ToString(dataTable.Rows[0]["CLIENT_CERTIFICATE_CHAIN"]);
-                var clientPrivateKey = Convert.ToString(dataTable.Rows[0]["CLIENT_PRIVATE_KEY"]);
-
+                rootCertificate = Convert.ToString(dataTable.Rows[0]["ROOT_CERTIFICATE"]);
+                clientCertificateChain = Convert.ToString(dataTable.Rows[0]["CLIENT_CERTIFICATE_CHAIN"]);
+                clientPrivateKey = Convert.ToString(dataTable.Rows[0]["CLIENT_PRIVATE_KEY"]);
+                _RTDBManager.RedisConn.Set("APP:rootCertificate", rootCertificate);
+                _RTDBManager.RedisConn.Set("APP:clientCertificateChain", clientCertificateChain);
+                _RTDBManager.RedisConn.Set("APP:clientPrivateKey", clientPrivateKey);
                 return new RpcSslCredentials(rootCertificate, clientCertificateChain, clientPrivateKey);
             }
+            else if (_RTDBManager.IsConnected)
+            {
+                rootCertificate = _RTDBManager.RedisConn.Get("APP:rootCertificate");
+                clientCertificateChain = _RTDBManager.RedisConn.Get("APP:clientCertificateChain");
+                clientPrivateKey = _RTDBManager.RedisConn.Get("APP:clientPrivateKey");
+                return new RpcSslCredentials(rootCertificate, clientCertificateChain, clientPrivateKey);
+            }
+
             return null;
         }
         private void RedisConnctionMonitoring(String AppName)

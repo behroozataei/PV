@@ -46,6 +46,7 @@ namespace COMMON
                 if (MainRTDBManager == null)
                 {
                     MainRTDBManager = new RedisUtils();
+                    MainRTDBManager.connect();
                 }
                 return MainRTDBManager;
             }
@@ -270,6 +271,11 @@ namespace COMMON
                 Thread.Sleep(5000);
                 if (IsConnected)
                     return;
+                else
+                {
+                    Stop();
+                    RedisUtils_Connect();
+                }
                 
             }
         }
