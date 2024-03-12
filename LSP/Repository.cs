@@ -97,28 +97,28 @@ namespace LSP
 
             try
             {
-                dataTable = _staticDataManager.GetRecord("SELECT OCPSHEDPOINT_ID, " +
-                                                                                       //  "GUID, " +
-                                                                                       "NAME, " +
-                                                                                       "NETWORKPATH, " +
-                                                                                       "DECISIONTABLE, " +
-                                                                                       "CHECKOVERLOAD," +
-                                                                                       " DESCRIPTION, " +
-                                                                                       "SHEDTYPE, " +
-                                                                                       "CATEGORY, " +
-                                                                                       "NOMINALVALUE, " +
-                                                                                       "LIMITPERCENT, " +
-                                                                                       "VOLTAGEENOM, " +
-                                                                                       "VOLTAGEDENOM, " +
-                                                                                       "POWERNUM, " +
-                                                                                       "POWERDENOM, " +
-                                                                                       //"IT_GUID, " +
-                                                                                       //"ALLOWEDACTIVEPOWER_GUID, " +
-                                                                                       //"SAMPLE_GUID, " +
-                                                                                       //"AVERAGE_GUID, " +
-                                                                                       "CHECKPOINT_NETWORKPATH " +
-                                                                               $"FROM  APP_OCP_CHECKPOINTS");
-
+                //dataTable = _staticDataManager.GetRecord("SELECT OCPSHEDPOINT_ID, " +
+                //                                                                       //  "GUID, " +
+                //                                                                       "NAME, " +
+                //                                                                       "NETWORKPATH, " +
+                //                                                                       "DECISIONTABLE, " +
+                //                                                                       "CHECKOVERLOAD," +
+                //                                                                       " DESCRIPTION, " +
+                //                                                                       "SHEDTYPE, " +
+                //                                                                       "CATEGORY, " +
+                //                                                                       "NOMINALVALUE, " +
+                //                                                                       "LIMITPERCENT, " +
+                //                                                                       "VOLTAGEENOM, " +
+                //                                                                       "VOLTAGEDENOM, " +
+                //                                                                       "POWERNUM, " +
+                //                                                                       "POWERDENOM, " +
+                //                                                                       //"IT_GUID, " +
+                //                                                                       //"ALLOWEDACTIVEPOWER_GUID, " +
+                //                                                                       //"SAMPLE_GUID, " +
+                //                                                                       //"AVERAGE_GUID, " +
+                //                                                                       "CHECKPOINT_NETWORKPATH " +
+                //                                                               $"FROM  APP_OCP_CHECKPOINTS");
+                dataTable = _staticDataManager.GetRecord("FUNCTIONS.APP_LSP_CHECKPOINTS_SELECT", CommandType.StoredProcedure);
                 if (dataTable != null)
                 {
                     if (!_RTDBManager.DelKeys(RedisKeyPattern.OCP_CheckPoints))
@@ -401,10 +401,10 @@ namespace LSP
             fetchedData = FetchLspParam();
             if (fetchedData == false) return false;
 
-            fetchedData = FetchPriorityListItems();
+            fetchedData = FetchDectItems();
             if (fetchedData == false) return false;
 
-            fetchedData = FetchShedpointListItems();
+            fetchedData = FetchPriorityItems();
             if (fetchedData == false) return false;
 
             fetchedData = FetchEecEafsPriorityListItems();
@@ -419,10 +419,10 @@ namespace LSP
             fetchedData = FetchLspParamfromRedis();
             if (fetchedData == false) return false;
 
-            fetchedData = FetchPriorityListItemsfromRedis();
+            fetchedData = FetchDectItemsfromRedis();
             if (fetchedData == false) return false;
 
-            fetchedData = FetchShedpointListItemsfromRedis();
+            fetchedData = FetchPriorityItemsfromRedis();
             if (fetchedData == false) return false;
 
             fetchedData = FetchEecEafsPriorityListItemsfromRedis();
@@ -435,7 +435,9 @@ namespace LSP
             try
             {
                 LSP_PARAMS_Str lsp_param = new LSP_PARAMS_Str();
-                var dataTable = _staticDataManager.GetRecord($"SELECT * FROM APP_LSP_PARAMS");
+
+                //var dataTable = _staticDataManager.GetRecord($"SELECT * FROM APP_LSP_PARAMS");
+                var dataTable = _staticDataManager.GetRecord("FUNCTIONS.APP_LSP_PARAMS_SELECT", CommandType.StoredProcedure);
                 if (dataTable != null)
                 {
                     if (!_RTDBManager.DelKeys(RedisKeyPattern.LSP_PARAMS))
@@ -444,7 +446,7 @@ namespace LSP
                 foreach (DataRow row in dataTable.Rows)
                 {
                     //var id = Guid.Parse(row["GUID"].ToString());
-                    var id = GetGuid(row["NetworkPath"].ToString());
+                    var id = Guid.Parse(row["GUID"].ToString());
                     var name = row["NAME"].ToString();
                     var networkPath = row["NetworkPath"].ToString();
 
@@ -544,13 +546,14 @@ namespace LSP
 
         }
 
-        private bool FetchPriorityListItems()
+        private bool FetchDectItems()
         {
             try
             {
 
                 LSP_DECTITEMS_Str lsp_dectitems = new LSP_DECTITEMS_Str();
-                var dataTable = _staticDataManager.GetRecord($"SELECT * FROM APP_LSP_DECTITEMS");
+                //var dataTable = _staticDataManager.GetRecord($"SELECT * FROM APP_LSP_DECTITEMS");
+                var dataTable = _staticDataManager.GetRecord("FUNCTIONS.APP_LSP_DECTITEMS_SELECT",CommandType.StoredProcedure);
                 if (dataTable != null)
                 {
                     if (!_RTDBManager.DelKeys(RedisKeyPattern.LSP_DECTITEMS))
@@ -606,7 +609,7 @@ namespace LSP
             return false;
         }
 
-        private bool FetchPriorityListItemsfromRedis()
+        private bool FetchDectItemsfromRedis()
         {
             _logger.WriteEntry("Loading LSP_DECTITEMS Data from Cache", LogLevels.Info);
             
@@ -656,14 +659,13 @@ namespace LSP
 
         }
 
-        private bool FetchShedpointListItems()
+        private bool FetchPriorityItems()
         {
             try
             {
-
-
                 LSP_PRIORITYITEMS_Str lsp_priorityitems = new LSP_PRIORITYITEMS_Str();
-                var dataTable = _staticDataManager.GetRecord($"SELECT * FROM APP_LSP_PRIORITYITEMS ORDER BY PRIORITYLISTNO, ITEMNO");
+                //var dataTable = _staticDataManager.GetRecord($"SELECT * FROM APP_LSP_PRIORITYITEMS ORDER BY PRIORITYLISTNO, ITEMNO");
+                var dataTable = _staticDataManager.GetRecord("FUNCTIONS.APP_LSP_PRIORITY_ITEMS_SELECT", CommandType.StoredProcedure);
                 if (dataTable != null)
                 {
                     if (!_RTDBManager.DelKeys(RedisKeyPattern.LSP_PRIORITYITEMS))
@@ -747,9 +749,9 @@ namespace LSP
             return false;
         }
 
-        private bool FetchShedpointListItemsfromRedis()
+        private bool FetchPriorityItemsfromRedis()
         {
-            _logger.WriteEntry("Loading LSP_DECTITEMS Data from Cache", LogLevels.Info);
+            _logger.WriteEntry("Loading LSP_PRIORITYITEMS Data from Cache", LogLevels.Info);
 
             try
             {
@@ -822,7 +824,8 @@ namespace LSP
             {
 
                 EEC_EAFSPRIORITY_Str eec_eafpriority = new EEC_EAFSPRIORITY_Str();
-                var dataTable = _staticDataManager.GetRecord($"SELECT * FROM APP_EEC_EAFSPRIORITY ORDER BY Furnace");
+                //var dataTable = _staticDataManager.GetRecord($"SELECT * FROM APP_EEC_EAFSPRIORITY ORDER BY Furnace");
+                var dataTable = _staticDataManager.GetRecord("FUNCTIONS.APP_LSP_EEC_EAFS_PRIORITY_SELECT", CommandType.StoredProcedure);
                 if (dataTable != null)
                 {
                     if (!_RTDBManager.DelKeys(RedisKeyPattern.EEC_EAFSPriority))
@@ -1020,7 +1023,8 @@ namespace LSP
                 {
                     DataTable dataTable = null;
 
-                    dataTable = _staticDataManager.GetRecord($"SELECT * from APP_LSP_DECTCOMB");
+                    //dataTable = _staticDataManager.GetRecord($"SELECT * from APP_LSP_DECTCOMB");
+                    dataTable = _staticDataManager.GetRecord("FUNCTIONS.APP_LSP_DECTCOMB_SELECT", CommandType.StoredProcedure);
                     if (dataTable != null)
                     {
                         if (!_RTDBManager.DelKeys(RedisKeyPattern.LSP_DECTCOMB))
@@ -1031,7 +1035,8 @@ namespace LSP
                     _RTDBManager.RedisConn.Set(RedisKeyPattern.LSP_DECTCOMB, JsonConvert.SerializeObject(dataTable));
 
                     //------------------------------------------------------------------------------
-                    dataTable = _staticDataManager.GetRecord($"SELECT * from APP_LSP_DECTLIST");
+                    //dataTable = _staticDataManager.GetRecord($"SELECT * from APP_LSP_DECTLIST");
+                    dataTable = _staticDataManager.GetRecord("FUNCTIONS.APP_LSP_DECTLIST_SELECT", CommandType.StoredProcedure);
                     if (dataTable != null)
                     {
                         if (!_RTDBManager.DelKeys(RedisKeyPattern.LSP_DECTLIST))
@@ -1040,7 +1045,9 @@ namespace LSP
                     _RTDBManager.RedisConn.Set(RedisKeyPattern.LSP_DECTLIST, JsonConvert.SerializeObject(dataTable));
 
                     //-------------------------------------------------------------------------------
-                    dataTable = _staticDataManager.GetRecord($"SELECT * from APP_LSP_DECTPRIOLS");
+                    //dataTable = _staticDataManager.GetRecord($"SELECT * from APP_LSP_DECTPRIOLS");
+                    dataTable = _staticDataManager.GetRecord("FUNCTIONS.APP_LSP_DECTPRIOLS_SELECT", CommandType.StoredProcedure);
+
                     if (dataTable != null)
                     {
                         if (!_RTDBManager.DelKeys(RedisKeyPattern.LSP_DECTPRIOLS))
@@ -1049,7 +1056,8 @@ namespace LSP
                     _RTDBManager.RedisConn.Set(RedisKeyPattern.LSP_DECTPRIOLS, JsonConvert.SerializeObject(dataTable));
 
                     //-------------------------------------------------------------------------------
-                    dataTable = _staticDataManager.GetRecord($"SELECT * from APP_LSP_PRIORITYLIST");
+                    //dataTable = _staticDataManager.GetRecord($"SELECT * from APP_LSP_PRIORITYLIST");
+                    dataTable = _staticDataManager.GetRecord("FUNCTIONS.APP_LSP_PRIORITY_LIST_SELECT", CommandType.StoredProcedure);
                     if (dataTable != null)
                     {
                         if (!_RTDBManager.DelKeys(RedisKeyPattern.LSP_PRIORITYLIST))
@@ -1639,12 +1647,11 @@ namespace LSP
                 else
                     _logger.WriteEntry("The GUID could not read from Repository for Network   " + networkpath, LogLevels.Error);
             }
-
-            string sql = "SELECT * FROM NodesFullPath where TO_CHAR(FullPath) = '" + networkpath + "'";
-
             try
             {
-                var dataTable = _staticDataManager.GetRecord(sql);
+                IDbDataParameter[] parameters = new IDbDataParameter[1];
+                parameters[0] = _staticDataManager.CreateParameter("networkpath", networkpath);
+                var dataTable = _staticDataManager.GetRecord("FUNCTIONS.APP_GUID_SELECT", CommandType.StoredProcedure, parameters);
                 Guid id = Guid.Empty;
                 if (dataTable != null && dataTable.Rows.Count == 1)
                 {

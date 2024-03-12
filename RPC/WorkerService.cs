@@ -37,7 +37,7 @@ namespace RPC
 
             _dataManager = new Irisa.DataLayer.Oracle.OracleDataManager(_config["OracleServicename"], _config["OracleDatabaseAddress"], _config["OracleStaticUser"], _config["OracleStaticPassword"]);
             _historicalDataManager = new Irisa.DataLayer.Oracle.OracleDataManager(_config["OracleServicename"], _config["OracleDatabaseAddress"], _config["OracleHISUser"], _config["OracleHISPassword"]);
-            _storeLogs = new StoreLogs(_dataManager, _logger, "SCADA.\"HIS_HisLogs_Insert\"");
+            _storeLogs = new StoreLogs(_dataManager, _logger, "SCADAHIS.\"HIS_HisLogs_Insert\"");
 
             var historyDataRequest = new HistoryDataRequest
             {

@@ -70,7 +70,7 @@ namespace RPC
             {
                 _logger.WriteEntry("Loading Data from Database", LogLevels.Info);
                 RPC_PARAMS_Str RPC_param = new RPC_PARAMS_Str();
-                var dataTable = _dataManager.GetRecord($"SELECT * from APP_RPC_PARAMS"); ;
+                var dataTable = _dataManager.GetRecord("FUNCTIONS.APP_RPC_PARAMS_SELECT", CommandType.StoredProcedure);
                 if (dataTable != null)
                 {
                     if (!_RTDBManager.DelKeys(RedisKeyPattern.RPC_PARAMS))
@@ -82,7 +82,7 @@ namespace RPC
                     var name = row["Name"].ToString();
                     var networkPath = row["NetworkPath"].ToString();
                     var pointDirectionType = "Input";
-                    var id = GetGuid(networkPath);
+                    var id = Guid.Parse(row["GUID"].ToString());
                     var scadaType = row["SCADATYPE"].ToString();
 
 
@@ -229,8 +229,17 @@ namespace RPC
                     value = firstvalue
                 });
 
-                var command = $"SELECT VALUE, TIMESTAMP, QUALITY FROM HISANALOGS WHERE MEASUREMENTID = '{analogMeasurementId.ToString().ToUpper()}' AND TIMESTAMP >  to_timestamp('{duration.StartTime.ToString("yyyy-MM-dd HH:mm:ss.ff")}','yyyy-MM-dd HH24:mi:ss.ff') AND TIMESTAMP <=  to_timestamp('{duration.EndTime.ToString("yyyy-MM-dd HH:mm:ss.ff")}','yyyy-MM-dd HH24:mi:ss.ff') ORDER BY  TIMESTAMP ASC ";
-                var archiveDataTable = _historicalDataManager.GetRecord(command);
+                //var command = $"SELECT VALUE, TIMESTAMP, QUALITY FROM HISANALOGS WHERE MEASUREMENTID = '{analogMeasurementId.ToString().ToUpper()}' AND TIMESTAMP >  to_timestamp('{duration.StartTime.ToString("yyyy-MM-dd HH:mm:ss.ff")}','yyyy-MM-dd HH24:mi:ss.ff') AND TIMESTAMP <=  to_timestamp('{duration.EndTime.ToString("yyyy-MM-dd HH:mm:ss.ff")}','yyyy-MM-dd HH24:mi:ss.ff') ORDER BY  TIMESTAMP ASC ";
+                //var archiveDataTable = _historicalDataManager.GetRecord(command);
+
+                IDbDataParameter[] parameters = new IDbDataParameter[3];
+                parameters[0] = _dataManager.CreateParameter("analogMeasurementId", analogMeasurementId.ToString().ToUpper());
+                parameters[1] = _dataManager.CreateParameter("StartTime", duration.StartTime.ToString("yyyy-MM-dd HH:mm:ss.ff"));
+                parameters[2] = _dataManager.CreateParameter("EndTime", duration.EndTime.ToString("yyyy-MM-dd HH:mm:ss.ff"));
+
+                var archiveDataTable = _dataManager.GetRecord("FUNCTIONS.APP_RPC_GET_AVERAGE_IN_INTERVAL_TIME_SELECT", CommandType.StoredProcedure, parameters);
+
+
                 float lastsampledValue = firstvalue;
 
                 if (archiveDataTable.Rows.Count > 0)
@@ -288,13 +297,21 @@ namespace RPC
         {
             double Minutes_Step = 10.0;
             try
-            {
-                var command = $"SELECT VALUE, TIMESTAMP, QUALITY FROM HISANALOGS WHERE " +
-                              $"MEASUREMENTID = '{analogMeasurementId.ToString().ToUpper()}' AND " +
-                              $"TIMESTAMP <=   to_timestamp('{duration.StartTime.ToString("yyyy-MM-dd HH:mm:ss.ff")}','yyyy-MM-dd HH24:mi:ss.ff') AND " +
-                              $"TIMESTAMP >=   to_timestamp('{duration.StartTime.AddMinutes(-1 * Minutes_Step).ToString("yyyy-MM-dd HH:mm:ss.ff")}','yyyy-MM-dd HH24:mi:ss.ff') ORDER BY TIMESTAMP DESC";
+               {
+            //    var command = $"SELECT VALUE, TIMESTAMP, QUALITY FROM HISANALOGS WHERE " +
+            //                  $"MEASUREMENTID = '{analogMeasurementId.ToString().ToUpper()}' AND " +
+            //                  $"TIMESTAMP <=   to_timestamp('{duration.StartTime.ToString("yyyy-MM-dd HH:mm:ss.ff")}','yyyy-MM-dd HH24:mi:ss.ff') AND " +
+            //                  $"TIMESTAMP >=   to_timestamp('{duration.StartTime.AddMinutes(-1 * Minutes_Step).ToString("yyyy-MM-dd HH:mm:ss.ff")}','yyyy-MM-dd HH24:mi:ss.ff') ORDER BY TIMESTAMP DESC";
 
-                var archiveDataTable = _historicalDataManager.GetRecord(command);
+            //    var archiveDataTable = _historicalDataManager.GetRecord(command);
+
+
+                IDbDataParameter[] parameters = new IDbDataParameter[3];
+                parameters[0] = _dataManager.CreateParameter("analogMeasurementId", analogMeasurementId.ToString().ToUpper());
+                parameters[1] = _dataManager.CreateParameter("StartTime", duration.StartTime.ToString("yyyy-MM-dd HH:mm:ss.ff"));
+                parameters[2] = _dataManager.CreateParameter("EndTime", duration.StartTime.ToString("yyyy-MM-dd HH:mm:ss.ff"));
+
+                var archiveDataTable = _dataManager.GetRecord("FUNCTIONS.APP_RPC_FIRST_DATA_IN_INTERVAL_TIME_SELECT", CommandType.StoredProcedure, parameters);
 
                 if (archiveDataTable.Rows.Count == 0)
                 {
@@ -303,13 +320,18 @@ namespace RPC
                     do
                     {
                         Count++;
-                        {
-                            command = $"SELECT VALUE, TIMESTAMP, QUALITY FROM HISANALOGS WHERE " +
-                                      $"MEASUREMENTID = '{analogMeasurementId.ToString().ToUpper()}' AND " +
-                                      $"TIMESTAMP <=   to_timestamp('{duration.StartTime.AddMinutes(-1 * Minutes_Step * (Count - 1)).ToString("yyyy-MM-dd HH:mm:ss.ff")}','yyyy-MM-dd HH24:mi:ss.ff') AND " +
-                                      $"TIMESTAMP >=   to_timestamp('{duration.StartTime.AddMinutes(-1 * Minutes_Step * Count).ToString("yyyy-MM-dd HH:mm:ss.ff")}','yyyy-MM-dd HH24:mi:ss.ff') ORDER BY TIMESTAMP DESC";
-                        }
-                        archiveDataTable = _historicalDataManager.GetRecord(command);
+                        //{
+                        //    command = $"SELECT VALUE, TIMESTAMP, QUALITY FROM HISANALOGS WHERE " +
+                        //              $"MEASUREMENTID = '{analogMeasurementId.ToString().ToUpper()}' AND " +
+                        //              $"TIMESTAMP <=   to_timestamp('{duration.StartTime.AddMinutes(-1 * Minutes_Step * (Count - 1)).ToString("yyyy-MM-dd HH:mm:ss.ff")}','yyyy-MM-dd HH24:mi:ss.ff') AND " +
+                        //              $"TIMESTAMP >=   to_timestamp('{duration.StartTime.AddMinutes(-1 * Minutes_Step * Count).ToString("yyyy-MM-dd HH:mm:ss.ff")}','yyyy-MM-dd HH24:mi:ss.ff') ORDER BY TIMESTAMP DESC";
+                        //}
+                        //archiveDataTable = _historicalDataManager.GetRecord(command);
+
+                        parameters[0] = _dataManager.CreateParameter("analogMeasurementId", analogMeasurementId.ToString().ToUpper());
+                        parameters[1] = _dataManager.CreateParameter("StartTime", duration.StartTime.AddMinutes(-1 * Minutes_Step * (Count - 1)).ToString("yyyy-MM-dd HH:mm:ss.ff"));
+                        parameters[2] = _dataManager.CreateParameter("EndTime", duration.StartTime.AddMinutes(-1 * Minutes_Step * Count).ToString("yyyy-MM-dd HH:mm:ss.ff"));
+                        archiveDataTable = _dataManager.GetRecord("FUNCTIONS.APP_RPC_FIRST_DATA_IN_INTERVAL_TIME_SELECT", CommandType.StoredProcedure, parameters);
                     } while (archiveDataTable.Rows.Count == 0 && Count <10);
                 }
 
@@ -330,7 +352,7 @@ namespace RPC
             }
         }
 
-        public Guid GetGuid(String networkpath)
+        Guid GetGuid(String networkpath)
         {
             if (isBuild)
             {
@@ -340,11 +362,13 @@ namespace RPC
                 else
                     _logger.WriteEntry("The GUID could not read from Repository for Network   " + networkpath, LogLevels.Error);
             }
-            string sql = "SELECT * FROM NodesFullPath where TO_CHAR(FullPath) = '" + networkpath + "'";
 
             try
             {
-                var dataTable = _dataManager.GetRecord(sql);
+
+                IDbDataParameter[] parameters = new IDbDataParameter[1];
+                parameters[0] = _dataManager.CreateParameter("networkpath", networkpath);
+                var dataTable = _dataManager.GetRecord("FUNCTIONS.APP_GUID_SELECT", CommandType.StoredProcedure, parameters);
                 Guid id = Guid.Empty;
                 if (dataTable != null && dataTable.Rows.Count == 1)
                 {

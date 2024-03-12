@@ -57,14 +57,17 @@ namespace MAB
         private bool GetInputScadaPoints(DataManager dataManager)
         {
             _logger.WriteEntry("Loading Data from Database", LogLevels.Info);
-            string command = "";
-            command = $"SELECT  Name, NetworkPath, DirectionType, SCADAType from APP_MAB_PARAMS";
+            //string command = "";
+            //command = 
+            //command = $"SELECT  Name, NetworkPath, DirectionType, SCADAType from APP_MAB_PARAMS";
             DataTable dataTable = null;
 
             MAB_PARAMS_Str mab_param = new MAB_PARAMS_Str();
             try
             {
-                dataTable = dataManager.GetRecord(command);
+                //dataTable = dataManager.GetRecord(command);
+                dataTable = dataManager.GetRecord("FUNCTIONS.APP_MAB_PARAMS_SELECT", CommandType.StoredProcedure);
+
                 if (dataTable != null)
                 {
                     if (!_RTDBManager.DelKeys(RedisKeyPattern.MAB_PARAMS))
@@ -88,7 +91,7 @@ namespace MAB
                 var networkPath = row["NetworkPath"].ToString();
                 var pointDirectionType = row["DirectionType"].ToString();
                 var scadaType = Convert.ToString(row["SCADAType"]);
-                var id = GetGuid(networkPath);
+                var id = Guid.Parse(row["GUID"].ToString());
 
                 mab_param.Name = name;
                 mab_param.NetworkPath = networkPath;
@@ -210,11 +213,12 @@ namespace MAB
                 else
                     _logger.WriteEntry("The GUID could not read from Repository for Network   " + networkpath, LogLevels.Error);
             }
-            string sql = "SELECT * FROM NodesFullPath where TO_CHAR(FullPath) = '" + networkpath + "'";
-
+           
             try
             {
-                var dataTable = _dataManager.GetRecord(sql);
+                IDbDataParameter[] parameters = new IDbDataParameter[1];
+                parameters[0] = _dataManager.CreateParameter("networkpath", networkpath);
+                var dataTable = _dataManager.GetRecord("FUNCTIONS.APP_GUID_SELECT", CommandType.StoredProcedure, parameters);
                 Guid id = Guid.Empty;
                 if (dataTable != null && dataTable.Rows.Count == 1)
                 {

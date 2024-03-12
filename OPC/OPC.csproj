@@ -18,7 +18,6 @@
   <ItemGroup>
     <None Remove="appsettings.json" />
     <None Remove="Dockerfile" />
-    <None Remove="opc-entrypoint.sh" />
   </ItemGroup>
 
   <ItemGroup>
@@ -67,6 +66,9 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <None Update="opc-entrypoint.sh">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="Opc.Ua.SampleClient.Config.xml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>

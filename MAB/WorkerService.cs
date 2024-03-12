@@ -35,7 +35,7 @@ namespace MAB
             _logger = serviceProvider.GetService<ILogger>();
 
             _dataManager = new Irisa.DataLayer.Oracle.OracleDataManager(_config["OracleServicename"], _config["OracleDatabaseAddress"], _config["OracleStaticUser"], _config["OracleStaticPassword"]);
-            _storeLogs = new StoreLogs(_dataManager, _logger, "SCADA.\"HIS_HisLogs_Insert\"");
+            _storeLogs = new StoreLogs(_dataManager, _logger, "SCADAHIS.\"HIS_HisLogs_Insert\"");
 
             var historyDataRequest = new HistoryDataRequest
             {

@@ -5,6 +5,7 @@
     <UserSecretsId>dotnet-RPC-B31A51B4-6D26-4AAA-8E77-612A2932715B</UserSecretsId>
     <StartupObject>RPC.Program</StartupObject>
     <PackageOutputPath>..\..\build\Release\RPC\</PackageOutputPath>
+    <BaseOutputPath>.\..\..\build\RPC</BaseOutputPath>
   </PropertyGroup>
 
   <ItemGroup>
@@ -49,5 +50,11 @@
     <Reference Include="Irisa.Message">
       <HintPath>..\Requirement\Irisa.Message.dll</HintPath>
     </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="rpc-entrypoint.sh">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 </Project>

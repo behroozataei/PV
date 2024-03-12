@@ -60,8 +60,8 @@ namespace DCP
             {
 
                 DCP_PARAMS_Str dcp_param = new DCP_PARAMS_Str();
-                var dataTable = _staticDataManager.GetRecord($"SELECT * from APP_DCP_PARAMS");
-                if(dataTable !=null)
+                var dataTable = _staticDataManager.GetRecord("FUNCTIONS.APP_DCP_PARAMS_SELECT", CommandType.StoredProcedure);
+                if (dataTable !=null)
                 {
                    if(!_RTDBManager.DelKeys(RedisKeyPattern.DCP_PARAMS))
                         _logger.WriteEntry("Error: Delete APP_DCP_PARAMS from Redis", LogLevels.Error);
@@ -69,13 +69,10 @@ namespace DCP
 
                 foreach (DataRow row in dataTable.Rows)
                 {
-                    //var id = Guid.Parse(row["GUID"].ToString());
                     var name = row["Name"].ToString();
                     var networkPath = row["NetworkPath"].ToString();
                     var pointDirectionType = row["DirectionType"].ToString();
-                    //if (name == "MAC_DS")
-                    //    System.Diagnostics.Debugger.Break();
-                    var id = GetGuid(networkPath);
+                    var id = Guid.Parse(row["GUID"].ToString());
                     dcp_param.FUNCTIONNAME = row["FUNCTIONNAME"].ToString();
                     dcp_param.NAME = name;
                     dcp_param.DESCRIPTION = row["DESCRIPTION"].ToString();
@@ -649,10 +646,11 @@ namespace DCP
 
         public Guid GetGuid(String networkpath)
         {
-            string sql = "SELECT * FROM NodesFullPath where TO_CHAR(FullPath) = '" + networkpath + "'";
             try
             {
-                var dataTable = _staticDataManager.GetRecord(sql);
+                IDbDataParameter[] parameters = new IDbDataParameter[1];
+                parameters[0] = _staticDataManager.CreateParameter("networkpath", networkpath);
+                var dataTable = _staticDataManager.GetRecord("FUNCTIONS.APP_GUID_SELECT", CommandType.StoredProcedure, parameters);
                 Guid id = Guid.Empty;
                 if (dataTable != null && dataTable.Rows.Count == 1)
                 {

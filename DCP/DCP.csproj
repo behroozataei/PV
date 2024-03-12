@@ -22,7 +22,6 @@
 
   <ItemGroup>
     <None Remove="appsettings.json" />
-    <None Remove="dcp-entrypoint.sh" />
     <None Remove="Dockerfile" />
   </ItemGroup>
 
@@ -75,6 +74,12 @@
 
   <ItemGroup>
     <None Remove="..\.dockerignore" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="dcp-entrypoint.sh">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>

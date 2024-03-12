@@ -3,6 +3,7 @@
   <PropertyGroup>
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <UserSecretsId>dotnet-SDK_Template-5F0C232F-1B90-4CD9-8045-502595EBC38E</UserSecretsId>
+    <BaseOutputPath>.\..\..\build\SDK_Template</BaseOutputPath>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">

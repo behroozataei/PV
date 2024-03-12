@@ -68,26 +68,26 @@ namespace OCP
         {
             _logger.WriteEntry("Loading OCP_Checkpoint Data from Database", LogLevels.Info);
             DataTable dataTable = new DataTable();
-            var sql = "SELECT OCPSHEDPOINT_ID, " +
-                                                                                    "NAME, " +
-                                                                                    "NETWORKPATH, " +
-                                                                                    "DECISIONTABLE, " +
-                                                                                    "CHECKOVERLOAD, " +
-                                                                                    "DESCRIPTION, " +
-                                                                                    "SHEDTYPE, " +
-                                                                                    "CATEGORY, " +
-                                                                                    "NOMINALVALUE, " +
-                                                                                    "LIMITPERCENT, " +
-                                                                                    "VoltageEnom, " +
-                                                                                    "VOLTAGEDENOM, " +
-                                                                                    "POWERNUM, " +
-                                                                                    "POWERDENOM, " +
-                                                                                    "CHECKPOINT_NETWORKPATH " +
-                                                                            $"FROM APP_OCP_CheckPoints";
+            //var sql = "SELECT OCPSHEDPOINT_ID, " +
+            //                                                                        "NAME, " +
+            //                                                                        "NETWORKPATH, " +
+            //                                                                        "DECISIONTABLE, " +
+            //                                                                        "CHECKOVERLOAD, " +
+            //                                                                        "DESCRIPTION, " +
+            //                                                                        "SHEDTYPE, " +
+            //                                                                        "CATEGORY, " +
+            //                                                                        "NOMINALVALUE, " +
+            //                                                                        "LIMITPERCENT, " +
+            //                                                                        "VoltageEnom, " +
+            //                                                                        "VOLTAGEDENOM, " +
+            //                                                                        "POWERNUM, " +
+            //                                                                        "POWERDENOM, " +
+            //                                                                        "CHECKPOINT_NETWORKPATH " +
+            //                                                                $"FROM APP_OCP_CheckPoints";
             try
             {
 
-                dataTable = _dataManager.GetRecord(sql);
+                dataTable = _dataManager.GetRecord("FUNCTIONS.APP_OCP_CHECKPOINTS_SELECT", CommandType.StoredProcedure);
             }
 
             catch (Irisa.DataLayer.DataException ex)
@@ -288,7 +288,7 @@ namespace OCP
             {
 
                 OCP_PARAMS_Str ocp_param = new OCP_PARAMS_Str();
-                var dataTable = _dataManager.GetRecord($"SELECT * FROM APP_OCP_PARAMS");
+                var dataTable = _dataManager.GetRecord("FUNCTIONS.APP_OCP_PARAMS_SELECT", CommandType.StoredProcedure);
                 if (dataTable != null)
                 {
                     if (!_RTDBManager.DelKeys(RedisKeyPattern.OCP_PARAMS))
@@ -300,7 +300,7 @@ namespace OCP
                     var name = row["Name"].ToString();
                     var networkPath = row["NetworkPath"].ToString();
                     //var pointDirectionType = row["DirectionType"].ToString();
-                    var id = GetGuid(networkPath);
+                    var id = Guid.Parse(row["GUID"].ToString());
                     var scadaPoint = new OCPScadaPoint(id, name, networkPath);
                     scadaPoint.DirectionType = Convert.ToString(row["DirectionType"]);
                     scadaPoint.SCADAType = Convert.ToString(row["SCADAType"]);
@@ -449,14 +449,16 @@ namespace OCP
                 else
                     _logger.WriteEntry("The GUID could not read from Repository for Network   " + networkpath, LogLevels.Error);
             }
-            string sql = "SELECT * FROM NodesFullPath where TO_CHAR(FullPath) = '" + networkpath + "'";
 
             try
             {
-                var dataTable = _dataManager.GetRecord(sql);
+                
+                IDbDataParameter[] parameters = new IDbDataParameter[1];
+                parameters[0] = _dataManager.CreateParameter("networkpath", networkpath);
+                var dataTable = _dataManager.GetRecord("FUNCTIONS.APP_GUID_SELECT", CommandType.StoredProcedure, parameters);
                 Guid id = Guid.Empty;
                 if (dataTable != null && dataTable.Rows.Count == 1)
-                {
+                { 
                     foreach (DataRow row in dataTable.Rows)
                     {
                         id = Guid.Parse(row["GUID"].ToString());

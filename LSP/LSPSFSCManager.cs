@@ -223,7 +223,7 @@ namespace LSP
                     return;
                 }
                 _stopwatch1.Stop();
-                if(_stopwatch1.ElapsedMilliseconds>20)
+                if(_stopwatch1.ElapsedMilliseconds>1500)
                     _logger.WriteEntry($"Get Data From Redis Take {_stopwatch1.ElapsedMilliseconds} ms!", LogLevels.Warn);
 
 

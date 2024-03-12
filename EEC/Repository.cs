@@ -18,7 +18,7 @@ namespace EEC
     {
         private readonly ILogger _logger;
         private readonly IConfiguration _configuration;
-        private readonly DataManager sqlDataMnager;
+        private readonly DataManager _dataManager;
         private readonly DataManager _historicalDataManager;
         private readonly Dictionary<Guid, EECScadaPoint> _scadaPoints;
         private readonly Dictionary<string, EECScadaPoint> _scadaPointsHelper;
@@ -33,7 +33,7 @@ namespace EEC
             _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
             _RTDBManager = RTDBManager ?? throw new ArgumentNullException(nameof(RTDBManager));
 
-            sqlDataMnager = new OracleDataManager(_configuration["OracleServicename"], _configuration["OracleDatabaseAddress"], _configuration["OracleStaticUser"], _configuration["OracleStaticPassword"]);
+            _dataManager = new OracleDataManager(_configuration["OracleServicename"], _configuration["OracleDatabaseAddress"], _configuration["OracleStaticUser"], _configuration["OracleStaticPassword"]);
             _historicalDataManager = new OracleDataManager(configuration["OracleServicename"], configuration["OracleDatabaseAddress"], configuration["OracleHISUser"], configuration["OracleHISPassword"]);
 
             _scadaPoints = new Dictionary<Guid, EECScadaPoint>();
@@ -123,7 +123,7 @@ namespace EEC
             {
 
                 EEC_PARAMS_Str eec_param = new EEC_PARAMS_Str();
-                var dataTable = sqlDataMnager.GetRecord($"SELECT * FROM APP_EEC_PARAMS");
+                var dataTable = _dataManager.GetRecord("FUNCTIONS.APP_EEC_PARAMS_SELECT", CommandType.StoredProcedure);
                 if (dataTable != null)
                 {
                     if (!_RTDBManager.DelKeys(RedisKeyPattern.EEC_PARAMS))
@@ -139,7 +139,7 @@ namespace EEC
                     var scadatype = row["SCADATYPE"].ToString();
                     //if (name == "PMAX1")
                     //    System.Diagnostics.Debug.Print("PAMX1");
-                    var id = GetGuid(networkPath);
+                    var id = Guid.Parse(row["GUID"].ToString());
 
                     eec_param.FUNCTIONNAME = row["FUNCTIONNAME"].ToString();
                     eec_param.NAME = name;
@@ -390,7 +390,7 @@ namespace EEC
 
         }
 
-        public Guid GetGuid(String networkpath)
+        Guid GetGuid(String networkpath)
         {
             if (isBuild)
             {
@@ -400,11 +400,13 @@ namespace EEC
                 else
                     _logger.WriteEntry("The GUID could not read from Repository for Network   " + networkpath, LogLevels.Error);
             }
-            string sql = "SELECT * FROM NodesFullPath where TO_CHAR(FullPath) = '" + networkpath + "'";
 
             try
             {
-                var dataTable = sqlDataMnager.GetRecord(sql);
+
+                IDbDataParameter[] parameters = new IDbDataParameter[1];
+                parameters[0] = _dataManager.CreateParameter("networkpath", networkpath);
+                var dataTable = _dataManager.GetRecord("FUNCTIONS.APP_GUID_SELECT", CommandType.StoredProcedure, parameters);
                 Guid id = Guid.Empty;
                 if (dataTable != null && dataTable.Rows.Count == 1)
                 {

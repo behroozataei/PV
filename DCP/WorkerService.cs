@@ -37,7 +37,7 @@ namespace DCP
 
             _staticDataManager = new Irisa.DataLayer.Oracle.OracleDataManager(_config["OracleServicename"], _config["OracleDatabaseAddress"], _config["OracleStaticUser"], _config["OracleStaticPassword"]);
             _historicalDataManager = new Irisa.DataLayer.Oracle.OracleDataManager(_config["OracleServicename"], _config["OracleDatabaseAddress"], _config["OracleHISUser"], _config["OracleHISPassword"]);
-            _storeLogs = new StoreLogs(_staticDataManager, _logger, "SCADA.\"HIS_HisLogs_Insert\"");
+            _storeLogs = new StoreLogs(_staticDataManager, _logger, "SCADAHIS.\"HIS_HisLogs_Insert\"");
             _linkDBpcsDataManager = new SqlServerDataManager(_config["PCSLinkDatabaseName"], _config["PCSLinkDatabaseAddress"], _config["PCSLinkUser"], _config["PCSLinkPassword"]);
 
             var historyDataRequest = new HistoryDataRequest

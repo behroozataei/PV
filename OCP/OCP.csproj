@@ -19,7 +19,6 @@
   <ItemGroup>
     <None Remove="appsettings.json" />
     <None Remove="Dockerfile" />
-    <None Remove="ocp-entrypoint.sh" />
   </ItemGroup>
 
   <ItemGroup>
@@ -67,6 +66,12 @@
     <Reference Include="Irisa.Message">
       <HintPath>..\Requirement\Irisa.Message.dll</HintPath>
     </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="ocp-entrypoint.sh">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>
