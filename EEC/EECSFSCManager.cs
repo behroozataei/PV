@@ -131,7 +131,17 @@ namespace EEC
                 }
                 else
                     isWorking = true;
-                
+
+
+
+                // A.B, 13402.03.21 Adding this code
+                // Step 00. Lowest Priority EAF for each group
+                if (!LowestPriorityofEAF())
+                {
+                    _logger.WriteEntry("Error in Update LowestPriorityEAF!", LogLevels.Error);
+
+                }
+
 
                 // A.Kaji, 1399.10.09 Adding this code
                 // Step 0. Read EAF-Groups from SCADA and Update in EEC_SFSCEAFSPriority
@@ -149,7 +159,7 @@ namespace EEC
                     return;
                 }
 
-                
+
 
                 // Step 1. Calculate and update power of furnaces and busbars
                 if (!CalculateBusbarAndFurnacePowers())
@@ -181,7 +191,7 @@ namespace EEC
 
                 //2023/12/25 Ataei
                 //Check Overload1 and Overload2
-                if(!CheckOverloadedLimtfromLSP())
+                if (!CheckOverloadedLimtfromLSP())
                 {
                     _logger.WriteEntry("LSP Overload limit is set, Waiting one minute or  Resetting Oveloaded Power limit! ", LogLevels.Warn);
                     isWorking = false;
@@ -218,7 +228,7 @@ namespace EEC
                     //return;
                 }
 
-                
+
 
 
                 //'-------------------------------------------------------------------------
@@ -230,6 +240,56 @@ namespace EEC
                 _logger.WriteEntry(ex.Message, LogLevels.Error, ex);
             }
             isWorking = false;
+        }
+
+        private bool LowestPriorityofEAF()
+        {
+           // bool ret = false;
+            try
+            {
+
+                int[] HighProirityfunrnace = new int[2];
+                for (int busbar = 0; busbar < NUMBER_OF_BUSBARS; busbar++)
+                {
+
+
+                    EEC_SFSCEAFSPRIORITY_Str[] eec_sfsceafprio = new EEC_SFSCEAFSPRIORITY_Str[8];
+
+
+                    for (int fur = 0; fur < 8; fur++)
+                    {
+                        // if (_repository.GetRedisUtiles().GetKeys(pattern: RedisKeyPattern.EEC_SFSCEAFSPRIORITY + (fur + 1).ToString()).Length != 0)
+                        // 1401-12-02 delay on redis query
+                        eec_sfsceafprio[fur] = JsonConvert.DeserializeObject<EEC_SFSCEAFSPRIORITY_Str>(_RTDBManager.RedisConn.Get(RedisKeyPattern.EEC_SFSCEAFSPRIORITY + (fur + 1).ToString()));
+                        //else
+                        //{
+                        //    _logger.WriteEntry($"Error in 'SELECT PRIORITY TABLE FROM APP_EEC_SFSCEAFSPRIORITY'", LogLevels.Error);
+                        //    return false;
+                        //}
+
+                    }
+
+                    var datatable = eec_sfsceafprio.Where(n => n.GROUPNUM_EEC == (busbar + 1).ToString() && n.STATUS_OF_FURNACE == "ON")
+                                                .OrderBy(n => Convert.ToDecimal(n.CONSUMED_ENERGY_PER_HEAT)).ToArray();
+
+                    if ((datatable is null || datatable.Length == 0))
+                    {
+                        HighProirityfunrnace[busbar] = 0;
+                    }
+                    else
+                    {
+                        HighProirityfunrnace[busbar] = Convert.ToInt32(datatable[0].FURNACE.ToString());
+                    }
+                 }
+                _logger.WriteEntry($"Lowest Priority EAF in Group1 is EAF{HighProirityfunrnace[0]}; Lowest Priority EAF in Group2 is EAF{HighProirityfunrnace[1]}", LogLevels.Info);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.WriteEntry(ex.Message, LogLevels.Error, ex);
+                return false;
+
+            }
         }
 
         //2023/12/25
@@ -249,12 +309,12 @@ namespace EEC
                     else
                     {
                         Cyc_Count_LSPOverloadset++;
-                        if (Cyc_Count_LSPOverloadset > 15)                                                   
-                            ret = true;                        
+                        if (Cyc_Count_LSPOverloadset > 15)
+                            ret = true;
                         else
                             ret = false;
                     }
-                    
+
                 }
                 else
                 {
@@ -265,7 +325,7 @@ namespace EEC
 
                 return ret;
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 _logger.WriteEntry(ex.Message, LogLevels.Error, ex);
                 return false;
@@ -288,7 +348,7 @@ namespace EEC
 
                 _eec_tel = JsonConvert.DeserializeObject<EEC_TELEGRAM_Str>(_RTDBManager.RedisConn.Get(RedisKeyPattern.EEC_TELEGRAM));
 
-                
+
                 if (!(_eec_tel is null))
                 {
                     _MaxBusbarPowers[0] = _eec_tel.MAXOVERLOAD1;
@@ -340,7 +400,7 @@ namespace EEC
                     float Busbarspowers = _MaxBusbarPowers[0] + _MaxBusbarPowers[1];
                     _MaxBusbarPowers[0] = Busbarspowers;
                     _MaxBusbarPowers[1] = Busbarspowers;
-                  //  _logger.WriteEntry("Error: MAB_EEC closed and both MAXOVERLOAD1 and MAXOVERLOAD2 > zero! ", LogLevels.Warn);
+                    //  _logger.WriteEntry("Error: MAB_EEC closed and both MAXOVERLOAD1 and MAXOVERLOAD2 > zero! ", LogLevels.Warn);
                 }
 
                 return true;
@@ -563,10 +623,10 @@ namespace EEC
                                                 $"'{Datatime}'" +
                                                 ",'" +
                                                 furnace + "', '" +
-                                                Math.Round(energy,2) + "', '" +
-                                                Math.Round(_MaxBusbarPowers[busbar],2) + "', '" +
-                                                Math.Round(_BusbarPowers[busbar],2) + "', '" +
-                                                (busbar+1) + "')";
+                                                Math.Round(energy, 2) + "', '" +
+                                                Math.Round(_MaxBusbarPowers[busbar], 2) + "', '" +
+                                                Math.Round(_BusbarPowers[busbar], 2) + "', '" +
+                                                (busbar + 1) + "')";
 
                                 var parameters = new IDbDataParameter[6];
                                 parameters[0] = _repository.Get_historicalDataManager().CreateParameter("p_DateTime", Datatime);
@@ -636,7 +696,7 @@ namespace EEC
                     if (!(scadapointEAFGroup is null) && !(scadapointEAFPower is null))
                     {
                         if ((int)scadapointEAFGroup.Value > 0)
-                            _BusbarPowers[(int)scadapointEAFGroup.Value - 1] += scadapointEAFPower.Value;                            
+                            _BusbarPowers[(int)scadapointEAFGroup.Value - 1] += scadapointEAFPower.Value;
                     }
                     else
                         _logger.WriteEntry("Error in reading EAFGroup-EEC from SCADA for Furnace : " + furnace, LogLevels.Warn);
@@ -725,6 +785,6 @@ namespace EEC
                 return false;
             }
         }
-        
+
     }
 }
