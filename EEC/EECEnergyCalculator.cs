@@ -109,6 +109,7 @@ namespace EEC
         private EECScadaPoint _ALARM_ENERGY;
         private EECScadaPoint _PSend1;
         private EECScadaPoint _PSend2;
+        private EECScadaPoint _EC_1MIN;
 
         private bool _FirstRead_MAB;
         private bool _FirstRead_MAB_EEC;
@@ -208,6 +209,7 @@ namespace EEC
             _ALARM_ENERGY = _repository.GetScadaPoint("ALARM_ENERGY");
             _PSend1 = _repository.GetScadaPoint("PSend1");
             _PSend2 = _repository.GetScadaPoint("PSend2");
+            _EC_1MIN =_repository.GetScadaPoint("EC_1min");
 
             _FirstRead_MAB = true;
             _FirstRead_MAB_EEC = true;
@@ -823,6 +825,8 @@ namespace EEC
                     _PB.Value = EB_Cycle * 60;
                 }
 
+                //Energy Managment 1403_06_19
+                _EC_1MIN.Value = ((_PMAX1.Value+_PMAX2.Value>_PMAXG.Value? _PMAXG.Value: _PMAX1.Value + _PMAX2.Value)+_PBMax.Value) / 60;
                 _logger.WriteEntry("===============================", LogLevels.Info);
                 _logger.WriteEntry($"PB { _PB.Value.ToString()}", LogLevels.Info);
                 _logger.WriteEntry($"PMAXG {_PMAXG.Value.ToString()}", LogLevels.Info);
@@ -832,7 +836,7 @@ namespace EEC
                 //'' Store calculated values in Table
                 //''   PMAX15->PMAX15
 
-              
+                _updateScadaPointOnServer.WriteAnalog(_EC_1MIN, _EC_1MIN.Value);
                 _updateScadaPointOnServer.WriteAnalog(_PMAX15, _PMAX15.Value);
                 _updateScadaPointOnServer.SendOneMinuteEnergyCALCValues(_PMAXG, _EBSum, _EFSum, _EAV_Sum, _ER_Cycle, _EBMAX, _RESTIME, _PC, _PB);
 

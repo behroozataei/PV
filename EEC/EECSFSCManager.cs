@@ -281,7 +281,7 @@ namespace EEC
                         HighProirityfunrnace[busbar] = Convert.ToInt32(datatable[0].FURNACE.ToString());
                     }
                  }
-                _logger.WriteEntry($"Lowest Priority EAF in Group1 is EAF{HighProirityfunrnace[0]}; Lowest Priority EAF in Group2 is EAF{HighProirityfunrnace[1]}", LogLevels.Info);
+               // _logger.WriteEntry($"Lowest Priority EAF in Group1 is EAF{HighProirityfunrnace[0]}; Lowest Priority EAF in Group2 is EAF{HighProirityfunrnace[1]}", LogLevels.Info);
                 return true;
             }
             catch (Exception ex)
