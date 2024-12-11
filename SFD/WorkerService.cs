@@ -25,7 +25,7 @@ namespace SRC_FEED_DETECTION
         private readonly Repository _repository;
         private readonly RuntimeDataReceiver _runtimeDataReceiver;
         private readonly Source_Feed_detection_Manager _source_Feed_Detect_Manager;
-        private readonly EnergyManagment energyManagment;
+        private readonly EnergyManagment _energyManagment;
        
         private readonly IConfiguration _config;
         public WorkerService(IServiceProvider serviceProvider)
@@ -50,9 +50,9 @@ namespace SRC_FEED_DETECTION
 
             _cpsRuntimeDataBuffer = new BlockingCollection<CpsRuntimeData>();
             _rpcService = new CpsRpcService(_config["CpsIpAddress"], 10000, historyDataRequest, _cpsRuntimeDataBuffer, GetRpcSslCredentials());
-            _repository = new Repository(_logger, _dataManager);
+            _repository = new Repository(_logger, _config, _dataManager);
             _source_Feed_Detect_Manager = new Source_Feed_detection_Manager(_logger, _repository, _rpcService.CommandService);
-            energyManagment = new EnergyManagment(_logger, _repository, _rpcService.CommandService);
+            _energyManagment = new EnergyManagment(_logger, _repository, _rpcService.CommandService);
             _runtimeDataReceiver = new RuntimeDataReceiver(_logger, _repository, (IProcessing)_source_Feed_Detect_Manager, _rpcService, _cpsRuntimeDataBuffer);
         }
 
@@ -84,7 +84,8 @@ namespace SRC_FEED_DETECTION
             taskWaiting.ContinueWith((t) =>
             {
                 _source_Feed_Detect_Manager.InitializeSFD();
-                energyManagment.Start();
+                _energyManagment.ReadLastData();
+                _energyManagment.Start();
 
             }, TaskContinuationOptions.OnlyOnRanToCompletion);
 

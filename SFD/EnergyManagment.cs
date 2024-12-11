@@ -10,6 +10,11 @@ using System.Data;
 using System.Linq;
 using System.Timers;
 using Google.Protobuf.WellKnownTypes;
+using static Grpc.Core.Metadata;
+using System.ComponentModel.DataAnnotations;
+using Irisa.Common.Utils;
+using Aspose.Cells;
+using Microsoft.Identity.Client;
 
 namespace SFD
 {
@@ -32,49 +37,124 @@ namespace SFD
             _timer_1_Min.Elapsed += Energy_Cal;
         }
 
+        ScadaPoint DailyEnergy, TotalEnergy, _1MinEnergy, PerviousDayEnergy;
+        ScadaPoint _1MinIrradiance, DailyIrradiance, TotalIrradiance, PerviousDayIrradiance;
+        ScadaPoint PR_1Min;
+        ScadaPoint PR_daily;
+        ScadaPoint PV_Panels;
+        public void ReadLastData()
+        {
+
+            try
+            {
+                string sql = $"SELECT   *  FROM   SCADAHIS.APP_ENERGY  ORDER BY  DATETIME DESC";
+                var datatable = _repository.GetFromHistoricalDB(sql);
+                if (datatable != null)
+                {
+                    var _e_daily = (double)(datatable.Rows[0]["DAILY"]);
+                    var _e_total = (double)(datatable.Rows[0]["TOTAL"]);
+                    var _ir_daily = (double)(datatable.Rows[0]["IR_DAILY"]);
+                    var _ir_total = (double)(datatable.Rows[0]["IR_TOTAL"]);
+
+                    DailyEnergy = _repository.GetScadaPoint("DailyEnergy");
+                    TotalEnergy = _repository.GetScadaPoint("TotalEnergy");
+                    DailyIrradiance = _repository.GetScadaPoint("DailyIrradiance");
+                    TotalIrradiance = _repository.GetScadaPoint("TotalIrradiance");
+                    
+                    _updateScadaPointOnServer.WriteAnalog(DailyEnergy, (float)_e_daily);
+                    _updateScadaPointOnServer.WriteAnalog(TotalEnergy, (float)_e_total);
+                    _updateScadaPointOnServer.WriteAnalog(DailyIrradiance, (float)_ir_daily);
+                    _updateScadaPointOnServer.WriteAnalog(TotalIrradiance, (float)_ir_total);
+                    _logger.WriteEntry($"LastValue Restored E_Daily = {_e_daily}   E_Total= {_e_total}", LogLevels.Info);
+                    _logger.WriteEntry($"LastValue Restored IR_Daily = {_ir_daily}  IR_Total= {_ir_total}", LogLevels.Info);
+
+
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.WriteEntry(ex.Message, LogLevels.Error);
+            }
+        }
+
+
+
+
         public void Start()
         {
             _timer_1_Min.Start();
         }
         private void Energy_Cal(object sender, ElapsedEventArgs e)
         {
+
             try
             {
-                var _1MinEnergy = _repository.GetScadaPoint("_1MinEnergy");
-                var DailyEnergy = _repository.GetScadaPoint("DailyEnergy");
-                var PerviousDayEnergy = _repository.GetScadaPoint("PerviousDayEnergy");
-                var TotalEnergy = _repository.GetScadaPoint("TotalEnergy");
-                DailyEnergy.Value = _1MinEnergy.Value + DailyEnergy.Value;//;+3245.746f;
+                _1MinEnergy = _repository.GetScadaPoint("_1MinEnergy");
+                DailyEnergy = _repository.GetScadaPoint("DailyEnergy");
+                PerviousDayEnergy = _repository.GetScadaPoint("PerviousDayEnergy");
+                TotalEnergy = _repository.GetScadaPoint("TotalEnergy");
 
+                _1MinIrradiance = _repository.GetScadaPoint("_1MinIrradiance");
+                DailyIrradiance = _repository.GetScadaPoint("DailyIrradiance");
+                TotalIrradiance = _repository.GetScadaPoint("TotalIrradiance");
+                PerviousDayIrradiance = _repository.GetScadaPoint("PerviousDayIrradiance");
+
+
+                DailyEnergy.Value = _1MinEnergy.Value + DailyEnergy.Value;
                 TotalEnergy.Value = _1MinEnergy.Value + TotalEnergy.Value;
-                //TotalEnergy.Value = 3281.0f;
-                //DailyEnergy.Value = 17.0f;
-                //PerviousDayEnergy.Value = 100.068f;
+                if (_1MinIrradiance.Value < 0)
+                    _1MinIrradiance.Value = 0;
 
 
-                _updateScadaPointOnServer.WriteAnalog(DailyEnergy, DailyEnergy.Value);
+                DailyIrradiance.Value = _1MinIrradiance.Value + DailyIrradiance.Value;
+                TotalIrradiance.Value = _1MinIrradiance.Value + TotalIrradiance.Value;
+
+
                 _updateScadaPointOnServer.WriteAnalog(TotalEnergy, TotalEnergy.Value);
-                _updateScadaPointOnServer.WriteAnalog(PerviousDayEnergy, PerviousDayEnergy.Value);
-                //     _updateScadaPointOnServer.WriteAnalog(AnnualEnergy, AnnualEnergy.Value);
+
+                _updateScadaPointOnServer.WriteAnalog(TotalIrradiance, TotalIrradiance.Value);
+
                 var CurrentTime = DateTime.Now;
 
                 if (CurrentTime.Hour == 0 && CurrentTime.Minute == 0)
                 {
                     _updateScadaPointOnServer.WriteAnalog(PerviousDayEnergy, DailyEnergy.Value);
+                    _updateScadaPointOnServer.WriteAnalog(PerviousDayIrradiance, PerviousDayIrradiance.Value);
                     DailyEnergy.Value = 0;
+                    DailyIrradiance.Value = 0;
 
                 }
-                _logger.WriteEntry($"Energy at {CurrentTime.ToString()} : {DailyEnergy.Value}",LogLevels.Info);
+                _updateScadaPointOnServer.WriteAnalog(DailyEnergy, DailyEnergy.Value);
+                _updateScadaPointOnServer.WriteAnalog(DailyIrradiance, DailyIrradiance.Value);
 
-                //if(_repository.GetScadaPoint("ResetDailyEnergy").Value ==1.0 ||( CurrentTime.Hour==0  && CurrentTime.Minute==0))
-                //{
-                //    DailyEnergy.Value = 0;
+                _logger.WriteEntry($"1MinEnergy: {_1MinEnergy.Value} , DailyEnergy: {DailyEnergy.Value}", LogLevels.Info);
+                _logger.WriteEntry($"1MinIrradiance: {_1MinIrradiance.Value},  DailyIrradiance: {DailyIrradiance.Value}", LogLevels.Info);
 
-                //}
-                //if (_repository.GetScadaPoint("ResetAnnualEnergy").Value == 1.0)
-                //{
-                //    AnnualEnergy.Value = 0;
-                //}
+                PR_Calc();
+
+
+                String Datatime = DateTime.Now.ToString($"yyyy-MM-dd HH:mm:ss.ff");
+
+
+
+                //string sql = $"INSERT INTO APP_ENERGY (DATETIME, IR_DAILY, IR_TOTAL) VALUES (" +
+                //                                $"TIMESTAMP '{Datatime}'" +
+                //                                ",'" +
+                //                                DailyIrradiance.Value + "', '" +
+                //                                TotalIrradiance.Value + "')";
+
+                string sql2 = $"UPDATE  APP_ENERGY  SET DATETIME = TIMESTAMP '{Datatime}' ," +
+                                                        $"DAILY =  {DailyEnergy.Value} ," +
+                                                        $"TOTAL =  {TotalEnergy.Value} ," +
+                                                        $"IR_DAILY =  {DailyIrradiance.Value} ," +
+                                                        $"IR_TOTAL =  {TotalIrradiance.Value}"; 
+                                                        
+                if (!_repository.ModifyOnHistoricalDB(sql2))
+
+                {
+                    _logger.WriteEntry($"Error in INSERT Into APP_ENERGY ", LogLevels.Error);
+                }
+
             }
             catch (Exception ex)
             {
@@ -82,6 +162,44 @@ namespace SFD
             }
 
 
+        }
+
+
+        //The Performance Ratio is the ratio of the energy effectively produced(used), with respect to the energy which would be produced
+        //if the system was continuously working at its nominal STC efficiency.The PR is defined in the norm IEC EN 61724.
+        //In usual Grid-connected systems, the available energy is E_Grid.In stand-alone systems, it is the PV energy effectively delivered to the user,
+        //The energy potentially produced at STC conditions is indeed equal to GlobInc * PnomPV, where PnomPV is the STC installed power (manufacturer's nameplate value).
+        //This equivalence is explained by the fact that at STC (1000 W/m², 25°C) each kWh/m² of incident irradiation will produce 1 kWh of electricity.
+        // Therefore for a grid-connected system:
+        //   PR  = E_Grid / (GlobInc * PnomPV)
+
+        const double PnomPV = 660.0 * 0.000001; //W ---> MW
+       
+
+        //Performance Ratio Calculation
+        private void PR_Calc()
+        {
+            try
+            {
+                var NumberofPanle = _repository.GetScadaPoint("PV_Panels").Value;
+                var _pr_1Min = (_1MinEnergy.Value / (_1MinIrradiance.Value * NumberofPanle * PnomPV / 1000.0));
+                PR_1Min = _repository.GetScadaPoint("PR_1Min");
+                _logger.WriteEntry($"PR:  {_pr_1Min}", LogLevels.Info);
+                if(_1MinEnergy.Value>0 && _1MinIrradiance.Value>0 )
+                    _updateScadaPointOnServer.WriteAnalog(PR_1Min,(float)_pr_1Min);
+
+                var _pr_daily = (DailyEnergy.Value / (DailyIrradiance.Value * NumberofPanle * PnomPV / 1000.0));
+                PR_daily = _repository.GetScadaPoint("PR_daily");
+                _logger.WriteEntry($"PR_Daily:  {_pr_daily}", LogLevels.Info);
+                if (DailyEnergy.Value > 0 && DailyIrradiance.Value > 0)
+                    _updateScadaPointOnServer.WriteAnalog(PR_daily, (float)_pr_daily);
+
             }
+            catch (Exception ex)
+            {
+                _logger.WriteEntry(ex.Message, LogLevels.Error);
+            }
+
+        }
     }
 }
