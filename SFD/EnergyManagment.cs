@@ -15,6 +15,7 @@ using System.ComponentModel.DataAnnotations;
 using Irisa.Common.Utils;
 using Aspose.Cells;
 using Microsoft.Identity.Client;
+using System.Collections;
 
 namespace SFD
 {
@@ -22,9 +23,12 @@ namespace SFD
     {
         private const int TIMER_TICKS = 60000;
         private readonly Timer _timer_1_Min;
+        private readonly Timer _timer_5_Min;
         private readonly IRepository _repository;
         private readonly ILogger _logger;
-
+        private const float LIMIT_FOR_1MIN_IRR = 0.023f;
+        Queue<float> IIR_5_Min;
+        Queue<float> Energy_5_Min;
         private UpdateScadaPointOnServer _updateScadaPointOnServer;
         internal EnergyManagment(ILogger logger, IRepository repository, ICpsCommandService cpsCommandService)
         {
@@ -35,6 +39,12 @@ namespace SFD
             _timer_1_Min = new Timer();
             _timer_1_Min.Interval = TIMER_TICKS;
             _timer_1_Min.Elapsed += Energy_Cal;
+
+            _timer_5_Min = new Timer();
+            _timer_5_Min.Interval = TIMER_TICKS;
+            _timer_5_Min.Elapsed += Energy_Cal;
+            IIR_5_Min=new Queue<float>();
+            Energy_5_Min = new Queue<float>();
         }
 
         ScadaPoint DailyEnergy, TotalEnergy, _1MinEnergy, PerviousDayEnergy;
@@ -102,7 +112,7 @@ namespace SFD
 
                 DailyEnergy.Value = _1MinEnergy.Value + DailyEnergy.Value;
                 TotalEnergy.Value = _1MinEnergy.Value + TotalEnergy.Value;
-                if (_1MinIrradiance.Value < 0)
+                if (_1MinIrradiance.Value < LIMIT_FOR_1MIN_IRR)
                     _1MinIrradiance.Value = 0;
 
 
@@ -181,18 +191,39 @@ namespace SFD
         {
             try
             {
-                var NumberofPanle = _repository.GetScadaPoint("PV_Panels").Value;
-                var _pr_1Min = (_1MinEnergy.Value / (_1MinIrradiance.Value * NumberofPanle * PnomPV / 1000.0));
-                PR_1Min = _repository.GetScadaPoint("PR_1Min");
-                _logger.WriteEntry($"PR:  {_pr_1Min}", LogLevels.Info);
-                if(_1MinEnergy.Value>0 && _1MinIrradiance.Value>0 )
-                    _updateScadaPointOnServer.WriteAnalog(PR_1Min,(float)_pr_1Min);
+                
+                var POA = _repository.GetScadaPoint("PV_Panels").Value;
+              
 
-                var _pr_daily = (DailyEnergy.Value / (DailyIrradiance.Value * NumberofPanle * PnomPV / 1000.0));
-                PR_daily = _repository.GetScadaPoint("PR_daily");
-                _logger.WriteEntry($"PR_Daily:  {_pr_daily}", LogLevels.Info);
+                if (_1MinEnergy.Value > 0 && _1MinIrradiance.Value > 0)
+                {
+                    IIR_5_Min.Enqueue(_1MinIrradiance.Value);
+                    Energy_5_Min.Enqueue(_1MinEnergy.Value);
+                    while(IIR_5_Min.Count>=6)
+                    {
+                        IIR_5_Min.Dequeue();
+                        Energy_5_Min.Dequeue();
+                    }
+                    if (IIR_5_Min.Count == 5)
+                    {
+                        var _pr_1Min = (Energy_5_Min.AsEnumerable<float>().Sum() / (POA * PnomPV * (IIR_5_Min.AsEnumerable<float>().Sum() / 1000.0)));
+                        PR_1Min = _repository.GetScadaPoint("PR_1Min");
+                        _logger.WriteEntry($"PR:  {_pr_1Min}", LogLevels.Info);
+                        _updateScadaPointOnServer.WriteAnalog(PR_1Min, (float)_pr_1Min * 100.0f); // Percent
+
+                    }
+
+
+                  
+                   
+                }
                 if (DailyEnergy.Value > 0 && DailyIrradiance.Value > 0)
-                    _updateScadaPointOnServer.WriteAnalog(PR_daily, (float)_pr_daily);
+                {
+                    var _pr_daily = (DailyEnergy.Value / (POA * PnomPV * (DailyIrradiance.Value / 1000.0)));
+                    PR_daily = _repository.GetScadaPoint("PR_daily");
+                    _logger.WriteEntry($"PR_Daily:  {_pr_daily}", LogLevels.Info);
+                    _updateScadaPointOnServer.WriteAnalog(PR_daily, (float)_pr_daily * 100.0f);  // Percent
+                }
 
             }
             catch (Exception ex)
